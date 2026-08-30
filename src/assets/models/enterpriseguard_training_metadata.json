@@ -1,0 +1,147 @@
+{
+  "pipeline": {
+    "name": "EnterpriseGuard ML Training Pipeline",
+    "version": "2.0.0"
+  },
+  "training_run": {
+    "success": true,
+    "trained_at": "2026-08-26T07:54:32.209704+00:00",
+    "training_samples": 8,
+    "feature_count": 7,
+    "feature_names": [
+      "request_frequency",
+      "failure_ratio",
+      "unique_source_count",
+      "unique_user_count",
+      "failed_attempts",
+      "anomaly_score",
+      "outbound_data_volume"
+    ],
+    "benign_samples": 4,
+    "threat_samples": 4,
+    "class_balance": 0.5,
+    "training_time_ms": 2830.112
+  },
+  "validation": {
+    "valid": true,
+    "total_samples": 8,
+    "benign_samples": 4,
+    "threat_samples": 4,
+    "errors": [],
+    "warnings": [
+      "Dataset contains an equal number of benign and threat samples."
+    ]
+  },
+  "model": {
+    "name": "EnterpriseGuard Threat Intelligence Model",
+    "version": "3.0.0",
+    "schema_version": 1,
+    "feature_count": 7,
+    "feature_names": [
+      "request_frequency",
+      "failure_ratio",
+      "unique_source_count",
+      "unique_user_count",
+      "failed_attempts",
+      "anomaly_score",
+      "outbound_data_volume"
+    ],
+    "trained": true,
+    "training_samples": 8,
+    "model_type": "LogisticRegression",
+    "created_at": "2026-08-26T07:54:32.209704+00:00",
+    "updated_at": "2026-08-26T07:54:32.209704+00:00",
+    "model_hash": "c7f5ace622a07ef891cf5fd9a03a8a1457264b4db1840aeb0751a9a724e22817",
+    "training_accuracy": 1.0,
+    "training_correct": 8,
+    "training_incorrect": 0,
+    "validation_accuracy": null,
+    "validation_correct": null,
+    "validation_incorrect": null,
+    "validation_samples": null,
+    "fit_time_ms": 2263.82,
+    "metrics_time_ms": 2.266,
+    "persistence_time_ms": 509.303,
+    "training_time_ms": 2775.93,
+    "ml_backend_available": true,
+    "training_status": "SUCCESS",
+    "training_metrics": {
+      "training_accuracy": 1.0,
+      "training_accuracy_percent": 100.0,
+      "training_correct": 8,
+      "training_incorrect": 0,
+      "training_evaluated_samples": 8
+    },
+    "timing": {
+      "total_training_time_ms": 2775.93,
+      "fit_time_ms": 2263.82,
+      "metrics_time_ms": 2.266,
+      "persistence_time_ms": 509.303
+    }
+  },
+  "verification": {
+    "verified": true,
+    "model_trained": true,
+    "model_available": true,
+    "model_type": "LogisticRegression",
+    "model_version": "3.0.0",
+    "model_hash": "c7f5ace622a07ef891cf5fd9a03a8a1457264b4db1840aeb0751a9a724e22817",
+    "prediction": {
+      "predicted_class": 0,
+      "threat_probability": 0.02732,
+      "benign_probability": 0.97268,
+      "anomaly_score": 0.05,
+      "confidence": 97.268,
+      "model_available": true,
+      "model_trained": true,
+      "model_version": "3.0.0",
+      "processing_time_ms": 12.428,
+      "error": null
+    }
+  },
+  "result": {
+    "success": true,
+    "model_name": "EnterpriseGuard Threat Intelligence Model",
+    "model_version": "3.0.0",
+    "model_type": "LogisticRegression",
+    "training_samples": 8,
+    "feature_count": 7,
+    "benign_samples": 4,
+    "threat_samples": 4,
+    "class_balance": 0.5,
+    "training_accuracy": 1.0,
+    "training_correct": 8,
+    "training_incorrect": 0,
+    "training_time_ms": 2830.112,
+    "fit_time_ms": 2263.82,
+    "persistence_time_ms": 509.303,
+    "model_file": "C:\\Users\\acer\\Desktop\\EnterpriseGuard\\src\\assets\\models\\enterpriseguard_model.pkl",
+    "model_hash": "c7f5ace622a07ef891cf5fd9a03a8a1457264b4db1840aeb0751a9a724e22817",
+    "trained_at": "2026-08-26T07:54:32.209704+00:00",
+    "validation_errors": [],
+    "validation_warnings": [
+      "Dataset contains an equal number of benign and threat samples."
+    ],
+    "verification": {
+      "verified": true,
+      "model_trained": true,
+      "model_available": true,
+      "model_type": "LogisticRegression",
+      "model_version": "3.0.0",
+      "model_hash": "c7f5ace622a07ef891cf5fd9a03a8a1457264b4db1840aeb0751a9a724e22817",
+      "prediction": {
+        "predicted_class": 0,
+        "threat_probability": 0.02732,
+        "benign_probability": 0.97268,
+        "anomaly_score": 0.05,
+        "confidence": 97.268,
+        "model_available": true,
+        "model_trained": true,
+        "model_version": "3.0.0",
+        "processing_time_ms": 12.428,
+        "error": null
+      }
+    },
+    "error": null
+  }
+}

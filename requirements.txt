@@ -1,0 +1,13 @@
+flask
+flask-cors
+flask-socketio
+flask-limiter
+bcrypt
+pyjwt
+redis
+sqlalchemy
+psycopg2-binary
+numpy
+scikit-learn
+python-dotenv
+eventlet

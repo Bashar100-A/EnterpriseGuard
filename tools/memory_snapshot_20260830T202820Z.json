@@ -1,0 +1,664 @@
+{
+  "generated_at": "2026-08-30T20:28:30Z",
+  "file_tree": "├── assets\n│   └── models\n│       ├── registry\n│       │   ├── versions\n│       │   └── model_registry.json\n│       ├── enterpriseguard_model.json\n│       ├── enterpriseguard_model.pkl\n│       └── enterpriseguard_training_metadata.json\n├── demo\n├── docs\n├── enterpriseguard\n├── logs\n│   └── audit.jsonl\n├── src\n│   ├── assets\n│   │   └── models\n│   │       ├── enterpriseguard_model.pkl\n│   │       └── enterpriseguard_training_metadata.json\n│   ├── core\n│   │   └── config.py\n│   ├── enterpriseguard\n│   │   ├── api\n│   │   │   └── dashboard_api.py\n│   │   ├── core\n│   │   │   └── config.py\n│   │   ├── monitoring\n│   │   │   └── audit.py\n│   │   ├── response\n│   │   │   ├── __init__.py\n│   │   │   ├── audit.py\n│   │   │   ├── engine.py\n│   │   │   ├── executor.py\n│   │   │   ├── integration.py\n│   │   │   └── verification.py\n│   │   └── ui\n│   │       └── dashboard.py\n│   ├── logs\n│   │   └── audit.jsonl\n│   ├── check_adie_exports.py\n│   ├── inject_mock_events.py\n│   ├── policy.py\n│   └── test_adie_integration.py\n├── tools\n│   ├── backups\n│   │   ├── activity_log_20260830T135857Z.json\n│   │   └── activity_log_20260830T140925Z.json\n│   ├── quarantine\n│   │   ├── 20260830T153155Z_'\n│   │   ├── 20260830T153155Z_Any\n│   │   ├── 20260830T153155Z_bool\n│   │   ├── 20260830T153155Z_cd\n│   │   ├── 20260830T153155Z_cls\n│   │   ├── 20260830T153155Z_dict[str\n│   │   ├── 20260830T153155Z_float\n│   │   ├── 20260830T153155Z_int\n│   │   ├── 20260830T153155Z_list[dict[str\n│   │   ├── 20260830T153155Z_Mapping\n│   │   ├── 20260830T153155Z_None\n│   │   ├── 20260830T153155Z_orchestrator.minimum_samples\n│   │   ├── 20260830T153155Z_python\n│   │   ├── 20260830T153155Z_reporting_state.pkl\n│   │   ├── 20260830T153155Z_run_claude.bat\n│   │   ├── 20260830T153155Z_set\n│   │   ├── 20260830T153155Z_start_claude.bat\n│   │   ├── 20260830T153155Z_str\n│   │   ├── 20260830T153155Z_streamlit\n│   │   └── 20260830T153155Z_TrainingOrchestrator\n│   ├── activity_log.json\n│   ├── activity_log.json.bak_20260830T172209Z\n│   ├── activity_log.json.bak_20260830T173514Z\n│   ├── activity_log.json.bak_20260830T185303Z\n│   ├── ai_diagnostics.py\n│   ├── alerts_monitor.py\n│   ├── checklist.py\n│   ├── command_center.py\n│   ├── command_center.py.bak_20260830T194431Z\n│   ├── command_center.py.bak_20260830T195453Z\n│   ├── command_center.py.bak_20260830T200424Z\n│   ├── command_center.py.bak_20260830T202444Z\n│   ├── command_center.py.bak_20260830T202748Z\n│   ├── DECISIONS_LOG.md\n│   ├── DECISIONS_LOG.md.bak_20260830T160135Z\n│   ├── discipline.py\n│   ├── errors.log\n│   ├── errors.log.bak_20260830T153155Z\n│   ├── errors.log.bak_20260830T191617Z\n│   ├── errors.log.bak_20260830T194431Z\n│   ├── errors.log.bak_20260830T194729Z\n│   ├── errors.log.bak_20260830T195453Z\n│   ├── errors.log.st_tree.archive.20260830T192128Z\n│   ├── errors.log.st_tree.archive.20260830T194729Z\n│   ├── errors.log.st_tree.archive.20260830T195453Z\n│   ├── latest_context.txt\n│   └── rag_system.py\n├── CONTRACTS.md\n├── policy.py\n├── project_files.txt\n├── PROJECT_MEMORY.md\n└── requirements.txt",
+  "governance_files": {
+    "decision_log": "# Decision Ledger\n\n| Decision ID | Timestamp | Context | Architectural Decision | Rationale | Status |\n| --- | --- | --- | --- | --- | --- |\n| DC-001 | 2026-08-30 00:00:00 UTC | Need a dedicated developer command center to monitor project health, run project context workflows, and expose governance controls from a browser. | Created the Developer Command Center as a Streamlit-based operational dashboard for monitoring files, RAG execution, activity logs, and release safety. | Centralized developer oversight improves project visibility, makes governance actions observable, and reduces risk from unstructured operations. | Active |\n\n---\n\n## Notes\n- This ledger is the initial governance record for the developer tooling layer.\n- All future architectural decisions should be appended here with a new decision ID and timestamp.\n- Protected project directories remain untouched in accordance with governance policy.\n\n| DC-002 | 2026-08-30 13:58:58 UTC | Legacy activity timestamps required normalization. | Converted 16 EDT activity timestamps to strict UTC ISO 8601; no Python files required modification. | Preserved audit integrity, verified all timestamps, and retained protected-directory isolation. | Active |\n\n| DC-002 | 2026-08-30T14:09:26Z | Activity log timestamp normalization | Normalized one legacy EDT timestamp in tools/activity_log.json to strict UTC ISO 8601; tools/command_center.py already used the required centralized UTC logger. | Reload validation found zero non-UTC timestamps; checklist exit code 0. | Complete — Superseded by DC-006 |\n\n| DC-003 | 2026-08-30T14:50:08Z | Checklist timestamp normalization | Updated tools/checklist.py centralized logging to strict UTC ISO 8601 with atomic activity and error-log writes; normalized the remaining legacy activity timestamp in tools/activity_log.json. | Validation found zero non-UTC timestamps and checklist exit code 0; protected directories were not traversed. | Complete — Superseded by DC-006 |\n\n| DC-004 | 2026-08-30T15:31:57Z | Source artifact quarantine and errors.log normalization | Quarantined the listed malformed src artifacts, applied the st.tree replacement where present, and normalized bracketed errors.log timestamps using explicit timezone offsets. Protected paths were excluded from all scans. | Reversible same-filesystem Path.rename moves, timestamped errors.log backup, atomic writes, and checklist validation completed successfully. | Complete — Superseded by DC-006 |\n\n| DC-005 | 2026-08-30T15:35:44Z | Source artifact quarantine and error-log/tree cleanup inventory | Quarantined: src/' -> tools/quarantine/20260830T153155Z_'; src/Any -> tools/quarantine/20260830T153155Z_Any; src/bool -> tools/quarantine/20260830T153155Z_bool; src/cd -> tools/quarantine/20260830T153155Z_cd; src/cls -> tools/quarantine/20260830T153155Z_cls; src/dict[str -> tools/quarantine/20260830T153155Z_dict[str; src/float -> tools/quarantine/20260830T153155Z_float; src/int -> tools/quarantine/20260830T153155Z_int; src/list[dict[str -> tools/quarantine/20260830T153155Z_list[dict[str; src/Mapping -> tools/quarantine/20260830T153155Z_Mapping; src/None -> tools/quarantine/20260830T153155Z_None; src/orchestrator.minimum_samples -> tools/quarantine/20260830T153155Z_orchestrator.minimum_samples; src/python -> tools/quarantine/20260830T153155Z_python; src/set -> tools/quarantine/20260830T153155Z_set; src/str -> tools/quarantine/20260830T153155Z_str; src/streamlit -> tools/quarantine/20260830T153155Z_streamlit; src/TrainingOrchestrator -> tools/quarantine/20260830T153155Z_TrainingOrchestrator; src/run_claude.bat -> tools/quarantine/20260830T153155Z_run_claude.bat; src/start_claude.bat -> tools/quarantine/20260830T153155Z_start_claude.bat; src/reporting_state.pkl -> tools/quarantine/20260830T153155Z_reporting_state.pkl. st.tree status: fixed in tools/errors.log, tools/latest_context.txt, and src/enterpriseguard/ui/dashboard.py. errors.log backup: tools/errors.log.bak_20260830T153155Z. errors.log normalization: complete; all bracket timestamps are strict UTC ISO 8601. Checklist exit code: 0. | Reversible same-filesystem pathlib renames, atomic writes, protected-path pruning, and final validation completed successfully. | Complete — Superseded by DC-006 |\n\n| DC-006 | 2026-08-30T16:01:35Z | Merged cleanup governance record | Merged DC-004 and DC-005 because they document the same source-artifact quarantine, st.tree remediation, and errors.log normalization operation; both originals remain above as superseded records. Quarantined files: src/' -> tools/quarantine/20260830T153155Z_'; src/Any -> tools/quarantine/20260830T153155Z_Any; src/bool -> tools/quarantine/20260830T153155Z_bool; src/cd -> tools/quarantine/20260830T153155Z_cd; src/cls -> tools/quarantine/20260830T153155Z_cls; src/dict[str -> tools/quarantine/20260830T153155Z_dict[str; src/float -> tools/quarantine/20260830T153155Z_float; src/int -> tools/quarantine/20260830T153155Z_int; src/list[dict[str -> tools/quarantine/20260830T153155Z_list[dict[str; src/Mapping -> tools/quarantine/20260830T153155Z_Mapping; src/None -> tools/quarantine/20260830T153155Z_None; src/orchestrator.minimum_samples -> tools/quarantine/20260830T153155Z_orchestrator.minimum_samples; src/python -> tools/quarantine/20260830T153155Z_python; src/set -> tools/quarantine/20260830T153155Z_set; src/str -> tools/quarantine/20260830T153155Z_str; src/streamlit -> tools/quarantine/20260830T153155Z_streamlit; src/TrainingOrchestrator -> tools/quarantine/20260830T153155Z_TrainingOrchestrator; src/run_claude.bat -> tools/quarantine/20260830T153155Z_run_claude.bat; src/start_claude.bat -> tools/quarantine/20260830T153155Z_start_claude.bat; src/reporting_state.pkl -> tools/quarantine/20260830T153155Z_reporting_state.pkl. st.tree fixed in tools/errors.log, tools/latest_context.txt, and src/enterpriseguard/ui/dashboard.py. errors.log backup: tools/errors.log.bak_20260830T153155Z; normalization complete. Checklist exit code: 0. Protected directories untouched and untraversed. | Combined duplicate operational records while retaining full historical traceability. | Complete |\n\n| DC-007 | 2026-08-30T16:05:31Z | Verification, governance merge, and Streamlit dry-run | command_center.py st.tree check: NOT_FOUND. dashboard.py st.tree check: NOT_FOUND; no st.code(tree, language=\\\"text\\\") call was present, so tree-variable runtime risk was not applicable. Streamlit dry-run: timed out after 30 seconds on port 8599 with no relevant errors observed; temporary configuration removed. Merged decision: DC-006. Checklist exit code: 0. Protected directories were existence-checked only and untouched. | Recorded final verification outcomes additively after the DC-004/DC-005 merge, preserving audit traceability. | Complete |\n\n| DC-008 | 2026-08-30T16:44:59Z | Local EnterpriseRAG creation and command-center integration | Created tools/rag_system.py using standard-library TF-IDF retrieval, hash-aware pickle loading, JSON metadata document extraction, retrieval-only fallback, atomic rag_run logging, and oldest-entry archival beyond 5000 records. Model inventory: assets/models/enterpriseguard_model.json (884 bytes, sha256 f0feeeb24191232018917d7e9d40e9a667ff4b8164c0dd37a024ac6bc01e9bfa), assets/models/enterpriseguard_model.pkl (1345 bytes, sha256 a38d213de8d51e984c1a64c5e68e3e1a0312c5cead9058080ee657335dd5f51), assets/models/enterpriseguard_training_metadata.json (4481 bytes, sha256 b8a3a3514dc0959d8b5eaf454d87eaa12af58907e0c768ade73a588ae3b4f33c), assets/models/registry/model_registry.json (236 bytes, sha256 f9df693bf1d028311cfa70082f10f5c93cba86fa645af296e62412c133a41), src/assets/models/enterpriseguard_model.pkl (1329 bytes, sha256 c7f5ace622a07ef891cf5fd9a03a8a1457264b4db1840aeb0751a9a724e22817), src/assets/models/enterpriseguard_training_metadata.json (4481 bytes, sha256 dc7a18c78e6a4c31d987084ed4df4b4db1840aeb0751a9a724e22817). Integrated the existing RAG Console with tools/rag_system.py subprocess JSON output. Tests: no argument exit 1 with usage; test exit 0 valid JSON; enterpriseguard exit 0 valid JSON with 3 retrieved documents; nonexistent_term_xyz exit 0 valid JSON with 0 retrieved documents. Checklist exit code: 0. | Standard-library implementation avoids heavy dependencies and preserves protected-directory isolation. | Complete |\n\n| DC-009 | 2026-08-30T17:08:58Z | Checklist RAG verification and activity filtering | Added tools/rag_system.py existence, readability, and compile validation to checklist.py; added activity_entries_for_scan() to ignore activity_type rag_run for both list and dict structures while retaining test_anomaly entries. Baseline: exit 0, SUCCESS 7, WARNING 2, FAILURE 0. Post-change: exit 0, SUCCESS 8, WARNING 2, FAILURE 0; the only diff was the new RAG success line. Runtime tests: no-argument exit 1 with usage; test exit 0 with valid JSON. Filter mock test passed for list and dict payloads. | Protected paths remained isolated and no existing checks regressed. | Complete |\n\n| DC-010 | 2026-08-30T17:29:33Z | Activity log normalization and ID integrity | Backup created at tools/activity_log.json.bak_20260830T172209Z with SHA-256 matching the pre-modification activity log. Normalized 1 post-checklist entry and added 30 missing IDs during normalization (all IDs unique); no archival was required because the final log contains 53 entries. Checklist exit code: 0. Activity types, including rag_run, were preserved. | Atomic writes and rollback verification completed; protected paths were untouched. | Complete |\n| DC-010 | 2026-08-30T18:53:04Z | Activity log normalization and verification | Normalized 56 entries in tools/activity_log.json, added missing IDs, preserved activity_type values including rag_run, and verified all timestamps are UTC ISO 8601 with Z suffix. Backup created at activity_log.json.bak_20260830T185303Z and integrity verified against the original hash. Checklist exit code: 0. | Verified with atomic writes, backup restore path, no protected-directory traversal, and governance compliance. | Complete |\n| DC-011 | 2026-08-30T19:21:28Z | Errors log cleanup and archival | Backed up original errors.log to errors.log.bak_20260830T191617Z, archived 0 st.tree-related lines into errors.log.st_tree.archive.20260830T192128Z, normalized 0 bracket timestamps to UTC ISO 8601, and recorded no ambiguous timestamp issues. Checklist exit code: 0. | Verified with atomic writes, backup restoration path, and protected-directory isolation. | Complete |\n| DC-012 | 2026-08-30T19:54:54Z | Command Center repair | Removed st.tree usage, implemented generate_file_tree, cleaned errors.log, regenerated context report. | py_compile passed, Streamlit smoke test passed on port 8551, protected dirs untouched. | Complete |\n",
+    "project_memory": "C:\\Users\\acer\\Desktop\\EnterpriseGuard\\PROJECT_MEMORY.md\n\n\n---\n\n# EnterpriseGuard → ADIE\n# Project Memory\n\nVersion: 1.0\nProject Type: Security Control Plane\nArchitecture: Adaptive Defense Intelligence Engine (ADIE)\n\n\n# 1. Project Identity\n\n## Name\n\nEnterpriseGuard → ADIE\n\n## Full Name\n\nAdaptive Defense Intelligence Engine\n\n\n## Vision\n\nADIE is not a traditional SIEM, SOAR, or detection engine.\n\nIt is a Security Control Plane designed to understand enterprise security state, predict possible future changes, evaluate policies, produce explainable decisions, and coordinate defensive planning.\n\nADIE does NOT directly execute security actions.\n\n\nSecurity boundary:\n\n- executes_security_actions = False\n- destructive_actions_allowed = False\n\n\nExecution remains outside ADIE under explicitly authorized components.\n\n\n---\n\n# 2. Current Project Phase\n\n\n## Current Phase\n\nPhase 1 — ADIE Control Plane Core\n\n\n## Phase Objective\n\nComplete and stabilize the ADIE core architecture:\n\nState\n↓\nPrediction\n↓\nPolicy\n↓\nDecision\n↓\nCheckpoint / Playbook\n↓\nRollback Planning\n↓\nOrchestrator\n↓\nIntegration\n\n\n---\n\n# 3. Architectural Principles\n\n\n## Core Rules\n\n1. ADIE is a planning and intelligence layer.\n\n2. No destructive actions inside ADIE.\n\n3. No hidden execution.\n\n4. Components communicate through contracts.\n\n5. Every module must contain validation and self-test where applicable.\n\n6. Stability is more important than speed.\n\n\n---\n\n# 4. Completed Architecture\n\n\n## ADIE Package\n\n\nLocation:\n\nsrc/enterpriseguard/adie/\n\nCurrent modules:\n\nadie/\n\ninit.py state.py prediction.py policy.py decision.py checkpoint.py playbook.py rollback.py orchestrator.py integration.py\n\nStatus:\n\nAll 9 components are available.\n\n\nLatest validation:\n\ncomponents_available = true\n\ncomponents_available_count = 9\n\n---\n\n# 5. ADIE Package Boundary\n\n\nFile:\n\nadie/init.py\n\nResponsibilities:\n\n- Public API boundary\n- Lazy imports\n- Component registry\n- Package status\n- Structural self-test\n\n\nCurrent version:\n\n1.3.0\n\nPublic exports:\n\n78\n\n---\n\n# 6. Current Test Status\n\n\nLatest command:\n\npython -m enterpriseguard.adie\n\nResult:\n\nFAILED\n\n\nReason:\n\nTwo validation failures:\n\nexport_target_integrity = false\n\npublic_exports = false\n\nAll other tests passed.\n\n\nSuccessful tests:\n\n- package_metadata\n- component_registry\n- component_count\n- component_availability\n- state_available\n- prediction_available\n- policy_available\n- decision_available\n- checkpoint_available\n- playbook_available\n- rollback_available\n- orchestrator_available\n- integration_available\n- prediction_contract\n- security_contract\n- status_contract\n\n\n---\n\n# 7. Current Known Issue\n\n\n## Problem\n\nADIE public export validation failure.\n\n\nAffected area:\n\nadie/init.py\n\nLikely cause:\n\nMismatch between:\n\n_PUBLIC_EXPORTS\n\nand actual exported symbols inside component modules.\n\n\nNext investigation:\n\nValidate every registered symbol:\n\nPublic Name\n↓\nComponent Module\n↓\nCanonical Attribute\n\n\nExample:\n\n\"DecisionEngineConfidence\": ( \"decision\", \"DecisionConfidence\" )\n\nMust confirm target exists.\n\n\n---\n\n# 8. Current Warning\n\n\nPython warning:\n\nSyntaxWarning: \"\\ \" is an invalid escape sequence\n\nLocation:\n\nadie/init.py\n\nCause:\n\nArchitecture diagram inside docstring contains backslash.\n\n\nFix later:\n\nEscape backslash or convert docstring section.\n\n\nPriority:\n\nLow.\n\n\n---\n\n# 9. Engineering Workflow\n\n\nThe project is developed using phases.\n\n\nEach phase:\n\n1. Define objective.\n2. Modify files.\n3. Run tests.\n4. Validate architecture.\n5. Write continuation point.\n6. Start new conversation if needed.\n\n\n---\n\n# 10. Current Conversation Goal\n\n\nFix ADIE package boundary validation.\n\n\nTarget:\n\nMake:\n\npython -m enterpriseguard.adie\n\nreturn:\n\npassed = true\n\nwithout weakening validation.\n\n\n---\n\n# 11. Next Actions\n\n\nOrder:\n\n\n1. Inspect failing export target.\n\n2. Identify missing or renamed symbols.\n\n3. Correct public export map.\n\n4. Re-run self-test.\n\n5. Update this memory file.\n\n\n---\n\n# 12. Continuation Point\n\n\nCurrent checkpoint:\n\nADIE Core exists and all components load successfully.\n\nRemaining task:\n\nRepair __init__.py public export contract validation.\n\n\nNext session starts from:\n\n\"Fix ADIE public export validation failure.\"\n\n\n---\n",
+    "contracts": "# EnterpriseGuard Engineering Contracts\n\n## Preamble\nThis document defines the non-negotiable architectural and operational contracts for the EnterpriseGuard project. These rules govern all future development, automation, tooling, and system integrations. They are intended to protect the integrity of the project, reduce drift, and ensure operational safety across every workflow.\n\nThis contract is binding for all contributors, automated workflows, tooling, and developer agents operating within the repository. Any deviation requires explicit master authorization and written approval before action is taken.\n\n---\n\n## Contract I: Absolute Protection of Core Logic\n\n### Rule\nThe internal core logic of EnterpriseGuard, especially the protected implementation domains, must remain immutable unless explicit master authorization has been granted in writing.\n\n### Protected areas\nThe following directories are designated protected core domains and must not be modified, replaced, or bypassed under normal operation:\n- `adie/`\n- `intelligence/`\n\n### Prohibition\nNo contributor, agent, or automated process may:\n- edit files inside protected directories without explicit master authorization;\n- remove, rename, or replace logic in core components;\n- alter protected execution paths or policy enforcement logic;\n- circumvent protections by writing compatibility patches that mutate protected runtime behavior.\n\n### Enforcement\n- Protected directories are treated as architectural boundaries.\n- Any attempt to access or modify these areas without approval is a severe engineering violation.\n- Changes must be implemented in the governed tooling layer or isolated extension surfaces only.\n\n### Authority\nIf a change to protected logic is required, it must be submitted through a verified change approval process and explicitly granted by the governing architectural authority before implementation.\n\n---\n\n## Contract II: Deterministic Logging & Auditing\n\n### Rule\nAll state-changing events, runs, commands, exceptions, and governance actions must be recorded in the approved operational audit locations.\n\n### Required logs\nThe following files are the sanctioned audit surfaces:\n- `tools/activity_log.json`\n- `tools/errors.log`\n\n### Mandatory logging behavior\nEvery state-changing action must be logged, including:\n- application startup;\n- major command execution;\n- report generation;\n- governance actions;\n- emergency stop activation;\n- any exception, runtime failure, or blocked interaction.\n\n### Operational requirement\nNo silent failure is permitted. If an operation changes system state or encounters an exception, a record must be written to the appropriate audit location.\n\n### Enforcement\n- Activity events must be preserved in `tools/activity_log.json` with timestamps.\n- Critical runtime or internal errors must be stored in `tools/errors.log`.\n- Logs must be treated as evidence for project health, execution provenance, and operational accountability.\n\n---\n\n## Contract III: Zero-Doubt & Protocol Enforcement\n\n### Rule\nNo ambiguous, speculative, or unverified code changes may be introduced into the project workflow.\n\n### Minimum evidentiary standard\nBefore allowing advanced operations, the system must confirm:\n- required governance artifacts exist;\n- required runtime preconditions are satisfied;\n- files and tools essential for enforcement are present;\n- all checks pass through the discipline-validation process.\n\n### Mandatory pre-flight gates\nThe following conditions are required before advanced workflow actions may proceed:\n- required tooling metadata exists;\n- activity log and governance artifacts are present;\n- error-tracking infrastructure is available;\n- runtime support is verified.\n\n### Prohibited conduct\nThe project must not allow:\n- unaudited automated edits;\n- speculative changes without validation;\n- actions that bypass the discipline checklist;\n- unlogged or undocumented state changes.\n\n### Enforcement\nThe discipline and governance layer is the standard gatekeeper. All advanced actions must pass the required checks before execution is permitted.\n\n---\n\n## Contract IV: Emergency Circuit Breaker\n\n### Rule\nThe system must support immediate lockdown in the event of critical failure, unsafe behavior, or imposed operational emergency.\n\n### Required mechanism\nThe command center must provide a clear emergency-stop control with the label:\n- `EMERGENCY STOP / CIRCUIT BREAKER`\n\n### Required behavior\nWhen the emergency stop is triggered, the system must:\n- write an emergency event to `tools/activity_log.json`;\n- log the critical event to `tools/errors.log`;\n- suspend further runtime actions in the current interface session;\n- display a clear safe-lockdown banner to the operator;\n- prevent normal operational flows until manual reset and review are performed.\n\n### Enforcement\nEmergency-stop behavior is considered a core safety invariant. It is mandatory for governance and operational continuity.\n\n---\n\n## Architectural Invariants\n\nThe following invariants are permanent:\n1. Protected core logic remains safe from unauthorized edits.\n2. All significant actions are auditable and timestamped.\n3. No workflow proceeds without discipline validation.\n4. Emergency lockdown exists as a final safety layer.\n5. Tooling and governance logic must remain outside protected implementation domains.\n6. The repository architecture must prioritize safety, clarity, and traceability over convenience.\n\n---\n\n## Compliance Statement\nAny contributor, tool, or automation operating in this repository agrees to uphold these contracts. Failure to comply constitutes a direct violation of project governance and may require corrective action, rollback, or formal review.\n\nThis document is intended to be a permanent governing standard for the EnterpriseGuard project.\n"
+  },
+  "errors_log": "[2026-08-30T12:12:20Z] ALERT: Log spike detected by alerts_monitor. Error count in last 24h = 2.\n",
+  "activity_log": {
+    "entries": [
+      {
+        "timestamp": "2026-08-30T13:29:55Z",
+        "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_65b82a"
+      },
+      {
+        "id": "268c7102d9444d7fb5e636528059fd06",
+        "timestamp": "2026-08-30T13:41:45Z",
+        "activity_type": "report_export",
+        "status": "success",
+        "details": "Report saved to /home/bashar/Desktop/EnterpriseGuard/tools/latest_context.txt"
+      },
+      {
+        "id": "4d59da34c3234529ad007024ecbb5d70",
+        "timestamp": "2026-08-30T13:41:47Z",
+        "activity_type": "report_export",
+        "status": "success",
+        "details": "Report saved to /home/bashar/Desktop/EnterpriseGuard/tools/latest_context.txt"
+      },
+      {
+        "id": "d2413e2f807d47d2b85a05892fe57e8a",
+        "timestamp": "2026-08-30T13:41:58Z",
+        "activity_type": "report_export",
+        "status": "success",
+        "details": "Report saved to /home/bashar/Desktop/EnterpriseGuard/tools/latest_context.txt"
+      },
+      {
+        "timestamp": "2026-08-30T13:42:36Z",
+        "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_2e633e"
+      },
+      {
+        "id": "7774da4d07cd462493cedfd19d89e414",
+        "timestamp": "2026-08-30T13:47:19Z",
+        "activity_type": "app_started",
+        "status": "success",
+        "details": "Application started"
+      },
+      {
+        "id": "0b05b9070f754c1484c83808f8f967b5",
+        "timestamp": "2026-08-30T13:49:57Z",
+        "activity_type": "report_export",
+        "status": "success",
+        "details": "Report saved to /home/bashar/Desktop/EnterpriseGuard/tools/latest_context.txt"
+      },
+      {
+        "timestamp": "2026-08-30T13:58:58Z",
+        "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_baf4a9"
+      },
+      {
+        "timestamp": "2026-08-30T14:09:26Z",
+        "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_e20c76"
+      },
+      {
+        "id": "1da4d0c3005749adbd7666f3dd147d5d",
+        "timestamp": "2026-08-30T14:11:56Z",
+        "activity_type": "app_started",
+        "status": "success",
+        "details": "Application started"
+      },
+      {
+        "id": "6950886890d34782aa1c20e0e0d48aa0",
+        "timestamp": "2026-08-30T14:12:14Z",
+        "activity_type": "report_export",
+        "status": "success",
+        "details": "Report saved to /home/bashar/Desktop/EnterpriseGuard/tools/latest_context.txt"
+      },
+      {
+        "id": "b6ca106b526b4fb4b0f6d4746a0945d4",
+        "timestamp": "2026-08-30T14:27:56Z",
+        "activity_type": "app_started",
+        "status": "success",
+        "details": "Application started"
+      },
+      {
+        "id": "cafb1d2ccb5d48b3ad32a92f8f4705b2",
+        "timestamp": "2026-08-30T14:28:33Z",
+        "activity_type": "report_export",
+        "status": "success",
+        "details": "Report saved to /home/bashar/Desktop/EnterpriseGuard/tools/latest_context.txt"
+      },
+      {
+        "id": "b5b7c663c4c44a2f8b58979f376f86ff",
+        "timestamp": "2026-08-30T14:28:35Z",
+        "activity_type": "report_export",
+        "status": "success",
+        "details": "Report saved to /home/bashar/Desktop/EnterpriseGuard/tools/latest_context.txt"
+      },
+      {
+        "timestamp": "2026-08-30T14:49:15Z",
+        "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_57c19b"
+      },
+      {
+        "id": "28b3000f29484861bcb1058ee3b7949b",
+        "timestamp": "2026-08-30T14:53:28Z",
+        "activity_type": "app_started",
+        "status": "success",
+        "details": "Application started"
+      },
+      {
+        "id": "454b2d494b8d46dab32e27ce3afcf4c8",
+        "timestamp": "2026-08-30T14:53:50Z",
+        "activity_type": "report_export",
+        "status": "success",
+        "details": "Report saved to /home/bashar/Desktop/EnterpriseGuard/tools/latest_context.txt"
+      },
+      {
+        "timestamp": "2026-08-30T15:01:21Z",
+        "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_462da8"
+      },
+      {
+        "timestamp": "2026-08-30T15:31:56Z",
+        "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_73860a"
+      },
+      {
+        "timestamp": "2026-08-30T15:31:57Z",
+        "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_5dd685"
+      },
+      {
+        "timestamp": "2026-08-30T15:35:45Z",
+        "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_789a7b"
+      },
+      {
+        "timestamp": "2026-08-30T16:04:56Z",
+        "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_449956"
+      },
+      {
+        "timestamp": "2026-08-30T16:06:05Z",
+        "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_8357e4"
+      },
+      {
+        "id": "dbd16c6579b947cd8e6c40a485f5e4b6",
+        "timestamp": "2026-08-30T16:23:08Z",
+        "activity_type": "app_started",
+        "status": "success",
+        "details": "Application started"
+      },
+      {
+        "id": "2026-08-30T16:42:48Z-494384cf90e74e83bad5698d9ba716d8",
+        "timestamp": "2026-08-30T16:42:48Z",
+        "activity_type": "rag_run",
+        "details": {
+          "query": "test",
+          "model_status": "no_models"
+        }
+      },
+      {
+        "id": "2026-08-30T16:42:48Z-43fe466ef585444ba9ef89d4753a88fd",
+        "timestamp": "2026-08-30T16:42:48Z",
+        "activity_type": "rag_run",
+        "details": {
+          "query": "enterpriseguard",
+          "model_status": "no_models"
+        }
+      },
+      {
+        "id": "2026-08-30T16:42:49Z-b3f8e5f73b95416a9ce9c334642ad486",
+        "timestamp": "2026-08-30T16:42:49Z",
+        "activity_type": "rag_run",
+        "details": {
+          "query": "nonexistent_term_xyz",
+          "model_status": "no_models"
+        }
+      },
+      {
+        "timestamp": "2026-08-30T16:43:25Z",
+        "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_f3df03"
+      },
+      {
+        "timestamp": "2026-08-30T16:45:00Z",
+        "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_b9ce80"
+      },
+      {
+        "id": "44ef90b026244361ba3a0492c7265975",
+        "timestamp": "2026-08-30T16:49:10Z",
+        "activity_type": "app_started",
+        "status": "success",
+        "details": "Application started"
+      },
+      {
+        "id": "2026-08-30T16:58:12Z-c6990a404f0348ecb54e05d12b0b493a",
+        "timestamp": "2026-08-30T16:58:12Z",
+        "activity_type": "rag_run",
+        "details": {
+          "query": "enterpriseguard",
+          "model_status": "no_models"
+        }
+      },
+      {
+        "id": "1c6cfb21ab84495dbda46e3554268b83",
+        "timestamp": "2026-08-30T16:58:12Z",
+        "activity_type": "rag_run",
+        "status": "success",
+        "details": "RAG execution returned code 0"
+      },
+      {
+        "timestamp": "2026-08-30T17:03:39Z",
+        "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_3c423d"
+      },
+      {
+        "timestamp": "2026-08-30T17:06:32Z",
+        "event": "Checklist verification run: WARNING (success=8, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_be356c"
+      },
+      {
+        "id": "2026-08-30T17:07:42Z-15c01df0ff414d66a1d16eb68ad6759f",
+        "timestamp": "2026-08-30T17:07:42Z",
+        "activity_type": "rag_run",
+        "details": {
+          "query": "test",
+          "model_status": "no_models"
+        }
+      },
+      {
+        "timestamp": "2026-08-30T17:08:59Z",
+        "event": "Checklist verification run: WARNING (success=8, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172443Z_784d23"
+      },
+      {
+        "timestamp": "2026-08-30T17:25:43Z",
+        "event": "Checklist verification run: WARNING (success=8, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T172932Z_232b0a"
+      },
+      {
+        "timestamp": "2026-08-30T17:30:34Z",
+        "event": "Checklist verification run: WARNING (success=8, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T173903Z_zol0td"
+      },
+      {
+        "timestamp": "2026-08-30T17:39:47Z",
+        "event": "Checklist verification run: WARNING (success=8, warning=2, failure=0)",
+        "activity_type": "legacy_entry",
+        "id": "20260830T174132Z_w1tpr9"
+      },
+      {
+        "id": "8b8e3ef48a12411388f7a3dfff154901",
+        "timestamp": "2026-08-30T18:48:59Z",
+        "activity_type": "app_started",
+        "status": "success",
+        "details": "Application started"
+      },
+      {
+        "timestamp": "2026-08-30T18:53:04Z",
+        "event": "Checklist verification run: WARNING (success=8, warning=2, failure=0)"
+      },
+      {
+        "id": "31027d5078c34d9a81e9d6b54137c4a2",
+        "timestamp": "2026-08-30T18:55:44Z",
+        "activity_type": "app_started",
+        "status": "success",
+        "details": "Application started"
+      },
+      {
+        "timestamp": "2026-08-30T19:21:28Z",
+        "event": "Checklist verification run: WARNING (success=8, warning=2, failure=0)"
+      },
+      {
+        "id": "3b2b967538fa40f7b45998888715f069",
+        "timestamp": "2026-08-30T19:25:32Z",
+        "activity_type": "report_export",
+        "status": "success",
+        "details": "Report saved to /home/bashar/Desktop/EnterpriseGuard/tools/latest_context.txt"
+      },
+      {
+        "id": "2026-08-30T19:54:53Z-c9cc941c43734dd1af4bbf8268dfa6a5",
+        "timestamp": "2026-08-30T19:54:53Z",
+        "activity_type": "rag_run",
+        "details": {
+          "query": "test",
+          "model_status": "no_models"
+        }
+      },
+      {
+        "timestamp": "2026-08-30T20:10:11Z",
+        "event": "Checklist verification run: WARNING (success=8, warning=2, failure=0)"
+      },
+      {
+        "id": "e577231919b843e78797c923f0313401",
+        "timestamp": "2026-08-30T20:14:19Z",
+        "activity_type": "app_started",
+        "status": "success",
+        "details": "Application started"
+      },
+      {
+        "timestamp": "2026-08-30T20:25:05Z",
+        "event": "Checklist verification run: WARNING (success=8, warning=2, failure=0)"
+      },
+      {
+        "timestamp": "2026-08-30T20:27:52Z",
+        "event": "Checklist verification run: WARNING (success=8, warning=2, failure=0)"
+      },
+      {
+        "timestamp": "2026-08-30T20:28:20Z",
+        "event": "Checklist verification run: WARNING (success=8, warning=2, failure=0)"
+      }
+    ],
+    "older_entries_exist": true
+  },
+  "checklist_exit_code": 0,
+  "checklist_output": "=== EnterpriseGuard Verification Summary ===\nSUCCESS: 8\nWARNING: 2\nFAILURE: 0\n-------------------------------------------\n[SUCCESS] CONTRACTS.md - CONTRACTS.md found at /home/bashar/Desktop/EnterpriseGuard/CONTRACTS.md\n[SUCCESS] tools/DECISIONS_LOG.md - tools/DECISIONS_LOG.md found at /home/bashar/Desktop/EnterpriseGuard/tools/DECISIONS_LOG.md\n[SUCCESS] tools/activity_log.json - tools/activity_log.json found at /home/bashar/Desktop/EnterpriseGuard/tools/activity_log.json\n[SUCCESS] tools/errors.log - tools/errors.log found at /home/bashar/Desktop/EnterpriseGuard/tools/errors.log\n[SUCCESS] tools/command_center.py - tools/command_center.py found at /home/bashar/Desktop/EnterpriseGuard/tools/command_center.py\n[SUCCESS] tools/discipline.py - tools/discipline.py found at /home/bashar/Desktop/EnterpriseGuard/tools/discipline.py\n[SUCCESS] tools/rag_system.py - tools/rag_system.py found, readable, and compile-valid at /home/bashar/Desktop/EnterpriseGuard/tools/rag_system.py\n[WARNING] protected_dir::adie - Protected directory /home/bashar/Desktop/EnterpriseGuard/adie is not present; this is acceptable only when intentionally absent.\n[WARNING] protected_dir::intelligence - Protected directory /home/bashar/Desktop/EnterpriseGuard/intelligence is not present; this is acceptable only when intentionally absent.\n[SUCCESS] streamlit_runtime - Streamlit runtime available\n===========================================\n\n\nVerification completed with warnings; project is operational but some non-critical checks should be reviewed.",
+  "latest_context": "Architectural Context Report — Generated at: 2026-08-30T19:54:54Z\n\n--- File Tree ---\n├── assets\n│   └── models\n│       ├── registry\n│       │   ├── versions\n│       │   └── model_registry.json\n│       ├── enterpriseguard_model.json\n│       ├── enterpriseguard_model.pkl\n│       └── enterpriseguard_training_metadata.json\n├── demo\n├── docs\n├── enterpriseguard\n├── logs\n│   └── audit.jsonl\n├── src\n│   ├── assets\n│   │   └── models\n│   │       ├── enterpriseguard_model.pkl\n│   │       └── enterpriseguard_training_metadata.json\n│   ├── core\n│   │   └── config.py\n│   ├── enterpriseguard\n│   │   ├── api\n│   │   │   └── dashboard_api.py\n│   │   ├── core\n│   │   │   └── config.py\n│   │   ├── monitoring\n│   │   │   └── audit.py\n│   │   ├── response\n│   │   │   ├── __init__.py\n│   │   │   ├── audit.py\n│   │   │   ├── engine.py\n│   │   │   ├── executor.py\n│   │   │   ├── integration.py\n│   │   │   └── verification.py\n│   │   └── ui\n│   │       └── dashboard.py\n│   ├── logs\n│   │   └── audit.jsonl\n│   ├── check_adie_exports.py\n│   ├── inject_mock_events.py\n│   ├── policy.py\n│   └── test_adie_integration.py\n├── tools\n│   ├── backups\n│   │   ├── activity_log_20260830T135857Z.json\n│   │   └── activity_log_20260830T140925Z.json\n│   ├── quarantine\n│   │   ├── 20260830T153155Z_'\n│   │   ├── 20260830T153155Z_Any\n│   │   ├── 20260830T153155Z_bool\n│   │   ├── 20260830T153155Z_cd\n│   │   ├── 20260830T153155Z_cls\n│   │   ├── 20260830T153155Z_dict[str\n│   │   ├── 20260830T153155Z_float\n│   │   ├── 20260830T153155Z_int\n│   │   ├── 20260830T153155Z_list[dict[str\n│   │   ├── 20260830T153155Z_Mapping\n│   │   ├── 20260830T153155Z_None\n│   │   ├── 20260830T153155Z_orchestrator.minimum_samples\n│   │   ├── 20260830T153155Z_python\n│   │   ├── 20260830T153155Z_reporting_state.pkl\n│   │   ├── 20260830T153155Z_run_claude.bat\n│   │   ├── 20260830T153155Z_set\n│   │   ├── 20260830T153155Z_start_claude.bat\n│   │   ├── 20260830T153155Z_str\n│   │   ├── 20260830T153155Z_streamlit\n│   │   └── 20260830T153155Z_TrainingOrchestrator\n│   ├── activity_log.json\n│   ├── activity_log.json.bak_20260830T172209Z\n│   ├── activity_log.json.bak_20260830T173514Z\n│   ├── activity_log.json.bak_20260830T185303Z\n│   ├── ai_diagnostics.py\n│   ├── alerts_monitor.py\n│   ├── checklist.py\n│   ├── command_center.py\n│   ├── command_center.py.bak_20260830T194431Z\n│   ├── command_center.py.bak_20260830T195453Z\n│   ├── DECISIONS_LOG.md\n│   ├── DECISIONS_LOG.md.bak_20260830T160135Z\n│   ├── discipline.py\n│   ├── errors.log\n│   ├── errors.log.bak_20260830T153155Z\n│   ├── errors.log.bak_20260830T191617Z\n│   ├── errors.log.bak_20260830T194431Z\n│   ├── errors.log.bak_20260830T194729Z\n│   ├── errors.log.bak_20260830T195453Z\n│   ├── errors.log.st_tree.archive.20260830T192128Z\n│   ├── errors.log.st_tree.archive.20260830T194729Z\n│   ├── errors.log.st_tree.archive.20260830T195453Z\n│   ├── latest_context.txt\n│   └── rag_system.py\n├── CONTRACTS.md\n├── policy.py\n├── project_files.txt\n├── PROJECT_MEMORY.md\n└── requirements.txt\n\n--- RAG Output ---\n{\"query\": \"test\", \"retrieved_documents\": [], \"generated_answer\": \"Retrieval-only mode active. See retrieved documents.\", \"model_used\": \"no_models\", \"timestamp\": \"2026-08-30T19:54:53Z\"}\n\n--- Latest Errors ---\n[2026-08-30T12:12:20Z] ALERT: Log spike detected by alerts_monitor. Error count in last 24h = 2.\n\n--- Recent Activity ---\n- No activity recorded.\n",
+  "environment": {
+    "python_version": "Python 3.12.3",
+    "streamlit_version": "1.62.0",
+    "requirements": "flask\nflask-cors\nflask-socketio\nflask-limiter\nbcrypt\npyjwt\nredis\nsqlalchemy\npsycopg2-binary\nnumpy\nscikit-learn\npython-dotenv\neventlet"
+  },
+  "recent_files": [
+    {
+      "path": "tools/activity_log.json",
+      "mtime": "2026-08-30T20:28:24Z"
+    },
+    {
+      "path": "tools/command_center.py.bak_20260830T202444Z",
+      "mtime": "2026-08-30T20:23:32Z"
+    },
+    {
+      "path": "tools/command_center.py.bak_20260830T202748Z",
+      "mtime": "2026-08-30T20:23:32Z"
+    },
+    {
+      "path": "tools/command_center.py",
+      "mtime": "2026-08-30T20:23:32Z"
+    },
+    {
+      "path": "tools/DECISIONS_LOG.md",
+      "mtime": "2026-08-30T19:54:54Z"
+    },
+    {
+      "path": "tools/latest_context.txt",
+      "mtime": "2026-08-30T19:54:54Z"
+    },
+    {
+      "path": "tools/errors.log",
+      "mtime": "2026-08-30T19:54:53Z"
+    },
+    {
+      "path": "tools/errors.log.st_tree.archive.20260830T195453Z",
+      "mtime": "2026-08-30T19:54:53Z"
+    },
+    {
+      "path": "tools/errors.log.st_tree.archive.20260830T194729Z",
+      "mtime": "2026-08-30T19:47:29Z"
+    },
+    {
+      "path": "tools/errors.log.bak_20260830T195453Z",
+      "mtime": "2026-08-30T19:47:29Z"
+    },
+    {
+      "path": "tools/command_center.py.bak_20260830T195453Z",
+      "mtime": "2026-08-30T19:45:25Z"
+    },
+    {
+      "path": "tools/command_center.py.bak_20260830T200424Z",
+      "mtime": "2026-08-30T19:45:25Z"
+    },
+    {
+      "path": "tools/errors.log.st_tree.archive.20260830T192128Z",
+      "mtime": "2026-08-30T19:21:28Z"
+    },
+    {
+      "path": "tools/errors.log.bak_20260830T194431Z",
+      "mtime": "2026-08-30T19:21:28Z"
+    },
+    {
+      "path": "tools/errors.log.bak_20260830T194729Z",
+      "mtime": "2026-08-30T19:21:28Z"
+    },
+    {
+      "path": "tools/errors.log.bak_20260830T191617Z",
+      "mtime": "2026-08-30T19:16:18Z"
+    },
+    {
+      "path": "tools/activity_log.json.bak_20260830T185303Z",
+      "mtime": "2026-08-30T18:53:03Z"
+    },
+    {
+      "path": "tools/activity_log.json.bak_20260830T173514Z",
+      "mtime": "2026-08-30T17:35:14Z"
+    },
+    {
+      "path": "tools/activity_log.json.bak_20260830T172209Z",
+      "mtime": "2026-08-30T17:22:09Z"
+    },
+    {
+      "path": "tools/checklist.py",
+      "mtime": "2026-08-30T17:05:48Z"
+    },
+    {
+      "path": "tools/command_center.py.bak_20260830T194431Z",
+      "mtime": "2026-08-30T16:42:16Z"
+    },
+    {
+      "path": "tools/rag_system.py",
+      "mtime": "2026-08-30T16:38:56Z"
+    },
+    {
+      "path": "tools/DECISIONS_LOG.md.bak_20260830T160135Z",
+      "mtime": "2026-08-30T16:01:35Z"
+    },
+    {
+      "path": "tools/errors.log.bak_20260830T153155Z",
+      "mtime": "2026-08-30T15:31:56Z"
+    },
+    {
+      "path": "tools/backups/activity_log_20260830T140925Z.json",
+      "mtime": "2026-08-30T14:09:25Z"
+    },
+    {
+      "path": "tools/backups/activity_log_20260830T135857Z.json",
+      "mtime": "2026-08-30T13:58:57Z"
+    },
+    {
+      "path": "tools/alerts_monitor.py",
+      "mtime": "2026-08-30T12:12:00Z"
+    },
+    {
+      "path": "tools/ai_diagnostics.py",
+      "mtime": "2026-08-30T10:06:40Z"
+    },
+    {
+      "path": "CONTRACTS.md",
+      "mtime": "2026-08-30T09:19:38Z"
+    },
+    {
+      "path": "tools/discipline.py",
+      "mtime": "2026-08-30T09:07:47Z"
+    },
+    {
+      "path": "project_files.txt",
+      "mtime": "2026-08-28T23:56:26Z"
+    },
+    {
+      "path": "src/test_adie_integration.py",
+      "mtime": "2026-08-27T21:46:24Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_run_claude.bat",
+      "mtime": "2026-08-27T20:08:18Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_start_claude.bat",
+      "mtime": "2026-08-27T19:14:32Z"
+    },
+    {
+      "path": "src/check_adie_exports.py",
+      "mtime": "2026-08-27T17:24:31Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_'",
+      "mtime": "2026-08-27T17:20:03Z"
+    },
+    {
+      "path": "PROJECT_MEMORY.md",
+      "mtime": "2026-08-27T17:17:14Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_reporting_state.pkl",
+      "mtime": "2026-08-27T14:20:47Z"
+    },
+    {
+      "path": "src/inject_mock_events.py",
+      "mtime": "2026-08-27T13:51:40Z"
+    },
+    {
+      "path": "src/enterpriseguard/ui/dashboard.py",
+      "mtime": "2026-08-27T13:38:18Z"
+    },
+    {
+      "path": "src/logs/audit.jsonl",
+      "mtime": "2026-08-27T13:08:02Z"
+    },
+    {
+      "path": "assets/models/enterpriseguard_model.pkl",
+      "mtime": "2026-08-27T13:01:27Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_streamlit",
+      "mtime": "2026-08-27T12:00:52Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_set",
+      "mtime": "2026-08-27T12:00:52Z"
+    },
+    {
+      "path": "src/enterpriseguard/api/dashboard_api.py",
+      "mtime": "2026-08-27T02:36:20Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_cls",
+      "mtime": "2026-08-27T01:27:56Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_cd",
+      "mtime": "2026-08-27T01:27:39Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_python",
+      "mtime": "2026-08-27T01:27:39Z"
+    },
+    {
+      "path": "policy.py",
+      "mtime": "2026-08-26T13:33:25Z"
+    },
+    {
+      "path": "src/policy.py",
+      "mtime": "2026-08-26T13:33:25Z"
+    },
+    {
+      "path": "src/assets/models/enterpriseguard_model.pkl",
+      "mtime": "2026-08-26T07:54:32Z"
+    },
+    {
+      "path": "src/assets/models/enterpriseguard_training_metadata.json",
+      "mtime": "2026-08-26T07:54:32Z"
+    },
+    {
+      "path": "assets/models/registry/model_registry.json",
+      "mtime": "2026-08-25T14:00:06Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_bool",
+      "mtime": "2026-08-25T06:37:38Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_None",
+      "mtime": "2026-08-25T06:37:37Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_dict[str",
+      "mtime": "2026-08-25T06:37:37Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_list[dict[str",
+      "mtime": "2026-08-25T06:37:36Z"
+    },
+    {
+      "path": "src/enterpriseguard/response/__init__.py",
+      "mtime": "2026-08-24T21:27:59Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_orchestrator.minimum_samples",
+      "mtime": "2026-08-24T20:16:36Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_TrainingOrchestrator",
+      "mtime": "2026-08-24T20:16:34Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_Mapping",
+      "mtime": "2026-08-24T20:16:34Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_Any",
+      "mtime": "2026-08-24T20:16:13Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_float",
+      "mtime": "2026-08-24T20:16:12Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_int",
+      "mtime": "2026-08-24T20:16:11Z"
+    },
+    {
+      "path": "tools/quarantine/20260830T153155Z_str",
+      "mtime": "2026-08-24T20:16:11Z"
+    },
+    {
+      "path": "assets/models/enterpriseguard_training_metadata.json",
+      "mtime": "2026-08-24T19:50:51Z"
+    },
+    {
+      "path": "src/enterpriseguard/response/integration.py",
+      "mtime": "2026-08-24T19:30:03Z"
+    },
+    {
+      "path": "src/enterpriseguard/response/audit.py",
+      "mtime": "2026-08-24T18:19:22Z"
+    },
+    {
+      "path": "src/enterpriseguard/response/verification.py",
+      "mtime": "2026-08-24T18:14:17Z"
+    },
+    {
+      "path": "src/enterpriseguard/response/executor.py",
+      "mtime": "2026-08-23T19:16:38Z"
+    },
+    {
+      "path": "src/enterpriseguard/response/engine.py",
+      "mtime": "2026-08-23T17:31:48Z"
+    },
+    {
+      "path": "logs/audit.jsonl",
+      "mtime": "2026-08-23T17:17:16Z"
+    },
+    {
+      "path": "src/enterpriseguard/monitoring/audit.py",
+      "mtime": "2026-08-23T16:12:05Z"
+    },
+    {
+      "path": "assets/models/enterpriseguard_model.json",
+      "mtime": "2026-08-23T05:21:27Z"
+    },
+    {
+      "path": "src/core/config.py",
+      "mtime": "2026-08-23T01:54:53Z"
+    },
+    {
+      "path": "src/enterpriseguard/core/config.py",
+      "mtime": "2026-08-23T00:54:53Z"
+    },
+    {
+      "path": "requirements.txt",
+      "mtime": "2026-08-22T22:23:40Z"
+    }
+  ],
+  "protected_dirs_exist": {
+    "adie": false,
+    "intelligence": false
+  },
+  "git_info": "NOT_AVAILABLE",
+  "notes": "Snapshot generated with hidden files and directories, __pycache__, node_modules, and protected directories excluded. Checklist output and larger content blocks were truncated to maintain portability."
+}

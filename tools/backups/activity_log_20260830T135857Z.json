@@ -1,0 +1,115 @@
+[
+  {
+    "timestamp": "2026-08-30 05:30:43 EDT",
+    "event": "Application Started"
+  },
+  {
+    "timestamp": "2026-08-30 05:43:08 EDT",
+    "event": "Architectural report exported"
+  },
+  {
+    "timestamp": "2026-08-30 05:49:53 EDT",
+    "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)"
+  },
+  {
+    "timestamp": "2026-08-30 06:00:11 EDT",
+    "event": "Application Started"
+  },
+  {
+    "timestamp": "2026-08-30 06:00:37 EDT",
+    "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)"
+  },
+  {
+    "timestamp": "2026-08-30 06:00:37 EDT",
+    "event": "Pre-flight checklist passed"
+  },
+  {
+    "timestamp": "2026-08-30 06:00:37 EDT",
+    "event": "Architectural report exported"
+  },
+  {
+    "timestamp": "2026-08-30 06:07:08 EDT",
+    "event": "AI diagnostics run executed"
+  },
+  {
+    "timestamp": "2026-08-30 06:17:09 EDT",
+    "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)"
+  },
+  {
+    "timestamp": "2026-08-30 06:17:09 EDT",
+    "event": "Pre-flight checklist passed"
+  },
+  {
+    "timestamp": "2026-08-30 06:17:09 EDT",
+    "event": "Architectural report exported"
+  },
+  {
+    "timestamp": "2026-08-30 06:21:03 EDT",
+    "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)"
+  },
+  {
+    "timestamp": "2026-08-30 06:21:03 EDT",
+    "event": "AI diagnostics run executed"
+  },
+  {
+    "timestamp": "2026-08-30 08:12:20 EDT",
+    "event": "Alert monitor run: ALERT"
+  },
+  {
+    "id": "e117dfbe9d864084a0bae2d9b08c7027",
+    "timestamp": "2026-08-30T12:55:21Z",
+    "activity_type": "app_started",
+    "status": "success",
+    "details": "Application started"
+  },
+  {
+    "id": "8440e2335f8f48a1bda8d387e55f7fe1",
+    "timestamp": "2026-08-30T12:56:36Z",
+    "activity_type": "report_export",
+    "status": "success",
+    "details": "Report saved to /home/bashar/Desktop/EnterpriseGuard/tools/latest_context.txt"
+  },
+  {
+    "timestamp": "2026-08-30 09:29:55 EDT",
+    "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)"
+  },
+  {
+    "id": "268c7102d9444d7fb5e636528059fd06",
+    "timestamp": "2026-08-30T13:41:45Z",
+    "activity_type": "report_export",
+    "status": "success",
+    "details": "Report saved to /home/bashar/Desktop/EnterpriseGuard/tools/latest_context.txt"
+  },
+  {
+    "id": "4d59da34c3234529ad007024ecbb5d70",
+    "timestamp": "2026-08-30T13:41:47Z",
+    "activity_type": "report_export",
+    "status": "success",
+    "details": "Report saved to /home/bashar/Desktop/EnterpriseGuard/tools/latest_context.txt"
+  },
+  {
+    "id": "d2413e2f807d47d2b85a05892fe57e8a",
+    "timestamp": "2026-08-30T13:41:58Z",
+    "activity_type": "report_export",
+    "status": "success",
+    "details": "Report saved to /home/bashar/Desktop/EnterpriseGuard/tools/latest_context.txt"
+  },
+  {
+    "timestamp": "2026-08-30 09:42:36 EDT",
+    "event": "Checklist verification run: WARNING (success=7, warning=2, failure=0)"
+  },
+  {
+    "id": "7774da4d07cd462493cedfd19d89e414",
+    "timestamp": "2026-08-30T13:47:19Z",
+    "activity_type": "app_started",
+    "status": "success",
+    "details": "Application started"
+  },
+  {
+    "id": "0b05b9070f754c1484c83808f8f967b5",
+    "timestamp": "2026-08-30T13:49:57Z",
+    "activity_type": "report_export",
+    "status": "success",
+    "details": "Report saved to /home/bashar/Desktop/EnterpriseGuard/tools/latest_context.txt"
+  }
+]

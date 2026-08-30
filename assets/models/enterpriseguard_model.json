@@ -1,0 +1,30 @@
+{
+  "name": "EnterpriseGuard Threat Intelligence Model",
+  "version": "1.0.0",
+  "model_type": "lightweight_baseline",
+  "feature_count": 7,
+  "feature_names": [
+    "request_frequency",
+    "failure_ratio",
+    "unique_source_count",
+    "unique_user_count",
+    "failed_attempts",
+    "anomaly_score",
+    "outbound_data_volume"
+  ],
+  "trained": true,
+  "training_samples": 8,
+  "training_accuracy": 100.0,
+  "created_at": "2026-08-23T05:21:27.437518+00:00",
+  "updated_at": "2026-08-23T05:21:27.437518+00:00",
+  "trained_at": "2026-08-23T05:21:27.437518+00:00",
+  "model_file": "C:\\Users\\acer\\Desktop\\EnterpriseGuard\\assets\\models\\enterpriseguard_model.pkl",
+  "model_hash": "5f036713b2002124e524c207945cba12d29bc368dc45f91b4bafd007a9d31067",
+  "evaluation": {
+    "samples": 8,
+    "correct": 8,
+    "incorrect": 0,
+    "accuracy": 1.0,
+    "accuracy_percent": 100.0
+  }
+}

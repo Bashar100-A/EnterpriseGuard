@@ -1,0 +1,325 @@
+"""
+EnterpriseGuard - Training Dataset Validator
+
+
+Responsible for:
+- Validating training datasets
+- Detecting empty datasets
+- Detecting invalid class distributions
+- Detecting invalid feature vectors
+- Producing machine-readable validation reports
+- Providing safe dataset validation before training
+
+
+This module does NOT train models.
+"""
+
+
+from __future__ import annotations
+
+
+from dataclasses import dataclass, asdict
+from typing import Any
+
+
+try:
+    from .dataset import (
+        FEATURE_COUNT,
+        TrainingDataset,
+        validate_feature_vector,
+        validate_label,
+    )
+except ImportError:
+    from dataset import (
+        FEATURE_COUNT,
+        TrainingDataset,
+        validate_feature_vector,
+        validate_label,
+    )
+
+
+
+
+class ValidationError(Exception):
+    """Base exception for training validation failures."""
+
+
+
+
+class EmptyDatasetError(ValidationError):
+    """Raised when the dataset contains no samples."""
+
+
+
+
+class ClassDistributionError(ValidationError):
+    """Raised when the dataset does not contain both classes."""
+
+
+
+
+@dataclass(frozen=True, slots=True)
+class ValidationResult:
+    """Immutable validation result."""
+
+
+    valid: bool
+    total_samples: int
+    benign_samples: int
+    threat_samples: int
+    feature_count: int
+    errors: tuple[str, ...]
+    warnings: tuple[str, ...]
+
+
+
+
+MINIMUM_SAMPLES = 4
+
+
+
+
+def validate_training_dataset(
+    dataset: TrainingDataset,
+    minimum_samples: int = MINIMUM_SAMPLES,
+) -> ValidationResult:
+    """
+    Validate a complete training dataset.
+
+
+    The validation checks:
+    - Dataset type
+    - Minimum sample count
+    - Feature validity
+    - Label validity
+    - Presence of benign samples
+    - Presence of threat samples
+    """
+
+
+    errors: list[str] = []
+    warnings: list[str] = []
+
+
+    if not isinstance(dataset, TrainingDataset):
+        return ValidationResult(
+            valid=False,
+            total_samples=0,
+            benign_samples=0,
+            threat_samples=0,
+            feature_count=FEATURE_COUNT,
+            errors=("dataset must be a TrainingDataset instance.",),
+            warnings=(),
+        )
+
+
+    total_samples = dataset.size
+
+
+    if total_samples == 0:
+        errors.append("Training dataset is empty.")
+
+
+    if minimum_samples < 1:
+        errors.append("minimum_samples must be greater than zero.")
+
+
+    if total_samples < minimum_samples:
+        errors.append(
+            f"Training dataset contains {total_samples} samples; "
+            f"at least {minimum_samples} are required."
+        )
+
+
+    benign_samples = 0
+    threat_samples = 0
+
+
+    for index, sample in enumerate(dataset.samples):
+        try:
+            validate_feature_vector(sample.features)
+        except Exception as exc:
+            errors.append(
+                f"Sample {index}: invalid feature vector: {exc}"
+            )
+
+
+        try:
+            label = validate_label(sample.label)
+
+
+            if label == 0:
+                benign_samples += 1
+            elif label == 1:
+                threat_samples += 1
+
+
+        except Exception as exc:
+            errors.append(
+                f"Sample {index}: invalid label: {exc}"
+            )
+
+
+    if total_samples > 0 and benign_samples == 0:
+        errors.append(
+            "Training dataset contains no benign samples."
+        )
+
+
+    if total_samples > 0 and threat_samples == 0:
+        errors.append(
+            "Training dataset contains no threat samples."
+        )
+
+
+    if total_samples > 0:
+        threat_ratio = threat_samples / total_samples
+
+
+        if threat_ratio == 0.5:
+            warnings.append(
+                "Dataset contains an equal number of benign and threat samples."
+            )
+
+
+        if threat_ratio < 0.20 or threat_ratio > 0.80:
+            warnings.append(
+                "Dataset class distribution is strongly imbalanced."
+            )
+
+
+    return ValidationResult(
+        valid=len(errors) == 0,
+        total_samples=total_samples,
+        benign_samples=benign_samples,
+        threat_samples=threat_samples,
+        feature_count=FEATURE_COUNT,
+        errors=tuple(errors),
+        warnings=tuple(warnings),
+    )
+
+
+
+
+def assert_valid_training_dataset(
+    dataset: TrainingDataset,
+    minimum_samples: int = MINIMUM_SAMPLES,
+) -> ValidationResult:
+    """
+    Validate a dataset and raise ValidationError if invalid.
+    """
+
+
+    result = validate_training_dataset(
+        dataset,
+        minimum_samples=minimum_samples,
+    )
+
+
+    if not result.valid:
+        message = "Training dataset validation failed."
+
+
+        if result.errors:
+            message += " " + " | ".join(result.errors)
+
+
+        raise ValidationError(message)
+
+
+    return result
+
+
+
+
+def dataset_validation_status(
+    dataset: TrainingDataset,
+) -> dict[str, Any]:
+    """
+    Return a machine-readable validation status.
+    """
+
+
+    result = validate_training_dataset(dataset)
+
+
+    return {
+        "valid": result.valid,
+        "total_samples": result.total_samples,
+        "benign_samples": result.benign_samples,
+        "threat_samples": result.threat_samples,
+        "feature_count": result.feature_count,
+        "errors": list(result.errors),
+        "warnings": list(result.warnings),
+    }
+
+
+
+
+def _self_test() -> None:
+    """Run validator integration tests."""
+
+
+    from .dataset import build_demo_dataset
+
+
+    print("=" * 78)
+    print("EnterpriseGuard Training Validator - Self Test")
+    print("=" * 78)
+
+
+    dataset = build_demo_dataset()
+
+
+    print("\n[1] Validating demo dataset")
+
+
+    result = validate_training_dataset(dataset)
+
+
+    print(asdict(result))
+
+
+    if not result.valid:
+        raise SystemExit(
+            "Validator self-test failed: valid demo dataset was rejected."
+        )
+
+
+    print("\n[2] Validation status")
+
+
+    print(dataset_validation_status(dataset))
+
+
+    print("\n[3] Assertion test")
+
+
+    assert_valid_training_dataset(dataset)
+
+
+    print("PASSED")
+
+
+    print("\n[4] Dataset statistics")
+
+
+    print(
+        {
+            "samples": result.total_samples,
+            "benign": result.benign_samples,
+            "threat": result.threat_samples,
+            "features": result.feature_count,
+        }
+    )
+
+
+    print("\n" + "=" * 78)
+    print("Validator self test completed successfully.")
+    print("=" * 78)
+
+
+
+
+if __name__ == "__main__":
+    _self_test()

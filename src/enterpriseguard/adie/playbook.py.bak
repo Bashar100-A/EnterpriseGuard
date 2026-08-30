@@ -1,0 +1,949 @@
+"""
+EnterpriseGuard ADIE - Adaptive Playbook Layer
+==============================================
+
+ADIE Foundation component responsible for:
+
+- Representing structured response playbooks.
+- Translating an approved Decision into a deterministic response plan.
+- Preserving ordering, priority, and safety constraints.
+- Supporting conditional and staged response actions.
+- Providing immutable playbook results.
+- Maintaining strict separation between planning and execution.
+
+Architecture:
+
+    State
+      |
+      v
+    Prediction
+      |
+      v
+    Policy
+      |
+      v
+    Decision
+      |
+      v
+    Playbook
+      |
+      v
+    Checkpoint
+      |
+      v
+    Response / Executor
+
+IMPORTANT
+---------
+This module DOES NOT execute security actions.
+
+It creates and validates response instructions only.
+
+Execution must remain delegated to the existing response subsystem.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import Enum
+from hashlib import sha256
+from types import MappingProxyType
+from typing import Any, Iterable, Mapping, Optional, Tuple
+import json
+
+
+__all__ = [
+    "PLAYBOOK_VERSION",
+    "PlaybookError",
+    "PlaybookValidationError",
+    "PlaybookActionType",
+    "PlaybookStatus",
+    "PlaybookAction",
+    "Playbook",
+    "PlaybookResult",
+    "PlaybookEngine",
+]
+
+
+PLAYBOOK_VERSION = "1.0.0"
+
+
+class PlaybookError(Exception):
+    """Base exception for ADIE playbook errors."""
+
+
+class PlaybookValidationError(PlaybookError):
+    """Raised when a playbook or action is invalid."""
+
+
+class PlaybookActionType(str, Enum):
+    """
+    Logical action categories.
+
+    These are planning primitives only.
+    They do not execute anything.
+    """
+
+    MONITOR = "monitor"
+    ALERT = "alert"
+    ESCALATE = "escalate"
+    CONTAIN = "contain"
+    ISOLATE = "isolate"
+    COLLECT_EVIDENCE = "collect_evidence"
+    CREATE_CHECKPOINT = "create_checkpoint"
+    REVIEW = "review"
+
+
+class PlaybookStatus(str, Enum):
+    """Lifecycle state of a generated playbook."""
+
+    DRAFT = "draft"
+    READY = "ready"
+    BLOCKED = "blocked"
+
+
+@dataclass(frozen=True)
+class PlaybookAction:
+    """
+    Immutable logical response action.
+
+    An action describes WHAT should happen.
+    It does not perform the action.
+    """
+
+    action_id: str
+    action_type: PlaybookActionType
+    description: str
+    priority: int = 100
+    requires_approval: bool = False
+    destructive: bool = False
+    parameters: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        action_id = str(self.action_id).strip()
+        description = str(self.description).strip()
+
+        if not action_id:
+            raise PlaybookValidationError(
+                "action_id must not be empty."
+            )
+
+        if not description:
+            raise PlaybookValidationError(
+                "description must not be empty."
+            )
+
+        if self.priority < 0:
+            raise PlaybookValidationError(
+                "priority must be >= 0."
+            )
+
+        if not isinstance(self.parameters, Mapping):
+            raise PlaybookValidationError(
+                "parameters must be a mapping."
+            )
+
+        object.__setattr__(self, "action_id", action_id)
+        object.__setattr__(self, "description", description)
+
+        normalized_parameters = dict(self.parameters)
+        object.__setattr__(
+            self,
+            "parameters",
+            MappingProxyType(normalized_parameters),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a serializable representation."""
+
+        return {
+            "action_id": self.action_id,
+            "action_type": self.action_type.value,
+            "description": self.description,
+            "priority": self.priority,
+            "requires_approval": self.requires_approval,
+            "destructive": self.destructive,
+            "parameters": dict(self.parameters),
+        }
+
+
+@dataclass(frozen=True)
+class Playbook:
+    """
+    Immutable ordered response playbook.
+
+    A playbook is a sequence of logical actions generated from
+    an ADIE decision.
+
+    It contains no executable commands.
+    """
+
+    playbook_id: str
+    name: str
+    description: str
+    actions: Tuple[PlaybookAction, ...]
+    status: PlaybookStatus = PlaybookStatus.DRAFT
+    decision_id: Optional[str] = None
+    source: str = "adie"
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        playbook_id = str(self.playbook_id).strip()
+        name = str(self.name).strip()
+        description = str(self.description).strip()
+
+        if not playbook_id:
+            raise PlaybookValidationError(
+                "playbook_id must not be empty."
+            )
+
+        if not name:
+            raise PlaybookValidationError(
+                "name must not be empty."
+            )
+
+        if not description:
+            raise PlaybookValidationError(
+                "description must not be empty."
+            )
+
+        if not isinstance(self.actions, tuple):
+            object.__setattr__(
+                self,
+                "actions",
+                tuple(self.actions),
+            )
+
+        for action in self.actions:
+            if not isinstance(action, PlaybookAction):
+                raise PlaybookValidationError(
+                    "All playbook actions must be PlaybookAction instances."
+                )
+
+        if not isinstance(self.metadata, Mapping):
+            raise PlaybookValidationError(
+                "metadata must be a mapping."
+            )
+
+        object.__setattr__(self, "playbook_id", playbook_id)
+        object.__setattr__(self, "name", name)
+        object.__setattr__(self, "description", description)
+
+        object.__setattr__(
+            self,
+            "metadata",
+            MappingProxyType(dict(self.metadata)),
+        )
+
+    @property
+    def action_count(self) -> int:
+        """Return the number of planned actions."""
+
+        return len(self.actions)
+
+    @property
+    def contains_destructive_actions(self) -> bool:
+        """Return True if any action is marked destructive."""
+
+        return any(action.destructive for action in self.actions)
+
+    @property
+    def fingerprint(self) -> str:
+        """
+        Return a deterministic SHA-256 fingerprint.
+
+        The fingerprint is useful for audit and integrity checks.
+        """
+
+        payload = {
+            "playbook_id": self.playbook_id,
+            "name": self.name,
+            "description": self.description,
+            "actions": [
+                action.to_dict()
+                for action in self.actions
+            ],
+            "status": self.status.value,
+            "decision_id": self.decision_id,
+            "source": self.source,
+            "metadata": dict(self.metadata),
+        }
+
+        encoded = json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        ).encode("utf-8")
+
+        return sha256(encoded).hexdigest()
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a serializable playbook representation."""
+
+        return {
+            "playbook_id": self.playbook_id,
+            "name": self.name,
+            "description": self.description,
+            "actions": [
+                action.to_dict()
+                for action in self.actions
+            ],
+            "status": self.status.value,
+            "decision_id": self.decision_id,
+            "source": self.source,
+            "metadata": dict(self.metadata),
+            "action_count": self.action_count,
+            "contains_destructive_actions": (
+                self.contains_destructive_actions
+            ),
+            "fingerprint": self.fingerprint,
+        }
+
+
+@dataclass(frozen=True)
+class PlaybookResult:
+    """
+    Immutable result returned by PlaybookEngine.
+
+    This object represents planning output only.
+    """
+
+    success: bool
+    playbook: Optional[Playbook]
+    error: Optional[str] = None
+    blocked: bool = False
+    executes_security_actions: bool = False
+    version: str = PLAYBOOK_VERSION
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a serializable result."""
+
+        return {
+            "success": self.success,
+            "playbook": (
+                self.playbook.to_dict()
+                if self.playbook is not None
+                else None
+            ),
+            "error": self.error,
+            "blocked": self.blocked,
+            "executes_security_actions": (
+                self.executes_security_actions
+            ),
+            "version": self.version,
+        }
+
+
+class PlaybookEngine:
+    """
+    ADIE Playbook Engine.
+
+    Responsibilities:
+    - Validate decisions.
+    - Generate deterministic playbooks.
+    - Apply safety constraints.
+    - Keep planning separate from execution.
+
+    Non-responsibilities:
+    - Command execution.
+    - Network isolation.
+    - Process termination.
+    - Account disabling.
+    - Firewall modification.
+    - Any destructive security action.
+    """
+
+    VERSION = PLAYBOOK_VERSION
+
+    def __init__(
+        self,
+        *,
+        allow_destructive_actions: bool = False,
+        require_approval_for_high_risk: bool = True,
+    ) -> None:
+        self._allow_destructive_actions = bool(
+            allow_destructive_actions
+        )
+        self._require_approval_for_high_risk = bool(
+            require_approval_for_high_risk
+        )
+
+    @property
+    def allow_destructive_actions(self) -> bool:
+        """Return whether destructive planning is permitted."""
+
+        return self._allow_destructive_actions
+
+    @property
+    def require_approval_for_high_risk(self) -> bool:
+        """Return whether high-risk actions require approval."""
+
+        return self._require_approval_for_high_risk
+
+    def create(
+        self,
+        decision: Mapping[str, Any],
+        *,
+        decision_id: Optional[str] = None,
+    ) -> PlaybookResult:
+        """
+        Generate a playbook from an ADIE decision.
+
+        Accepted decision fields include:
+        - predicted_class
+        - threat_probability
+        - confidence
+        - risk_level
+        - decision
+        - allowed
+        - requires_approval
+        """
+
+        try:
+            if not isinstance(decision, Mapping):
+                raise PlaybookValidationError(
+                    "decision must be a mapping."
+                )
+
+            normalized = self._normalize_decision(decision)
+
+            if not normalized["allowed"]:
+                playbook = self._build_blocked_playbook(
+                    normalized,
+                    decision_id=decision_id,
+                )
+
+                return PlaybookResult(
+                    success=True,
+                    playbook=playbook,
+                    blocked=True,
+                    executes_security_actions=False,
+                )
+
+            actions = self._build_actions(normalized)
+
+            status = (
+                PlaybookStatus.READY
+                if actions
+                else PlaybookStatus.DRAFT
+            )
+
+            playbook = Playbook(
+                playbook_id=self._build_playbook_id(
+                    normalized,
+                    decision_id,
+                ),
+                name=self._build_name(normalized),
+                description=(
+                    "ADIE-generated response playbook."
+                ),
+                actions=tuple(actions),
+                status=status,
+                decision_id=decision_id,
+                source="adie",
+                metadata={
+                    "decision_risk_level": normalized["risk_level"],
+                    "threat_probability": normalized[
+                        "threat_probability"
+                    ],
+                    "confidence": normalized["confidence"],
+                },
+            )
+
+            return PlaybookResult(
+                success=True,
+                playbook=playbook,
+                executes_security_actions=False,
+            )
+
+        except PlaybookError as exc:
+            return PlaybookResult(
+                success=False,
+                playbook=None,
+                error=str(exc),
+                executes_security_actions=False,
+            )
+
+        except Exception as exc:
+            return PlaybookResult(
+                success=False,
+                playbook=None,
+                error=f"Unexpected playbook error: {exc}",
+                executes_security_actions=False,
+            )
+
+    def validate(
+        self,
+        playbook: Playbook,
+    ) -> bool:
+        """Validate an existing playbook."""
+
+        if not isinstance(playbook, Playbook):
+            raise PlaybookValidationError(
+                "playbook must be a Playbook instance."
+            )
+
+        seen_ids: set[str] = set()
+
+        for action in playbook.actions:
+            if action.action_id in seen_ids:
+                raise PlaybookValidationError(
+                    f"Duplicate action_id: {action.action_id}"
+                )
+
+            seen_ids.add(action.action_id)
+
+            if (
+                action.destructive
+                and not self._allow_destructive_actions
+            ):
+                raise PlaybookValidationError(
+                    "Destructive actions are disabled by policy."
+                )
+
+        return True
+
+    def status(self) -> dict[str, Any]:
+        """Return engine status."""
+
+        return {
+            "module": "adie.playbook",
+            "version": self.VERSION,
+            "allow_destructive_actions": (
+                self._allow_destructive_actions
+            ),
+            "require_approval_for_high_risk": (
+                self._require_approval_for_high_risk
+            ),
+            "executes_security_actions": False,
+        }
+
+    def health_check(self) -> dict[str, Any]:
+        """Return a lightweight health report."""
+
+        return {
+            "healthy": True,
+            "module": "adie.playbook",
+            "version": self.VERSION,
+            "executes_security_actions": False,
+        }
+
+    def _normalize_decision(
+        self,
+        decision: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Normalize external decision data."""
+
+        predicted_class = str(
+            decision.get(
+                "predicted_class",
+                decision.get("prediction", "unknown"),
+            )
+        ).strip().lower()
+
+        threat_probability = self._safe_probability(
+            decision.get("threat_probability")
+        )
+
+        confidence = self._safe_probability(
+            decision.get("confidence")
+        )
+
+        risk_level = str(
+            decision.get(
+                "risk_level",
+                self._derive_risk_level(
+                    threat_probability
+                ),
+            )
+        ).strip().lower()
+
+        allowed = bool(
+            decision.get(
+                "allowed",
+                not bool(decision.get("denied", False)),
+            )
+        )
+
+        requires_approval = bool(
+            decision.get(
+                "requires_approval",
+                False,
+            )
+        )
+
+        return {
+            "predicted_class": predicted_class,
+            "threat_probability": threat_probability,
+            "confidence": confidence,
+            "risk_level": risk_level,
+            "allowed": allowed,
+            "requires_approval": requires_approval,
+        }
+
+    def _build_actions(
+        self,
+        decision: Mapping[str, Any],
+    ) -> list[PlaybookAction]:
+        """Build a deterministic response sequence."""
+
+        actions: list[PlaybookAction] = []
+
+        risk_level = str(
+            decision["risk_level"]
+        ).lower()
+
+        threat_probability = float(
+            decision["threat_probability"]
+        )
+
+        requires_approval = bool(
+            decision["requires_approval"]
+        )
+
+        # Every non-benign situation starts with monitoring.
+        if (
+            risk_level != "low"
+            or threat_probability >= 0.50
+        ):
+            actions.append(
+                PlaybookAction(
+                    action_id="monitor-001",
+                    action_type=PlaybookActionType.MONITOR,
+                    description=(
+                        "Increase monitoring and preserve "
+                        "relevant security telemetry."
+                    ),
+                    priority=10,
+                )
+            )
+
+        # Medium risk -> alert.
+        if risk_level in {
+            "medium",
+            "high",
+            "critical",
+        } or threat_probability >= 0.70:
+            actions.append(
+                PlaybookAction(
+                    action_id="alert-001",
+                    action_type=PlaybookActionType.ALERT,
+                    description=(
+                        "Generate a security alert for "
+                        "analyst review."
+                    ),
+                    priority=20,
+                )
+            )
+
+        # High/critical -> escalation.
+        if risk_level in {
+            "high",
+            "critical",
+        } or threat_probability >= 0.90:
+            actions.append(
+                PlaybookAction(
+                    action_id="escalate-001",
+                    action_type=PlaybookActionType.ESCALATE,
+                    description=(
+                        "Escalate the security event to the "
+                        "appropriate response workflow."
+                    ),
+                    priority=30,
+                    requires_approval=(
+                        self._require_approval_for_high_risk
+                        or requires_approval
+                    ),
+                )
+            )
+
+        # Critical risk -> evidence collection.
+        if risk_level == "critical":
+            actions.append(
+                PlaybookAction(
+                    action_id="evidence-001",
+                    action_type=(
+                        PlaybookActionType.COLLECT_EVIDENCE
+                    ),
+                    description=(
+                        "Preserve relevant evidence before "
+                        "further response decisions."
+                    ),
+                    priority=40,
+                )
+            )
+
+        # Critical risk -> checkpoint.
+        if risk_level in {
+            "high",
+            "critical",
+        }:
+            actions.append(
+                PlaybookAction(
+                    action_id="checkpoint-001",
+                    action_type=(
+                        PlaybookActionType.CREATE_CHECKPOINT
+                    ),
+                    description=(
+                        "Create an immutable state checkpoint "
+                        "for response traceability."
+                    ),
+                    priority=50,
+                )
+            )
+
+        # No destructive action is generated here.
+        #
+        # Containment/isolation are represented only as
+        # policy-level planning concepts and require the
+        # downstream response subsystem.
+
+        if risk_level == "critical":
+            actions.append(
+                PlaybookAction(
+                    action_id="review-001",
+                    action_type=PlaybookActionType.REVIEW,
+                    description=(
+                        "Require human or authorized policy "
+                        "review before high-impact response."
+                    ),
+                    priority=60,
+                    requires_approval=True,
+                )
+            )
+
+        return actions
+
+    def _build_blocked_playbook(
+        self,
+        decision: Mapping[str, Any],
+        *,
+        decision_id: Optional[str],
+    ) -> Playbook:
+        """Build an explicitly blocked playbook."""
+
+        return Playbook(
+            playbook_id=self._build_playbook_id(
+                decision,
+                decision_id,
+            ),
+            name="blocked-decision",
+            description=(
+                "Response planning blocked by ADIE policy."
+            ),
+            actions=(
+                PlaybookAction(
+                    action_id="review-001",
+                    action_type=PlaybookActionType.REVIEW,
+                    description=(
+                        "Review the denied decision and "
+                        "policy constraints."
+                    ),
+                    priority=100,
+                    requires_approval=True,
+                ),
+            ),
+            status=PlaybookStatus.BLOCKED,
+            decision_id=decision_id,
+            source="adie",
+            metadata={
+                "reason": "decision_denied_by_policy",
+            },
+        )
+
+    @staticmethod
+    def _safe_probability(value: Any) -> float:
+        """Normalize a probability to [0, 1]."""
+
+        if value is None:
+            return 0.0
+
+        try:
+            probability = float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
+        if probability < 0.0:
+            return 0.0
+
+        if probability > 1.0:
+            return 1.0
+
+        return probability
+
+    @staticmethod
+    def _derive_risk_level(
+        threat_probability: float,
+    ) -> str:
+        """Derive a conservative risk level."""
+
+        if threat_probability >= 0.90:
+            return "critical"
+
+        if threat_probability >= 0.70:
+            return "high"
+
+        if threat_probability >= 0.50:
+            return "medium"
+
+        return "low"
+
+    @staticmethod
+    def _build_playbook_id(
+        decision: Mapping[str, Any],
+        decision_id: Optional[str],
+    ) -> str:
+        """Generate a deterministic playbook identifier."""
+
+        payload = {
+            "decision_id": decision_id,
+            "risk_level": decision["risk_level"],
+            "threat_probability": decision[
+                "threat_probability"
+            ],
+            "predicted_class": decision[
+                "predicted_class"
+            ],
+        }
+
+        encoded = json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+
+        digest = sha256(encoded).hexdigest()[:16]
+
+        return f"pb-{digest}"
+
+    @staticmethod
+    def _build_name(
+        decision: Mapping[str, Any],
+    ) -> str:
+        """Build a human-readable playbook name."""
+
+        risk_level = decision["risk_level"]
+
+        return f"{risk_level}-risk-response"
+
+
+def self_test() -> dict[str, Any]:
+    """
+    Run a lightweight module self-test.
+
+    The self-test must never execute security actions.
+    """
+
+    tests: dict[str, bool] = {}
+
+    engine = PlaybookEngine()
+
+    # Test 1: benign decision.
+    benign = engine.create(
+        {
+            "predicted_class": "benign",
+            "threat_probability": 0.10,
+            "confidence": 0.90,
+            "risk_level": "low",
+            "allowed": True,
+        },
+        decision_id="decision-benign",
+    )
+
+    tests["benign_playbook"] = (
+        benign.success
+        and benign.playbook is not None
+        and not benign.blocked
+    )
+
+    # Test 2: high-risk decision.
+    high_risk = engine.create(
+        {
+            "predicted_class": "threat",
+            "threat_probability": 0.95,
+            "confidence": 0.95,
+            "risk_level": "critical",
+            "allowed": True,
+        },
+        decision_id="decision-critical",
+    )
+
+    tests["high_risk_playbook"] = (
+        high_risk.success
+        and high_risk.playbook is not None
+        and high_risk.playbook.action_count >= 4
+    )
+
+    # Test 3: denied decision.
+    denied = engine.create(
+        {
+            "predicted_class": "threat",
+            "threat_probability": 0.95,
+            "risk_level": "critical",
+            "allowed": False,
+        },
+        decision_id="decision-denied",
+    )
+
+    tests["policy_block"] = (
+        denied.success
+        and denied.blocked
+        and denied.playbook is not None
+        and denied.playbook.status == PlaybookStatus.BLOCKED
+    )
+
+    # Test 4: immutability.
+    immutable = False
+
+    if high_risk.playbook is not None:
+        try:
+            high_risk.playbook.name = "tampered"
+        except Exception:
+            immutable = True
+
+    tests["immutable_playbook"] = immutable
+
+    # Test 5: integrity fingerprint.
+    fingerprint_valid = False
+
+    if high_risk.playbook is not None:
+        fingerprint_valid = (
+            len(high_risk.playbook.fingerprint) == 64
+        )
+
+    tests["integrity_fingerprint"] = fingerprint_valid
+
+    # Test 6: execution safety.
+    tests["execution_safety"] = (
+        benign.executes_security_actions is False
+        and high_risk.executes_security_actions is False
+        and denied.executes_security_actions is False
+        and engine.status()[
+            "executes_security_actions"
+        ] is False
+    )
+
+    passed = all(tests.values())
+
+    return {
+        "passed": passed,
+        "module": "adie.playbook",
+        "version": PLAYBOOK_VERSION,
+        "playbook_test_passed": passed,
+        "tests": tests,
+        "executes_security_actions": False,
+        "destructive_actions_allowed": (
+            engine.allow_destructive_actions
+        ),
+    }
+
+
+if __name__ == "__main__":
+    print(
+        json.dumps(
+            self_test(),
+            indent=2,
+            ensure_ascii=False,
+        )
+    )

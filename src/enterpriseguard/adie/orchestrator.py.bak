@@ -1,0 +1,2328 @@
+"""
+EnterpriseGuard ADIE - Orchestrator
+===================================
+
+Adaptive Defense Intelligence Engine
+Central Control-Plane Orchestrator
+
+Version
+-------
+1.1.0
+
+Purpose
+-------
+The orchestrator is the central coordination boundary of ADIE.
+
+It connects:
+
+    State
+      |
+      v
+    Prediction
+      |
+      v
+    Policy
+      |
+      v
+    Decision
+      |
+      +-----------> Checkpoint
+      |
+      +-----------> Playbook
+      |
+      +-----------> Rollback
+      |
+      v
+    Immutable Orchestration Result
+
+Security Boundary
+-----------------
+This module is PLANNING / CONTROL-PLANE ONLY.
+
+It MUST NOT:
+
+- execute shell commands
+- execute operating-system commands
+- modify infrastructure
+- isolate hosts
+- disable accounts
+- delete files
+- change firewall rules
+- alter network configuration
+- kill processes
+- execute response actions
+
+Actual security-action execution belongs to an explicitly authorized
+execution/response subsystem outside this control-plane boundary.
+
+Design Goals
+------------
+- Native ADIE component compatibility
+- Explicit stage boundaries
+- Fail-closed behavior
+- Immutable result contract
+- Deterministic operation identity
+- Cryptographic result fingerprint
+- Safe serialization
+- Component failure isolation
+- Backward-compatible provider adapters
+- Auditable lineage
+- No secret/error leakage
+- No implicit security execution
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from enum import Enum
+import hashlib
+import json
+import time
+from typing import Any, Mapping, Optional, Protocol
+
+
+# ============================================================================
+# Public metadata
+# ============================================================================
+
+ORCHESTRATOR_VERSION = "1.1.0"
+MODULE_NAME = "adie.orchestrator"
+
+EXECUTES_SECURITY_ACTIONS = False
+DESTRUCTIVE_ACTIONS_ALLOWED = False
+
+
+__all__ = [
+    "ORCHESTRATOR_VERSION",
+    "MODULE_NAME",
+    "EXECUTES_SECURITY_ACTIONS",
+    "DESTRUCTIVE_ACTIONS_ALLOWED",
+    "OrchestrationError",
+    "OrchestrationValidationError",
+    "OrchestrationComponentError",
+    "OrchestrationContractError",
+    "OrchestrationStatus",
+    "OrchestrationStage",
+    "OrchestrationResult",
+    "ADIEOrchestrator",
+    "self_test",
+]
+
+
+# ============================================================================
+# Exceptions
+# ============================================================================
+
+
+class OrchestrationError(Exception):
+    """Base exception for ADIE orchestration."""
+
+
+class OrchestrationValidationError(OrchestrationError):
+    """Raised when orchestration input or configuration is invalid."""
+
+
+class OrchestrationComponentError(OrchestrationError):
+    """Raised when an ADIE component fails."""
+
+
+class OrchestrationContractError(OrchestrationError):
+    """Raised when an ADIE component violates its expected contract."""
+
+
+# ============================================================================
+# Enums
+# ============================================================================
+
+
+class OrchestrationStatus(str, Enum):
+    """Final lifecycle status of an orchestration operation."""
+
+    COMPLETED = "completed"
+    BLOCKED = "blocked"
+    FAILED = "failed"
+
+
+class OrchestrationStage(str, Enum):
+    """Canonical ADIE orchestration stages."""
+
+    STATE = "state"
+    PREDICTION = "prediction"
+    POLICY = "policy"
+    DECISION = "decision"
+    CHECKPOINT = "checkpoint"
+    PLAYBOOK = "playbook"
+    ROLLBACK = "rollback"
+
+
+# ============================================================================
+# Provider protocols
+# ============================================================================
+
+
+class StateProvider(Protocol):
+    """
+    Native-compatible state provider.
+
+    Supported contracts are discovered at runtime so the orchestrator
+    can integrate with evolving ADIE state implementations.
+    """
+
+    ...
+
+
+class PredictionProvider(Protocol):
+    """Prediction provider boundary."""
+
+    ...
+
+
+class PolicyProvider(Protocol):
+    """Policy provider boundary."""
+
+    ...
+
+
+class DecisionProvider(Protocol):
+    """Decision provider boundary."""
+
+    ...
+
+
+class CheckpointProvider(Protocol):
+    """Checkpoint planning provider boundary."""
+
+    ...
+
+
+class PlaybookProvider(Protocol):
+    """Playbook planning provider boundary."""
+
+    ...
+
+
+class RollbackProvider(Protocol):
+    """Rollback planning provider boundary."""
+
+    ...
+
+
+# ============================================================================
+# Immutable result
+# ============================================================================
+
+
+@dataclass(frozen=True)
+class OrchestrationResult:
+    """
+    Immutable ADIE orchestration result.
+
+    This object describes what ADIE observed, predicted, evaluated,
+    decided and planned.
+
+    It NEVER represents execution of a security action.
+    """
+
+    operation_id: str
+    status: OrchestrationStatus
+
+    state: Any = None
+    prediction: Any = None
+    policy: Any = None
+    decision: Any = None
+
+    checkpoint: Any = None
+    playbook: Any = None
+    rollback: Any = None
+
+    stages_completed: tuple[str, ...] = ()
+    failed_stage: Optional[str] = None
+
+    created_at: str = ""
+    completed_at: str = ""
+
+    duration_ms: float = 0.0
+
+    error: Optional[str] = None
+
+    executes_security_actions: bool = False
+    destructive_actions_allowed: bool = False
+
+    fingerprint: str = ""
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.operation_id, str):
+            raise OrchestrationValidationError(
+                "operation_id must be a string."
+            )
+
+        if not self.operation_id.strip():
+            raise OrchestrationValidationError(
+                "operation_id must not be empty."
+            )
+
+        if not isinstance(
+            self.status,
+            OrchestrationStatus,
+        ):
+            raise OrchestrationValidationError(
+                "status must be OrchestrationStatus."
+            )
+
+        if self.executes_security_actions:
+            raise OrchestrationValidationError(
+                "ADIE orchestration cannot execute security actions."
+            )
+
+        if self.destructive_actions_allowed:
+            raise OrchestrationValidationError(
+                "Destructive actions are forbidden."
+            )
+
+        if not isinstance(
+            self.stages_completed,
+            tuple,
+        ):
+            object.__setattr__(
+                self,
+                "stages_completed",
+                tuple(self.stages_completed),
+            )
+
+        if not self.fingerprint:
+            object.__setattr__(
+                self,
+                "fingerprint",
+                _fingerprint_result(self),
+            )
+
+    @property
+    def successful(self) -> bool:
+        """Return True when orchestration completed successfully."""
+
+        return self.status == OrchestrationStatus.COMPLETED
+
+    @property
+    def blocked(self) -> bool:
+        """Return True when policy/decision blocked the operation."""
+
+        return self.status == OrchestrationStatus.BLOCKED
+
+    @property
+    def failed(self) -> bool:
+        """Return True when orchestration failed."""
+
+        return self.status == OrchestrationStatus.FAILED
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-safe representation."""
+
+        return {
+            "operation_id": self.operation_id,
+            "status": self.status.value,
+            "state": _safe_serialize(self.state),
+            "prediction": _safe_serialize(self.prediction),
+            "policy": _safe_serialize(self.policy),
+            "decision": _safe_serialize(self.decision),
+            "checkpoint": _safe_serialize(self.checkpoint),
+            "playbook": _safe_serialize(self.playbook),
+            "rollback": _safe_serialize(self.rollback),
+            "stages_completed": list(
+                self.stages_completed
+            ),
+            "failed_stage": self.failed_stage,
+            "created_at": self.created_at,
+            "completed_at": self.completed_at,
+            "duration_ms": self.duration_ms,
+            "error": self.error,
+            "executes_security_actions": (
+                self.executes_security_actions
+            ),
+            "destructive_actions_allowed": (
+                self.destructive_actions_allowed
+            ),
+            "fingerprint": self.fingerprint,
+            "successful": self.successful,
+            "blocked": self.blocked,
+            "failed": self.failed,
+        }
+
+
+# ============================================================================
+# Orchestrator
+# ============================================================================
+
+
+class ADIEOrchestrator:
+    """
+    Central ADIE control-plane orchestrator.
+
+    The orchestrator coordinates ADIE intelligence and planning
+    components without executing security actions.
+    """
+
+    VERSION = ORCHESTRATOR_VERSION
+
+    executes_security_actions = False
+    destructive_actions_allowed = False
+
+    def __init__(
+        self,
+        state_provider: Any,
+        prediction_provider: Any,
+        policy_provider: Any,
+        decision_provider: Any,
+        *,
+        checkpoint_provider: Optional[Any] = None,
+        playbook_provider: Optional[Any] = None,
+        rollback_provider: Optional[Any] = None,
+    ) -> None:
+
+        self._validate_component(
+            state_provider,
+            "state_provider",
+            (
+                "get_status",
+                "collect",
+                "to_dict",
+            ),
+        )
+
+        self._validate_component(
+            prediction_provider,
+            "prediction_provider",
+            ("predict",),
+        )
+
+        self._validate_component(
+            policy_provider,
+            "policy_provider",
+            ("evaluate",),
+        )
+
+        self._validate_component(
+            decision_provider,
+            "decision_provider",
+            ("decide",),
+        )
+
+        if checkpoint_provider is not None:
+            self._validate_component(
+                checkpoint_provider,
+                "checkpoint_provider",
+                (
+                    "create",
+                    "create_checkpoint",
+                ),
+            )
+
+        if playbook_provider is not None:
+            self._validate_component(
+                playbook_provider,
+                "playbook_provider",
+                (
+                    "create",
+                    "plan",
+                    "build",
+                ),
+            )
+
+        if rollback_provider is not None:
+            self._validate_component(
+                rollback_provider,
+                "rollback_provider",
+                (
+                    "plan",
+                    "create",
+                ),
+            )
+
+        self._state_provider = state_provider
+        self._prediction_provider = prediction_provider
+        self._policy_provider = policy_provider
+        self._decision_provider = decision_provider
+
+        self._checkpoint_provider = checkpoint_provider
+        self._playbook_provider = playbook_provider
+        self._rollback_provider = rollback_provider
+
+        self._operations = 0
+        self._successful_operations = 0
+        self._blocked_operations = 0
+        self._failed_operations = 0
+        self._total_duration_ms = 0.0
+
+        self._last_result: Optional[
+            OrchestrationResult
+        ] = None
+
+    # ========================================================================
+    # Public API
+    # ========================================================================
+
+    def orchestrate(
+        self,
+        event: Mapping[str, Any],
+        *,
+        create_checkpoint: bool = False,
+        create_playbook: bool = False,
+        create_rollback: bool = False,
+    ) -> OrchestrationResult:
+        """
+        Execute the ADIE reasoning/planning pipeline.
+
+        The word "execute" here refers only to orchestration of software
+        components. No security action is executed.
+        """
+
+        self._validate_event(event)
+
+        if not isinstance(
+            create_checkpoint,
+            bool,
+        ):
+            raise OrchestrationValidationError(
+                "create_checkpoint must be boolean."
+            )
+
+        if not isinstance(
+            create_playbook,
+            bool,
+        ):
+            raise OrchestrationValidationError(
+                "create_playbook must be boolean."
+            )
+
+        if not isinstance(
+            create_rollback,
+            bool,
+        ):
+            raise OrchestrationValidationError(
+                "create_rollback must be boolean."
+            )
+
+        operation_id = self._build_operation_id(event)
+        started = time.perf_counter()
+        created_at = _utc_now()
+
+        self._operations += 1
+
+        completed: list[str] = []
+
+        state = None
+        prediction = None
+        policy = None
+        decision = None
+        checkpoint = None
+        playbook = None
+        rollback = None
+
+        try:
+            # --------------------------------------------------------------
+            # STATE
+            # --------------------------------------------------------------
+
+            state = self._collect_state(event)
+
+            completed.append(
+                OrchestrationStage.STATE.value
+            )
+
+            # --------------------------------------------------------------
+            # PREDICTION
+            # --------------------------------------------------------------
+
+            prediction = self._predict(
+                state,
+                event,
+            )
+
+            completed.append(
+                OrchestrationStage.PREDICTION.value
+            )
+
+            # --------------------------------------------------------------
+            # POLICY
+            # --------------------------------------------------------------
+
+            policy = self._evaluate_policy(
+                state,
+                prediction,
+                event,
+            )
+
+            completed.append(
+                OrchestrationStage.POLICY.value
+            )
+
+            # --------------------------------------------------------------
+            # DECISION
+            # --------------------------------------------------------------
+
+            decision = self._make_decision(
+                state,
+                prediction,
+                policy,
+                event,
+            )
+
+            completed.append(
+                OrchestrationStage.DECISION.value
+            )
+
+            # --------------------------------------------------------------
+            # BLOCKING SEMANTICS
+            # --------------------------------------------------------------
+
+            if _is_policy_blocked(policy):
+                status = OrchestrationStatus.BLOCKED
+                self._blocked_operations += 1
+
+            else:
+                status = OrchestrationStatus.COMPLETED
+
+            # --------------------------------------------------------------
+            # CHECKPOINT
+            # --------------------------------------------------------------
+
+            if (
+                create_checkpoint
+                and self._checkpoint_provider is not None
+                and status != OrchestrationStatus.BLOCKED
+            ):
+                checkpoint = self._create_checkpoint(
+                    state,
+                    operation_id,
+                )
+
+                completed.append(
+                    OrchestrationStage.CHECKPOINT.value
+                )
+
+            # --------------------------------------------------------------
+            # PLAYBOOK
+            # --------------------------------------------------------------
+
+            if (
+                create_playbook
+                and self._playbook_provider is not None
+                and status != OrchestrationStatus.BLOCKED
+            ):
+                playbook = self._create_playbook(
+                    decision,
+                    state,
+                    prediction,
+                    operation_id,
+                )
+
+                completed.append(
+                    OrchestrationStage.PLAYBOOK.value
+                )
+
+            # --------------------------------------------------------------
+            # ROLLBACK
+            # --------------------------------------------------------------
+
+            if (
+                create_rollback
+                and self._rollback_provider is not None
+                and status != OrchestrationStatus.BLOCKED
+            ):
+                rollback = self._create_rollback(
+                    decision,
+                    checkpoint,
+                    operation_id,
+                )
+
+                completed.append(
+                    OrchestrationStage.ROLLBACK.value
+                )
+
+            completed_at = _utc_now()
+            duration_ms = _duration_ms(started)
+
+            result = OrchestrationResult(
+                operation_id=operation_id,
+                status=status,
+                state=_safe_serialize(state),
+                prediction=_safe_serialize(prediction),
+                policy=_safe_serialize(policy),
+                decision=_safe_serialize(decision),
+                checkpoint=_safe_serialize(checkpoint),
+                playbook=_safe_serialize(playbook),
+                rollback=_safe_serialize(rollback),
+                stages_completed=tuple(completed),
+                created_at=created_at,
+                completed_at=completed_at,
+                duration_ms=duration_ms,
+                executes_security_actions=False,
+                destructive_actions_allowed=False,
+            )
+
+            result = _rebuild_with_fingerprint(result)
+
+            self._record_success(result)
+
+            return result
+
+        except OrchestrationError as exc:
+            duration_ms = _duration_ms(started)
+
+            failed_stage = self._infer_failed_stage(
+                completed
+            )
+
+            result = OrchestrationResult(
+                operation_id=operation_id,
+                status=OrchestrationStatus.FAILED,
+                state=_safe_serialize(state),
+                prediction=_safe_serialize(prediction),
+                policy=_safe_serialize(policy),
+                decision=_safe_serialize(decision),
+                checkpoint=_safe_serialize(checkpoint),
+                playbook=_safe_serialize(playbook),
+                rollback=_safe_serialize(rollback),
+                stages_completed=tuple(completed),
+                failed_stage=failed_stage,
+                created_at=created_at,
+                completed_at=_utc_now(),
+                duration_ms=duration_ms,
+                error=_safe_error(exc),
+                executes_security_actions=False,
+                destructive_actions_allowed=False,
+            )
+
+            result = _rebuild_with_fingerprint(result)
+
+            self._record_failure(result)
+
+            return result
+
+        except Exception as exc:
+            duration_ms = _duration_ms(started)
+
+            failed_stage = self._infer_failed_stage(
+                completed
+            )
+
+            result = OrchestrationResult(
+                operation_id=operation_id,
+                status=OrchestrationStatus.FAILED,
+                state=_safe_serialize(state),
+                prediction=_safe_serialize(prediction),
+                policy=_safe_serialize(policy),
+                decision=_safe_serialize(decision),
+                checkpoint=_safe_serialize(checkpoint),
+                playbook=_safe_serialize(playbook),
+                rollback=_safe_serialize(rollback),
+                stages_completed=tuple(completed),
+                failed_stage=failed_stage,
+                created_at=created_at,
+                completed_at=_utc_now(),
+                duration_ms=duration_ms,
+                error=_safe_error(exc),
+                executes_security_actions=False,
+                destructive_actions_allowed=False,
+            )
+
+            result = _rebuild_with_fingerprint(result)
+
+            self._record_failure(result)
+
+            return result
+
+    # ========================================================================
+    # Convenience APIs
+    # ========================================================================
+
+    def process(
+        self,
+        event: Mapping[str, Any],
+    ) -> OrchestrationResult:
+        """
+        Run the default reasoning pipeline.
+
+        Optional planning components are not automatically invoked.
+        """
+
+        return self.orchestrate(event)
+
+    def plan(
+        self,
+        event: Mapping[str, Any],
+    ) -> OrchestrationResult:
+        """
+        Run the complete control-plane planning pipeline.
+
+        This creates checkpoint/playbook/rollback plans when the
+        corresponding providers are configured.
+
+        No security action is executed.
+        """
+
+        return self.orchestrate(
+            event,
+            create_checkpoint=(
+                self._checkpoint_provider is not None
+            ),
+            create_playbook=(
+                self._playbook_provider is not None
+            ),
+            create_rollback=(
+                self._rollback_provider is not None
+            ),
+        )
+
+    def status(self) -> dict[str, Any]:
+        """Return operational metadata without performing security actions."""
+
+        total = (
+            self._successful_operations
+            + self._blocked_operations
+            + self._failed_operations
+        )
+
+        success_rate = (
+            round(
+                self._successful_operations / total,
+                4,
+            )
+            if total
+            else 0.0
+        )
+
+        return {
+            "module": MODULE_NAME,
+            "version": self.VERSION,
+            "operations": self._operations,
+            "successful_operations": (
+                self._successful_operations
+            ),
+            "blocked_operations": (
+                self._blocked_operations
+            ),
+            "failed_operations": (
+                self._failed_operations
+            ),
+            "success_rate": success_rate,
+            "average_duration_ms": (
+                round(
+                    self._total_duration_ms / total,
+                    3,
+                )
+                if total
+                else 0.0
+            ),
+            "last_operation_id": (
+                self._last_result.operation_id
+                if self._last_result
+                else None
+            ),
+            "planning_only": True,
+            "executes_security_actions": False,
+            "destructive_actions_allowed": False,
+            "providers": {
+                "state": True,
+                "prediction": True,
+                "policy": True,
+                "decision": True,
+                "checkpoint": (
+                    self._checkpoint_provider is not None
+                ),
+                "playbook": (
+                    self._playbook_provider is not None
+                ),
+                "rollback": (
+                    self._rollback_provider is not None
+                ),
+            },
+        }
+
+    def health_check(self) -> dict[str, Any]:
+        """Return a lightweight health report."""
+
+        providers = {
+            "state": self._component_has_any_method(
+                self._state_provider,
+                (
+                    "get_status",
+                    "collect",
+                    "to_dict",
+                ),
+            ),
+            "prediction": self._component_has_any_method(
+                self._prediction_provider,
+                ("predict",),
+            ),
+            "policy": self._component_has_any_method(
+                self._policy_provider,
+                ("evaluate",),
+            ),
+            "decision": self._component_has_any_method(
+                self._decision_provider,
+                ("decide",),
+            ),
+        }
+
+        healthy = all(
+            providers.values()
+        )
+
+        return {
+            "healthy": healthy,
+            "module": MODULE_NAME,
+            "version": self.VERSION,
+            "components": providers,
+            "optional_components": {
+                "checkpoint": (
+                    self._checkpoint_provider is not None
+                ),
+                "playbook": (
+                    self._playbook_provider is not None
+                ),
+                "rollback": (
+                    self._rollback_provider is not None
+                ),
+            },
+            "planning_only": True,
+            "executes_security_actions": False,
+            "destructive_actions_allowed": False,
+        }
+
+    def last_result(self) -> Optional[OrchestrationResult]:
+        """Return the last orchestration result."""
+
+        return self._last_result
+
+    # ========================================================================
+    # Pipeline adapters
+    # ========================================================================
+
+    def _collect_state(
+        self,
+        event: Mapping[str, Any],
+    ) -> Any:
+        provider = self._state_provider
+
+        try:
+            if callable(
+                getattr(provider, "collect", None)
+            ):
+                result = provider.collect(
+                    dict(event)
+                )
+
+            elif callable(
+                getattr(provider, "get_status", None)
+            ):
+                result = provider.get_status()
+
+            elif callable(
+                getattr(provider, "to_dict", None)
+            ):
+                result = provider.to_dict()
+
+            else:
+                raise OrchestrationContractError(
+                    "State provider has no supported method."
+                )
+
+        except OrchestrationError:
+            raise
+
+        except Exception as exc:
+            raise OrchestrationComponentError(
+                "State collection failed."
+            ) from exc
+
+        if result is None:
+            raise OrchestrationContractError(
+                "State provider returned None."
+            )
+
+        return _attach_event(
+            result,
+            event,
+        )
+
+    def _predict(
+        self,
+        state: Any,
+        event: Mapping[str, Any],
+    ) -> Any:
+        provider = self._prediction_provider
+
+        method = getattr(
+            provider,
+            "predict",
+            None,
+        )
+
+        if not callable(method):
+            raise OrchestrationContractError(
+                "Prediction provider does not implement predict()."
+            )
+
+        candidates = (
+            (state,),
+            (_safe_to_dict(state),),
+            (_safe_to_dict(state), dict(event)),
+        )
+
+        return self._invoke_candidates(
+            method,
+            candidates,
+            "Prediction",
+        )
+
+    def _evaluate_policy(
+        self,
+        state: Any,
+        prediction: Any,
+        event: Mapping[str, Any],
+    ) -> Any:
+        provider = self._policy_provider
+
+        method = getattr(
+            provider,
+            "evaluate",
+            None,
+        )
+
+        if not callable(method):
+            raise OrchestrationContractError(
+                "Policy provider does not implement evaluate()."
+            )
+
+        candidates = (
+            (prediction,),
+            (_safe_to_dict(prediction),),
+            (
+                _safe_to_dict(prediction),
+                _safe_to_dict(state),
+            ),
+            (
+                _safe_to_dict(prediction),
+                _safe_to_dict(state),
+                dict(event),
+            ),
+        )
+
+        return self._invoke_candidates(
+            method,
+            candidates,
+            "Policy evaluation",
+        )
+
+    def _make_decision(
+        self,
+        state: Any,
+        prediction: Any,
+        policy: Any,
+        event: Mapping[str, Any],
+    ) -> Any:
+        provider = self._decision_provider
+
+        method = getattr(
+            provider,
+            "decide",
+            None,
+        )
+
+        if not callable(method):
+            raise OrchestrationContractError(
+                "Decision provider does not implement decide()."
+            )
+
+        candidates = (
+            (
+                prediction,
+                policy,
+            ),
+            (
+                _safe_to_dict(prediction),
+                _safe_to_dict(policy),
+            ),
+            (
+                _safe_to_dict(prediction),
+                _safe_to_dict(policy),
+                _safe_to_dict(state),
+            ),
+            (
+                _safe_to_dict(prediction),
+                _safe_to_dict(policy),
+                _safe_to_dict(state),
+                dict(event),
+            ),
+        )
+
+        return self._invoke_candidates(
+            method,
+            candidates,
+            "Decision generation",
+        )
+
+    def _create_checkpoint(
+        self,
+        state: Any,
+        operation_id: str,
+    ) -> Any:
+        provider = self._checkpoint_provider
+
+        if provider is None:
+            raise OrchestrationComponentError(
+                "Checkpoint provider is not configured."
+            )
+
+        metadata = {
+            "operation_id": operation_id,
+            "source": MODULE_NAME,
+            "purpose": "adie_planning",
+        }
+
+        candidates = []
+
+        method = getattr(
+            provider,
+            "create_checkpoint",
+            None,
+        )
+
+        if callable(method):
+            candidates.extend(
+                (
+                    (
+                        state,
+                        metadata,
+                    ),
+                    (
+                        _safe_to_dict(state),
+                        metadata,
+                    ),
+                )
+            )
+
+        method = getattr(
+            provider,
+            "create",
+            None,
+        )
+
+        if callable(method):
+            candidates.extend(
+                (
+                    (
+                        state,
+                    ),
+                    (
+                        _safe_to_dict(state),
+                    ),
+                )
+            )
+
+        if not candidates:
+            raise OrchestrationContractError(
+                "Checkpoint provider has no supported method."
+            )
+
+        return self._invoke_candidates(
+            candidates=candidates,
+            method_name="Checkpoint planning",
+            methods=None,
+        )
+
+    def _create_playbook(
+        self,
+        decision: Any,
+        state: Any,
+        prediction: Any,
+        operation_id: str,
+    ) -> Any:
+        provider = self._playbook_provider
+
+        if provider is None:
+            raise OrchestrationComponentError(
+                "Playbook provider is not configured."
+            )
+
+        decision_data = _safe_to_dict(decision)
+        state_data = _safe_to_dict(state)
+        prediction_data = _safe_to_dict(prediction)
+
+        candidates = []
+
+        method = getattr(
+            provider,
+            "create",
+            None,
+        )
+
+        if callable(method):
+            candidates.extend(
+                (
+                    (
+                        decision_data,
+                    ),
+                    (
+                        decision_data,
+                        operation_id,
+                    ),
+                    (
+                        decision_data,
+                        operation_id,
+                        state_data,
+                    ),
+                )
+            )
+
+            decision_id = _extract_id(
+                decision,
+                (
+                    "decision_id",
+                    "id",
+                ),
+            )
+
+            state_id = _extract_id(
+                state,
+                (
+                    "state_id",
+                    "id",
+                ),
+            )
+
+            if decision_id:
+                candidates.append(
+                    (
+                        decision_data,
+                        decision_id,
+                    )
+                )
+
+            if (
+                decision_id
+                and state_id
+            ):
+                candidates.append(
+                    (
+                        decision_data,
+                        decision_id,
+                        state_id,
+                    )
+                )
+
+        method = getattr(
+            provider,
+            "plan",
+            None,
+        )
+
+        if callable(method):
+            candidates.extend(
+                (
+                    (
+                        decision,
+                        state,
+                        prediction,
+                    ),
+                    (
+                        decision_data,
+                        state_data,
+                        prediction_data,
+                    ),
+                    (
+                        decision_data,
+                    ),
+                )
+            )
+
+        method = getattr(
+            provider,
+            "build",
+            None,
+        )
+
+        if callable(method):
+            candidates.extend(
+                (
+                    (decision,),
+                    (decision_data,),
+                )
+            )
+
+        if not candidates:
+            raise OrchestrationContractError(
+                "Playbook provider has no supported method."
+            )
+
+        return self._invoke_candidates(
+            candidates=candidates,
+            method_name="Playbook planning",
+            methods=None,
+        )
+
+    def _create_rollback(
+        self,
+        decision: Any,
+        checkpoint: Any,
+        operation_id: str,
+    ) -> Any:
+        provider = self._rollback_provider
+
+        if provider is None:
+            raise OrchestrationComponentError(
+                "Rollback provider is not configured."
+            )
+
+        request = {
+            "operation_id": operation_id,
+            "decision": _safe_to_dict(decision),
+            "checkpoint": _safe_to_dict(checkpoint),
+            "source": MODULE_NAME,
+        }
+
+        candidates = [
+            (request,),
+            (
+                _safe_to_dict(decision),
+                _safe_to_dict(checkpoint),
+            ),
+            (
+                decision,
+                checkpoint,
+            ),
+        ]
+
+        method = getattr(
+            provider,
+            "plan",
+            None,
+        )
+
+        if not callable(method):
+            method = getattr(
+                provider,
+                "create",
+                None,
+            )
+
+        if not callable(method):
+            raise OrchestrationContractError(
+                "Rollback provider has no supported method."
+            )
+
+        return self._invoke_candidates(
+            method,
+            candidates,
+            "Rollback planning",
+        )
+
+    # ========================================================================
+    # Invocation helpers
+    # ========================================================================
+
+    @staticmethod
+    def _invoke_candidates(
+        method: Any = None,
+        candidates: tuple = (),
+        method_name: str = "Component",
+        methods: Any = None,
+    ) -> Any:
+        """
+        Try compatible method signatures without hiding genuine failures.
+
+        Important:
+        TypeError is treated as a signature compatibility signal only when
+        the candidate invocation itself cannot accept the arguments.
+
+        Component exceptions are normalized and returned as a controlled
+        orchestration failure.
+        """
+
+        if method is None:
+            # This path is used by checkpoint/playbook helpers where
+            # candidate methods were assembled separately.
+            raise OrchestrationContractError(
+                f"{method_name} method is unavailable."
+            )
+
+        last_type_error: Optional[TypeError] = None
+
+        for args in candidates:
+            try:
+                result = method(*args)
+
+                if result is None:
+                    raise OrchestrationContractError(
+                        f"{method_name} returned None."
+                    )
+
+                return result
+
+            except TypeError as exc:
+                last_type_error = exc
+                continue
+
+            except OrchestrationError:
+                raise
+
+            except Exception as exc:
+                raise OrchestrationComponentError(
+                    f"{method_name} failed."
+                ) from exc
+
+        if last_type_error is not None:
+            raise OrchestrationContractError(
+                f"{method_name} provider does not match a supported "
+                "interface."
+            ) from last_type_error
+
+        raise OrchestrationContractError(
+            f"{method_name} returned no result."
+        )
+
+    # ========================================================================
+    # Statistics
+    # ========================================================================
+
+    def _record_success(
+        self,
+        result: OrchestrationResult,
+    ) -> None:
+        self._successful_operations += 1
+        self._total_duration_ms += result.duration_ms
+        self._last_result = result
+
+    def _record_failure(
+        self,
+        result: OrchestrationResult,
+    ) -> None:
+        self._failed_operations += 1
+        self._total_duration_ms += result.duration_ms
+        self._last_result = result
+
+    # ========================================================================
+    # Validation
+    # ========================================================================
+
+    @staticmethod
+    def _validate_event(
+        event: Mapping[str, Any],
+    ) -> None:
+        if not isinstance(
+            event,
+            Mapping,
+        ):
+            raise OrchestrationValidationError(
+                "event must be a mapping."
+            )
+
+        if not event:
+            raise OrchestrationValidationError(
+                "event must not be empty."
+            )
+
+    @staticmethod
+    def _validate_component(
+        component: Any,
+        name: str,
+        supported_methods: tuple[str, ...],
+    ) -> None:
+        if component is None:
+            raise OrchestrationValidationError(
+                f"{name} is required."
+            )
+
+        if not any(
+            callable(
+                getattr(
+                    component,
+                    method,
+                    None,
+                )
+            )
+            for method in supported_methods
+        ):
+            methods = ", ".join(
+                f"{method}()"
+                for method in supported_methods
+            )
+
+            raise OrchestrationValidationError(
+                f"{name} must provide one of: {methods}."
+            )
+
+    @staticmethod
+    def _component_has_any_method(
+        component: Any,
+        methods: tuple[str, ...],
+    ) -> bool:
+        return any(
+            callable(
+                getattr(
+                    component,
+                    method,
+                    None,
+                )
+            )
+            for method in methods
+        )
+
+    # ========================================================================
+    # Identity / diagnostics
+    # ========================================================================
+
+    @staticmethod
+    def _build_operation_id(
+        event: Mapping[str, Any],
+    ) -> str:
+        """
+        Generate deterministic operation identity from canonical event data.
+
+        A timestamp is intentionally excluded so identical events produce
+        the same operation identity.
+        """
+
+        canonical = json.dumps(
+            _safe_serialize(dict(event)),
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            default=str,
+        )
+
+        digest = hashlib.sha256(
+            canonical.encode("utf-8")
+        ).hexdigest()
+
+        return f"adie-{digest[:24]}"
+
+    @staticmethod
+    def _infer_failed_stage(
+        completed: list[str],
+    ) -> Optional[str]:
+        ordered = [
+            OrchestrationStage.STATE.value,
+            OrchestrationStage.PREDICTION.value,
+            OrchestrationStage.POLICY.value,
+            OrchestrationStage.DECISION.value,
+            OrchestrationStage.CHECKPOINT.value,
+            OrchestrationStage.PLAYBOOK.value,
+            OrchestrationStage.ROLLBACK.value,
+        ]
+
+        for stage in ordered:
+            if stage not in completed:
+                return stage
+
+        return None
+
+
+# ============================================================================
+# Utility functions
+# ============================================================================
+
+
+def _utc_now() -> str:
+    return datetime.now(
+        timezone.utc
+    ).isoformat()
+
+
+def _duration_ms(
+    started: float,
+) -> float:
+    return round(
+        max(
+            0.0,
+            (
+                time.perf_counter()
+                - started
+            )
+            * 1000.0,
+        ),
+        3,
+    )
+
+
+def _extract_id(
+    value: Any,
+    names: tuple[str, ...],
+) -> Optional[str]:
+    if value is None:
+        return None
+
+    if isinstance(value, Mapping):
+        for name in names:
+            candidate = value.get(name)
+            if candidate:
+                return str(candidate)
+
+    for name in names:
+        candidate = getattr(
+            value,
+            name,
+            None,
+        )
+
+        if candidate:
+            return str(candidate)
+
+    return None
+
+
+def _attach_event(
+    state: Any,
+    event: Mapping[str, Any],
+) -> Any:
+    """
+    Preserve event lineage without overwriting canonical state fields.
+    """
+
+    if isinstance(state, Mapping):
+        result = dict(state)
+
+        result.setdefault(
+            "event",
+            dict(event),
+        )
+
+        return result
+
+    return {
+        "state": _safe_serialize(state),
+        "event": dict(event),
+    }
+
+
+def _safe_to_dict(
+    value: Any,
+) -> Any:
+    """
+    Convert common ADIE objects into serializable structures.
+    """
+
+    if value is None:
+        return None
+
+    if isinstance(
+        value,
+        Mapping,
+    ):
+        return {
+            str(key): _safe_serialize(item)
+            for key, item in value.items()
+        }
+
+    to_dict = getattr(
+        value,
+        "to_dict",
+        None,
+    )
+
+    if callable(to_dict):
+        try:
+            return _safe_serialize(
+                to_dict()
+            )
+        except Exception:
+            pass
+
+    if hasattr(
+        value,
+        "__dict__",
+    ):
+        try:
+            return _safe_serialize(
+                dict(value.__dict__)
+            )
+        except Exception:
+            pass
+
+    return _safe_serialize(value)
+
+
+def _safe_serialize(
+    value: Any,
+) -> Any:
+    """
+    Recursively normalize common ADIE data into JSON-safe structures.
+    """
+
+    if value is None:
+        return None
+
+    if isinstance(
+        value,
+        Enum,
+    ):
+        return value.value
+
+    if isinstance(
+        value,
+        Mapping,
+    ):
+        return {
+            str(key): _safe_serialize(item)
+            for key, item in value.items()
+        }
+
+    if isinstance(
+        value,
+        (list, tuple),
+    ):
+        return [
+            _safe_serialize(item)
+            for item in value
+        ]
+
+    if isinstance(
+        value,
+        (str, int, float, bool),
+    ):
+        return value
+
+    if hasattr(
+        value,
+        "to_dict",
+    ):
+        try:
+            return _safe_serialize(
+                value.to_dict()
+            )
+        except Exception:
+            return {
+                "type": type(value).__name__,
+            }
+
+    if hasattr(
+        value,
+        "__dict__",
+    ):
+        return {
+            "type": type(value).__name__,
+        }
+
+    return str(value)
+
+
+def _safe_error(
+    exc: Exception,
+) -> str:
+    """
+    Prevent arbitrary exception details from leaking into orchestration
+    results.
+
+    Exception type is retained for diagnostics.
+    """
+
+    return (
+        f"{type(exc).__name__}: "
+        "orchestration stage failed."
+    )
+
+
+def _is_policy_blocked(
+    policy: Any,
+) -> bool:
+    """
+    Detect explicit policy denial.
+
+    The function intentionally requires an explicit false/blocked signal;
+    absence of such a signal is not treated as a denial.
+    """
+
+    data = _safe_to_dict(policy)
+
+    if not isinstance(
+        data,
+        Mapping,
+    ):
+        return False
+
+    if data.get("blocked") is True:
+        return True
+
+    if data.get("allowed") is False:
+        return True
+
+    if data.get("authorized") is False:
+        return True
+
+    status = str(
+        data.get(
+            "status",
+            "",
+        )
+    ).lower()
+
+    if status in {
+        "blocked",
+        "denied",
+        "rejected",
+    }:
+        return True
+
+    return False
+
+
+def _fingerprint_result(
+    result: OrchestrationResult,
+) -> str:
+    """
+    Generate a SHA-256 integrity fingerprint for the result.
+
+    This fingerprint provides integrity detection only.
+    It does NOT prove authenticity.
+    """
+
+    material = {
+        "operation_id": result.operation_id,
+        "status": result.status.value,
+        "state": _safe_serialize(result.state),
+        "prediction": _safe_serialize(result.prediction),
+        "policy": _safe_serialize(result.policy),
+        "decision": _safe_serialize(result.decision),
+        "checkpoint": _safe_serialize(result.checkpoint),
+        "playbook": _safe_serialize(result.playbook),
+        "rollback": _safe_serialize(result.rollback),
+        "stages_completed": list(
+            result.stages_completed
+        ),
+        "failed_stage": result.failed_stage,
+        "created_at": result.created_at,
+        "completed_at": result.completed_at,
+        "duration_ms": result.duration_ms,
+        "error": result.error,
+        "executes_security_actions": (
+            result.executes_security_actions
+        ),
+        "destructive_actions_allowed": (
+            result.destructive_actions_allowed
+        ),
+    }
+
+    encoded = json.dumps(
+        material,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        default=str,
+    )
+
+    return hashlib.sha256(
+        encoded.encode("utf-8")
+    ).hexdigest()
+
+
+def _rebuild_with_fingerprint(
+    result: OrchestrationResult,
+) -> OrchestrationResult:
+    """
+    Rebuild immutable result after all fields are known.
+    """
+
+    fingerprint = _fingerprint_result(
+        result
+    )
+
+    return OrchestrationResult(
+        operation_id=result.operation_id,
+        status=result.status,
+        state=result.state,
+        prediction=result.prediction,
+        policy=result.policy,
+        decision=result.decision,
+        checkpoint=result.checkpoint,
+        playbook=result.playbook,
+        rollback=result.rollback,
+        stages_completed=result.stages_completed,
+        failed_stage=result.failed_stage,
+        created_at=result.created_at,
+        completed_at=result.completed_at,
+        duration_ms=result.duration_ms,
+        error=result.error,
+        executes_security_actions=False,
+        destructive_actions_allowed=False,
+        fingerprint=fingerprint,
+    )
+
+
+# ============================================================================
+# Self-test providers
+# ============================================================================
+
+
+class _TestState:
+    def get_status(self) -> Mapping[str, Any]:
+        return {
+            "state_id": "state-test-001",
+            "system": "test",
+            "state_version": "1.1",
+        }
+
+
+class _TestPrediction:
+    def predict(
+        self,
+        state: Mapping[str, Any],
+    ) -> Mapping[str, Any]:
+        return {
+            "prediction_id": "prediction-test-001",
+            "predicted_class": "threat",
+            "threat_probability": 0.91,
+            "benign_probability": 0.09,
+        }
+
+
+class _TestPolicy:
+    def evaluate(
+        self,
+        prediction: Any,
+    ) -> Mapping[str, Any]:
+        return {
+            "policy_id": "policy-test-001",
+            "allowed": True,
+            "risk_level": "high",
+        }
+
+
+class _TestDecision:
+    def decide(
+        self,
+        prediction: Any,
+        policy: Any,
+    ) -> Mapping[str, Any]:
+        return {
+            "decision_id": "decision-test-001",
+            "action": "alert",
+            "risk_level": "high",
+            "authorized": True,
+        }
+
+
+class _TestCheckpoint:
+    def create(
+        self,
+        state: Mapping[str, Any],
+    ) -> Mapping[str, Any]:
+        return {
+            "checkpoint_id": "checkpoint-test-001",
+            "created": True,
+        }
+
+
+class _TestPlaybook:
+    def create(
+        self,
+        decision: Any,
+    ) -> Mapping[str, Any]:
+        return {
+            "playbook_id": "playbook-test-001",
+            "planned": True,
+        }
+
+
+class _TestRollback:
+    def plan(
+        self,
+        request: Any,
+    ) -> Mapping[str, Any]:
+        return {
+            "rollback_id": "rollback-test-001",
+            "planned": True,
+        }
+
+
+class _BlockedPolicy:
+    def evaluate(
+        self,
+        prediction: Any,
+    ) -> Mapping[str, Any]:
+        return {
+            "policy_id": "policy-blocked",
+            "allowed": False,
+            "risk_level": "critical",
+            "status": "blocked",
+        }
+
+
+class _FailingPrediction:
+    def predict(
+        self,
+        state: Mapping[str, Any],
+    ) -> Any:
+        raise RuntimeError(
+            "internal test failure"
+        )
+
+
+# ============================================================================
+# Self-test
+# ============================================================================
+
+
+def self_test() -> dict[str, Any]:
+    """
+    Run deterministic structural and end-to-end orchestrator tests.
+
+    No security action is executed.
+    """
+
+    tests = {
+        "metadata_contract": False,
+        "provider_validation": False,
+        "event_validation": False,
+        "state_collection": False,
+        "prediction_stage": False,
+        "policy_stage": False,
+        "decision_stage": False,
+        "checkpoint_planning": False,
+        "playbook_planning": False,
+        "rollback_planning": False,
+        "immutable_result": False,
+        "operation_identity": False,
+        "fingerprint_contract": False,
+        "blocked_policy": False,
+        "failure_isolation": False,
+        "status_contract": False,
+        "health_contract": False,
+        "execution_safety": False,
+        "destructive_action_block": False,
+        "json_export": False,
+    }
+
+    try:
+        # --------------------------------------------------------------------
+        # Metadata
+        # --------------------------------------------------------------------
+
+        tests["metadata_contract"] = (
+            ORCHESTRATOR_VERSION == "1.1.0"
+            and MODULE_NAME == "adie.orchestrator"
+        )
+
+        # --------------------------------------------------------------------
+        # Validation
+        # --------------------------------------------------------------------
+
+        try:
+            ADIEOrchestrator(
+                None,
+                _TestPrediction(),
+                _TestPolicy(),
+                _TestDecision(),
+            )
+        except OrchestrationValidationError:
+            tests["provider_validation"] = True
+
+        try:
+            ADIEOrchestrator._validate_event({})
+        except OrchestrationValidationError:
+            tests["event_validation"] = True
+
+        # --------------------------------------------------------------------
+        # Full pipeline
+        # --------------------------------------------------------------------
+
+        orchestrator = ADIEOrchestrator(
+            _TestState(),
+            _TestPrediction(),
+            _TestPolicy(),
+            _TestDecision(),
+            checkpoint_provider=_TestCheckpoint(),
+            playbook_provider=_TestPlaybook(),
+            rollback_provider=_TestRollback(),
+        )
+
+        event = {
+            "event_type": "self_test",
+            "source": "adie.orchestrator",
+            "value": 1,
+        }
+
+        result = orchestrator.orchestrate(
+            event,
+            create_checkpoint=True,
+            create_playbook=True,
+            create_rollback=True,
+        )
+
+        tests["state_collection"] = (
+            result.state is not None
+            and isinstance(
+                result.state,
+                Mapping,
+            )
+            and "state_id" in result.state
+        )
+
+        tests["prediction_stage"] = (
+            isinstance(
+                result.prediction,
+                Mapping,
+            )
+            and result.prediction.get(
+                "predicted_class"
+            ) == "threat"
+        )
+
+        tests["policy_stage"] = (
+            isinstance(
+                result.policy,
+                Mapping,
+            )
+            and result.policy.get(
+                "allowed"
+            ) is True
+        )
+
+        tests["decision_stage"] = (
+            isinstance(
+                result.decision,
+                Mapping,
+            )
+            and result.decision.get(
+                "action"
+            ) == "alert"
+        )
+
+        tests["checkpoint_planning"] = (
+            isinstance(
+                result.checkpoint,
+                Mapping,
+            )
+            and result.checkpoint.get(
+                "created"
+            ) is True
+        )
+
+        tests["playbook_planning"] = (
+            isinstance(
+                result.playbook,
+                Mapping,
+            )
+            and result.playbook.get(
+                "planned"
+            ) is True
+        )
+
+        tests["rollback_planning"] = (
+            isinstance(
+                result.rollback,
+                Mapping,
+            )
+            and result.rollback.get(
+                "planned"
+            ) is True
+        )
+
+        # --------------------------------------------------------------------
+        # Immutability
+        # --------------------------------------------------------------------
+
+        try:
+            result.status = (
+                OrchestrationStatus.FAILED
+            )
+            tests["immutable_result"] = False
+
+        except (
+            TypeError,
+            AttributeError,
+        ):
+            tests["immutable_result"] = True
+
+        # --------------------------------------------------------------------
+        # Deterministic identity
+        # --------------------------------------------------------------------
+
+        second = orchestrator.orchestrate(
+            event,
+        )
+
+        tests["operation_identity"] = (
+            result.operation_id
+            == second.operation_id
+        )
+
+        # --------------------------------------------------------------------
+        # Fingerprint
+        # --------------------------------------------------------------------
+
+        tests["fingerprint_contract"] = (
+            isinstance(
+                result.fingerprint,
+                str,
+            )
+            and len(
+                result.fingerprint
+            ) == 64
+        )
+
+        # --------------------------------------------------------------------
+        # Blocked policy
+        # --------------------------------------------------------------------
+
+        blocked_orchestrator = ADIEOrchestrator(
+            _TestState(),
+            _TestPrediction(),
+            _BlockedPolicy(),
+            _TestDecision(),
+            checkpoint_provider=_TestCheckpoint(),
+            playbook_provider=_TestPlaybook(),
+            rollback_provider=_TestRollback(),
+        )
+
+        blocked = blocked_orchestrator.orchestrate(
+            event,
+            create_checkpoint=True,
+            create_playbook=True,
+            create_rollback=True,
+        )
+
+        tests["blocked_policy"] = (
+            blocked.status
+            == OrchestrationStatus.BLOCKED
+            and blocked.checkpoint is None
+            and blocked.playbook is None
+            and blocked.rollback is None
+        )
+
+        # --------------------------------------------------------------------
+        # Failure isolation
+        # --------------------------------------------------------------------
+
+        failing = ADIEOrchestrator(
+            _TestState(),
+            _FailingPrediction(),
+            _TestPolicy(),
+            _TestDecision(),
+        )
+
+        failure = failing.orchestrate(
+            event
+        )
+
+        tests["failure_isolation"] = (
+            failure.status
+            == OrchestrationStatus.FAILED
+            and failure.failed_stage
+            == OrchestrationStage.POLICY.value
+            and failure.error is not None
+            and "internal test failure"
+            not in failure.error
+        )
+
+        # --------------------------------------------------------------------
+        # Status / health
+        # --------------------------------------------------------------------
+
+        status = orchestrator.status()
+
+        tests["status_contract"] = (
+            status["module"]
+            == MODULE_NAME
+            and status["version"]
+            == ORCHESTRATOR_VERSION
+            and status[
+                "executes_security_actions"
+            ] is False
+            and status[
+                "destructive_actions_allowed"
+            ] is False
+        )
+
+        health = orchestrator.health_check()
+
+        tests["health_contract"] = (
+            health["healthy"] is True
+            and health["planning_only"] is True
+        )
+
+        # --------------------------------------------------------------------
+        # Security boundary
+        # --------------------------------------------------------------------
+
+        tests["execution_safety"] = (
+            EXECUTES_SECURITY_ACTIONS is False
+            and orchestrator.executes_security_actions is False
+            and result.executes_security_actions is False
+        )
+
+        tests["destructive_action_block"] = (
+            DESTRUCTIVE_ACTIONS_ALLOWED is False
+            and orchestrator.destructive_actions_allowed is False
+            and result.destructive_actions_allowed is False
+        )
+
+        # --------------------------------------------------------------------
+        # JSON serialization
+        # --------------------------------------------------------------------
+
+        encoded = json.dumps(
+            result.to_dict(),
+            sort_keys=True,
+            default=str,
+        )
+
+        decoded = json.loads(
+            encoded
+        )
+
+        tests["json_export"] = (
+            isinstance(
+                decoded,
+                dict,
+            )
+            and decoded.get(
+                "operation_id"
+            )
+            == result.operation_id
+            and decoded.get(
+                "fingerprint"
+            )
+            == result.fingerprint
+        )
+
+        passed = all(
+            tests.values()
+        )
+
+        return {
+            "passed": passed,
+            "module": MODULE_NAME,
+            "version": ORCHESTRATOR_VERSION,
+            "orchestration_test_passed": passed,
+            "tests": tests,
+            "executes_security_actions": False,
+            "destructive_actions_allowed": False,
+        }
+
+    except Exception as exc:
+        return {
+            "passed": False,
+            "module": MODULE_NAME,
+            "version": ORCHESTRATOR_VERSION,
+            "orchestration_test_passed": False,
+            "tests": tests,
+            "error": _safe_error(exc),
+            "executes_security_actions": False,
+            "destructive_actions_allowed": False,
+        }
+
+
+# ============================================================================
+# Module entry point
+# ============================================================================
+
+
+if __name__ == "__main__":
+    print(
+        json.dumps(
+            self_test(),
+            indent=2,
+            sort_keys=True,
+        )
+    )

@@ -1,0 +1,555 @@
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import traceback
+import uuid
+from copy import deepcopy
+from datetime import datetime, timezone
+from pathlib import Path
+
+import streamlit as st
+
+ROOT = Path(__file__).resolve().parent.parent
+ROOT_DIR = ROOT
+TOOLS_DIR = ROOT / "tools"
+ACTIVITY_LOG_PATH = TOOLS_DIR / "activity_log.json"
+ERROR_LOG_PATH = TOOLS_DIR / "errors.log"
+ERRORS_LOG_PATH = ERROR_LOG_PATH
+LATEST_CONTEXT_PATH = TOOLS_DIR / "latest_context.txt"
+REPORT_PATH = LATEST_CONTEXT_PATH
+PROTECTED_DIRS = {"adie", "intelligence"}
+EXCLUDED_DIRS = {".git", "__pycache__", "node_modules", ".venv", "venv"}
+RAG_CANDIDATES = [ROOT / "rag_system.py", TOOLS_DIR / "rag_system.py"]
+RAG_SCRIPT_CANDIDATES = RAG_CANDIDATES
+
+
+def iso_utc_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def get_utc_now_str() -> str:
+    """Return the current UTC timestamp in ISO 8601 format."""
+    return iso_utc_now()
+
+
+def ensure_tools_dir() -> None:
+    TOOLS_DIR.mkdir(exist_ok=True, parents=True)
+
+
+def stderr_warn(message: str) -> None:
+    print(f"[EnterpriseGuard] {message}", file=sys.stderr)
+
+
+def read_json_file(path: Path, default):
+    if not path.exists():
+        return deepcopy(default)
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            data = json.load(handle)
+        if isinstance(data, (list, dict)):
+            return data
+        return deepcopy(default)
+    except (json.JSONDecodeError, OSError, ValueError) as exc:
+        stderr_warn(f"Warning: corrupt or unreadable JSON file at {path}. Starting fresh. Error: {exc}")
+        return deepcopy(default)
+
+
+def write_json_file(path: Path, data) -> bool:
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=str(path.parent), delete=False) as handle:
+            json.dump(data, handle, indent=2, ensure_ascii=False)
+            temp_path = Path(handle.name)
+        os.replace(temp_path, path)
+        return True
+    except Exception as exc:
+        stderr_warn(f"Failed to write JSON file {path}: {exc}")
+        return False
+
+
+def append_to_errors_log(message: str) -> None:
+    ensure_tools_dir()
+    try:
+        with ERROR_LOG_PATH.open("a", encoding="utf-8") as handle:
+            handle.write(f"[{iso_utc_now()}] ERROR: {message}\n")
+    except Exception as exc:
+        stderr_warn(f"Failed to append to errors log: {exc}")
+
+
+def append_to_activity_log(entry: dict) -> None:
+    ensure_tools_dir()
+    try:
+        current = read_json_file(ACTIVITY_LOG_PATH, [])
+        if isinstance(current, dict):
+            entries = current.get("activities", []) if isinstance(current.get("activities"), list) else []
+            payload = {"activities": entries}
+        elif isinstance(current, list):
+            entries = current
+            payload = entries
+        else:
+            entries = []
+            payload = []
+
+        new_entry = {"id": uuid.uuid4().hex, "timestamp": iso_utc_now()}
+        if isinstance(entry, dict):
+            new_entry.update(entry)
+        if "activity_type" not in new_entry:
+            new_entry["activity_type"] = "command_center_action"
+        if "status" not in new_entry:
+            new_entry["status"] = "success"
+        if "details" not in new_entry:
+            new_entry["details"] = "n/a"
+
+        entries.append(new_entry)
+        if isinstance(payload, dict):
+            payload["activities"] = entries
+        else:
+            payload = entries
+
+        if not write_json_file(ACTIVITY_LOG_PATH, payload):
+            stderr_warn(f"Unable to persist activity log entry: {new_entry}")
+    except Exception as exc:
+        stderr_warn(f"Failed to append activity log entry: {exc}")
+        append_to_errors_log(f"Activity log write failed: {exc}")
+
+
+def read_activity_entries() -> list:
+    raw = read_json_file(ACTIVITY_LOG_PATH, [])
+    if isinstance(raw, dict):
+        entries = raw.get("activities", []) if isinstance(raw.get("activities"), list) else []
+    elif isinstance(raw, list):
+        entries = raw
+    else:
+        entries = []
+    return entries
+
+
+def get_activity_display_entries(limit: int = 50) -> list:
+    entries = read_activity_entries()
+    filtered = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("activity_type") in {"app_started", "command_center_action"}:
+            continue
+        filtered.append(entry)
+    return filtered[-limit:]
+
+
+def get_last_activity_label() -> str:
+    entries = read_activity_entries()
+    filtered = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("activity_type") in {"app_started", "command_center_action"}:
+            continue
+        filtered.append(entry)
+    if not filtered:
+        return "No activity recorded yet"
+    last = filtered[-1]
+    ts = last.get("timestamp", "unknown")
+    activity_type = last.get("activity_type", "activity")
+    details = last.get("details") or last.get("status") or "n/a"
+    return f"{ts} :: {activity_type} :: {details}"
+
+
+def get_latest_report_timestamp() -> str:
+    if not LATEST_CONTEXT_PATH.exists():
+        return "Never"
+    try:
+        text = LATEST_CONTEXT_PATH.read_text(encoding="utf-8")
+    except Exception as exc:
+        stderr_warn(f"Unable to read report file: {exc}")
+        return "Never"
+    marker = "Architectural Context Report — Generated at: "
+    if marker in text:
+        remainder = text.split(marker, 1)[1].splitlines()[0].strip()
+        return remainder or "Never"
+    return "Unknown report timestamp"
+
+
+def count_project_files_and_lines(root: Path) -> tuple[int, int]:
+    file_count = 0
+    total_lines = 0
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [
+            d for d in dirnames
+            if d not in EXCLUDED_DIRS
+            and not d.startswith(".")
+            and d not in PROTECTED_DIRS
+            and not any(part in PROTECTED_DIRS for part in Path(dirpath).joinpath(d).parts)
+        ]
+        for filename in filenames:
+            if filename.startswith("."):
+                continue
+            file_path = Path(dirpath) / filename
+            if file_path.is_dir():
+                continue
+            try:
+                file_count += 1
+                with file_path.open("r", encoding="utf-8", errors="ignore") as handle:
+                    total_lines += sum(1 for _ in handle)
+            except Exception:
+                continue
+    return file_count, total_lines
+
+
+def generate_file_tree(root_path: Path) -> str:
+    """Return a text tree for the repository without traversing protected directories."""
+    lines: list[str] = []
+
+    def walk(directory: Path, prefix: str = "") -> None:
+        try:
+            entries = sorted(
+                directory.iterdir(),
+                key=lambda item: (not item.is_dir(), item.name.lower()),
+            )
+        except OSError:
+            return
+
+        visible_entries = []
+        for item in entries:
+            if item.name in EXCLUDED_DIRS or item.name.startswith("."):
+                continue
+            if item.name in PROTECTED_DIRS:
+                continue
+            if any(part in PROTECTED_DIRS for part in item.parts):
+                continue
+            visible_entries.append(item)
+
+        for index, item in enumerate(visible_entries):
+            is_last = index == len(visible_entries) - 1
+            connector = "└── " if is_last else "├── "
+            lines.append(f"{prefix}{connector}{item.name}")
+            if item.is_dir():
+                child_prefix = prefix + ("    " if is_last else "│   ")
+                walk(item, child_prefix)
+
+    walk(root_path)
+    return "\n".join(lines) if lines else "Root Repository is empty."
+
+
+def build_project_tree(root: Path) -> dict:
+    tree: dict = {}
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [
+            d for d in dirnames
+            if d not in EXCLUDED_DIRS
+            and not d.startswith(".")
+            and d not in PROTECTED_DIRS
+            and not any(part in PROTECTED_DIRS for part in Path(dirpath).joinpath(d).parts)
+        ]
+        current_rel = Path(dirpath).relative_to(root)
+        pointer = tree
+        if current_rel != Path("."):
+            for part in current_rel.parts:
+                pointer = pointer.setdefault(part, {})
+        for filename in sorted(filenames):
+            if filename.startswith("."):
+                continue
+            pointer[filename] = None
+    return tree
+
+
+def scan_project_tree() -> tuple[str, int, int]:
+    """Return a display tree, visible file count, and text-line count."""
+    tree_text = generate_file_tree(ROOT_DIR)
+    file_count, line_count = count_project_files_and_lines(ROOT_DIR)
+    return tree_text, file_count, line_count
+
+
+def render_tree_lines(tree: dict, prefix: str = "") -> list[str]:
+    lines = []
+    keys = list(tree.keys())
+    for index, key in enumerate(keys):
+        is_last = index == len(keys) - 1
+        connector = "└── " if is_last else "├── "
+        lines.append(f"{prefix}{connector}{key}")
+        value = tree[key]
+        if isinstance(value, dict) and value:
+            child_prefix = prefix + ("    " if is_last else "│   ")
+            lines.extend(render_tree_lines(value, child_prefix))
+    return lines
+
+
+def find_rag_path() -> Path | None:
+    for candidate in RAG_CANDIDATES:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def get_rag_status() -> str:
+    return "Available" if find_rag_path() else "Not Found"
+
+
+def read_error_lines() -> list[str]:
+    ensure_tools_dir()
+    if not ERROR_LOG_PATH.exists():
+        return []
+    try:
+        with ERROR_LOG_PATH.open("r", encoding="utf-8") as handle:
+            return [line.rstrip() for line in handle if line.strip()]
+    except Exception as exc:
+        stderr_warn(f"Failed to read errors log: {exc}")
+        return []
+
+
+def get_activity_summary(last_n: int = 20) -> str:
+    entries = read_activity_entries()[-last_n:]
+    if not entries:
+        return "No activity recorded."
+    lines = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        details = entry.get("details") or entry.get("status") or "n/a"
+        lines.append(f"- {entry.get('timestamp', 'unknown')} :: {entry.get('activity_type', 'activity')} :: {details}")
+    return "\n".join(lines)
+
+
+def render_dashboard() -> None:
+    st.title("Developer Command Center")
+    st.subheader("Workspace Overview")
+    st.markdown("---")
+    now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    file_count, line_count = count_project_files_and_lines(ROOT)
+    rag_status = get_rag_status()
+    last_report = get_latest_report_timestamp()
+    last_activity = get_last_activity_label()
+
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        st.metric("Current UTC", now_utc)
+    with col2:
+        st.metric("Files", file_count)
+    with col3:
+        st.metric("Lines", line_count)
+    with col4:
+        st.metric("RAG", rag_status)
+    with col5:
+        st.metric("Last report", last_report)
+
+    st.divider()
+    st.info(f"Last activity: {last_activity}")
+    if rag_status == "Available":
+        st.success("RAG system is available and ready for execution.")
+    else:
+        st.warning("RAG system not found — pending integration")
+
+
+def render_file_tree() -> None:
+    st.title("File Tree")
+    st.subheader("Project Structure")
+    st.caption("Hidden directories, node_modules, and protected core directories are excluded from the walk.")
+    tree_text = generate_file_tree(ROOT)
+    if not tree_text or tree_text == "Root Repository is empty.":
+        st.warning("No files available to display.")
+        return
+    with st.expander("File Tree", expanded=True):
+        st.code(tree_text, language="text")
+    visible_file_count, _ = count_project_files_and_lines(ROOT)
+    st.caption(f"Visible file count: {visible_file_count}")
+
+
+def render_rag_console() -> None:
+    st.title("RAG Console")
+    rag_path = find_rag_path()
+    if rag_path is None and (TOOLS_DIR / "rag_system.py").exists():
+        rag_path = TOOLS_DIR / "rag_system.py"
+    if rag_path is None:
+        st.warning("RAG system not found — pending integration")
+        return
+
+    st.info(f"Source: {rag_path}")
+    query = st.text_input("Query", placeholder="Enter a project context query")
+    if st.button("Run RAG System"):
+        if not query.strip():
+            st.warning("Enter a query before running the RAG system.")
+            return
+        try:
+            result = subprocess.run([sys.executable, str(rag_path), query], capture_output=True, text=True, cwd=str(ROOT), timeout=60, check=False)
+            output = (result.stdout or "").strip() or (result.stderr or "").strip() or "RAG system executed successfully with no output."
+            try:
+                parsed_output = json.loads(output)
+                st.session_state["rag_output"] = parsed_output
+            except json.JSONDecodeError:
+                st.session_state["rag_output"] = output
+            status = "success" if result.returncode == 0 else "failed"
+            append_to_activity_log({
+                "activity_type": "rag_run",
+                "status": status,
+                "details": f"RAG execution returned code {result.returncode}",
+            })
+            if result.returncode != 0:
+                append_to_errors_log(f"RAG execution failed with code {result.returncode}: {output[:500]}")
+                st.error(f"RAG execution failed: {output}")
+            else:
+                st.success("RAG system completed successfully.")
+        except subprocess.TimeoutExpired:
+            msg = "RAG system timed out after 60 seconds."
+            append_to_errors_log(msg)
+            append_to_activity_log({"activity_type": "rag_run", "status": "failed", "details": msg})
+            st.error(msg)
+        except Exception as exc:
+            msg = f"Unexpected RAG execution error: {exc}"
+            append_to_errors_log(msg)
+            append_to_activity_log({"activity_type": "rag_run", "status": "failed", "details": msg})
+            st.error(msg)
+
+    rag_output = st.session_state.get("rag_output", "")
+    if rag_output:
+        st.subheader("Output")
+        if isinstance(rag_output, dict):
+            st.json(rag_output)
+        else:
+            st.code(rag_output, language="text")
+    else:
+        st.info("No RAG output available yet.")
+
+
+def render_activity_log() -> None:
+    st.title("Activity Log")
+    if st.button("Refresh log"):
+        st.rerun()
+    entries = get_activity_display_entries(limit=50)
+    if not entries:
+        st.warning("No activity recorded yet.")
+        return
+    rows = []
+    for entry in entries:
+        rows.append({
+            "timestamp": entry.get("timestamp", "unknown"),
+            "activity_type": entry.get("activity_type", "activity"),
+            "details": entry.get("details") or entry.get("status") or "n/a",
+        })
+    st.dataframe(rows, use_container_width=True, hide_index=True)
+
+
+def render_report_generator() -> None:
+    st.title("Report Generator")
+    st.subheader("Export Architectural Report")
+    if st.button("Export Architectural Report"):
+        try:
+            tree = build_project_tree(ROOT)
+            tree_text = "\n".join(render_tree_lines(tree)) or "Project tree is empty."
+            rag_output = st.session_state.get("rag_output", "RAG not run in this session")
+            error_lines = read_error_lines()[-20:]
+            error_text = "\n".join(error_lines) if error_lines else "No errors logged."
+            activity_summary = get_activity_summary(last_n=20)
+
+            report_lines = [
+                f"Architectural Context Report — Generated at: {iso_utc_now()}",
+                "",
+                "--- File Tree ---",
+                tree_text,
+                "",
+                "--- RAG Output ---",
+                str(rag_output),
+                "",
+                "--- Latest Errors ---",
+                error_text,
+                "",
+                "--- Recent Activity ---",
+                activity_summary,
+            ]
+            report_text = "\n".join(report_lines)
+            LATEST_CONTEXT_PATH.write_text(report_text, encoding="utf-8")
+            append_to_activity_log({
+                "activity_type": "report_export",
+                "status": "success",
+                "details": f"Report saved to {LATEST_CONTEXT_PATH}",
+            })
+            st.success(f"Architectural report exported to {LATEST_CONTEXT_PATH}")
+        except Exception as exc:
+            msg = f"Report export failed: {exc}"
+            append_to_errors_log(msg)
+            append_to_activity_log({"activity_type": "report_export", "status": "failed", "details": msg})
+            st.error(msg)
+
+    if LATEST_CONTEXT_PATH.exists():
+        st.caption(f"Latest report exists at: {LATEST_CONTEXT_PATH}")
+        with LATEST_CONTEXT_PATH.open("r", encoding="utf-8") as handle:
+            st.code(handle.read(), language="text")
+    else:
+        st.info("No report generated yet.")
+
+
+def initialize_session_state() -> None:
+    if "rag_output" not in st.session_state:
+        st.session_state["rag_output"] = ""
+    if "app_started_logged" not in st.session_state:
+        append_to_activity_log({
+            "activity_type": "app_started",
+            "status": "success",
+            "details": "Application started",
+        })
+        st.session_state["app_started_logged"] = True
+    if "lockdown_active" not in st.session_state:
+        st.session_state["lockdown_active"] = False
+
+
+def main() -> None:
+    st.set_page_config(
+        page_title="Developer Command Center",
+        page_icon="🛡️",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
+    initialize_session_state()
+    ensure_tools_dir()
+
+    if not ACTIVITY_LOG_PATH.exists():
+        write_json_file(ACTIVITY_LOG_PATH, [])
+    if not ERROR_LOG_PATH.exists():
+        ERROR_LOG_PATH.touch()
+
+    if st.session_state.get("lockdown_active"):
+        st.error("Emergency stop active. Safe lockdown engaged.")
+        st.title("Operational Safety Lockdown")
+        st.markdown("Runtime action has been suspended after a circuit-breaker event.")
+        st.button("Emergency lock engaged", disabled=True)
+        return
+
+    st.sidebar.title("Developer Command Center")
+    st.sidebar.caption("Governance, monitoring, and system control")
+    st.sidebar.markdown("---")
+    st.sidebar.info("EnterpriseGuard Governance Layer Active\n\nProtected areas (adie/, intelligence/) are strictly isolated.")
+    st.sidebar.markdown("---")
+    page = st.sidebar.radio("Navigation", ["Dashboard", "File Tree", "RAG Console", "Activity Log", "Report Generator"])
+    st.sidebar.markdown("---")
+    if st.sidebar.button("EMERGENCY STOP / CIRCUIT BREAKER"):
+        append_to_activity_log({
+            "activity_type": "command_center_action",
+            "status": "emergency_stop",
+            "details": "Circuit breaker triggered",
+        })
+        append_to_errors_log("EMERGENCY STOP / CIRCUIT BREAKER activated from Developer Command Center")
+        st.session_state["lockdown_active"] = True
+        st.rerun()
+
+    if page == "Dashboard":
+        render_dashboard()
+    elif page == "File Tree":
+        render_file_tree()
+    elif page == "RAG Console":
+        render_rag_console()
+    elif page == "Activity Log":
+        render_activity_log()
+    elif page == "Report Generator":
+        render_report_generator()
+
+    st.markdown("---")
+    st.caption("Developer Command Center v1.0 • Governance enforced • Protected directories remain outside scope.")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        append_to_errors_log(f"Unhandled internal application error: {exc}")
+        st.error("An unexpected internal error occurred. Details were written to the errors log.")
+        st.code(traceback.format_exc(), language="text")

@@ -1,0 +1,800 @@
+"""
+EnterpriseGuard ADIE - State Checkpoint Layer
+=============================================
+
+Purpose
+-------
+Provides immutable, integrity-verifiable checkpoints of ADIE state.
+
+Architecture
+------------
+
+    State
+      |
+      v
+    Checkpoint
+      |
+      +--> identity
+      +--> timestamp
+      +--> state snapshot
+      +--> integrity fingerprint
+      +--> metadata
+
+
+Design principles
+-----------------
+1. Checkpoints are immutable.
+2. State is copied at checkpoint creation time.
+3. Integrity is independently verifiable.
+4. Checkpoints never execute security actions.
+5. Checkpoints do not perform rollback.
+6. Checkpoints do not mutate the source state.
+7. The API is deterministic and auditable.
+8. Historical state is treated as evidence, not authority.
+
+
+Security boundary
+-----------------
+This module stores and verifies state.
+
+It does NOT:
+- restore infrastructure
+- execute remediation
+- modify enterprise systems
+- invoke response adapters
+- perform rollback
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from hashlib import sha256
+from typing import Any, Mapping, Optional
+import copy
+import json
+
+
+MODULE_VERSION = "1.0.0"
+
+
+class CheckpointError(Exception):
+    """Base exception for checkpoint errors."""
+
+
+class CheckpointValidationError(CheckpointError):
+    """Raised when checkpoint input is invalid."""
+
+
+class CheckpointIntegrityError(CheckpointError):
+    """Raised when checkpoint integrity verification fails."""
+
+
+@dataclass(frozen=True)
+class StateCheckpoint:
+    """
+    Immutable representation of a state checkpoint.
+
+    A checkpoint captures a point-in-time representation of state
+    together with a cryptographic integrity fingerprint.
+
+    The fingerprint proves that the serialized checkpoint payload
+    has not changed since creation.
+
+    It does NOT prove that the original state itself was truthful.
+    """
+
+    checkpoint_id: str
+    state_id: Optional[str]
+
+    created_at: str
+
+    state: Mapping[str, Any]
+
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    integrity_hash: str = ""
+
+    immutable: bool = True
+    executes_security_actions: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a detached JSON-compatible representation."""
+
+        return {
+            "checkpoint_id": self.checkpoint_id,
+            "state_id": self.state_id,
+            "created_at": self.created_at,
+            "state": copy.deepcopy(dict(self.state)),
+            "metadata": copy.deepcopy(dict(self.metadata)),
+            "integrity_hash": self.integrity_hash,
+            "immutable": self.immutable,
+            "executes_security_actions": (
+                self.executes_security_actions
+            ),
+        }
+
+
+class CheckpointManager:
+    """
+    Manages immutable ADIE state checkpoints.
+
+    The manager keeps checkpoints in memory only.
+
+    Persistent storage can be introduced later without changing the
+    checkpoint contract.
+    """
+
+    def __init__(
+        self,
+        *,
+        max_checkpoints: int = 100,
+    ) -> None:
+        if isinstance(max_checkpoints, bool):
+            raise CheckpointValidationError(
+                "max_checkpoints must be an integer"
+            )
+
+        if not isinstance(max_checkpoints, int):
+            raise CheckpointValidationError(
+                "max_checkpoints must be an integer"
+            )
+
+        if max_checkpoints < 1:
+            raise CheckpointValidationError(
+                "max_checkpoints must be greater than zero"
+            )
+
+        self._max_checkpoints = max_checkpoints
+
+        self._checkpoints: dict[
+            str,
+            StateCheckpoint,
+        ] = {}
+
+        self._order: list[str] = []
+
+        self._creation_count = 0
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def create(
+        self,
+        state: Mapping[str, Any],
+        *,
+        state_id: Optional[str] = None,
+        metadata: Optional[Mapping[str, Any]] = None,
+    ) -> StateCheckpoint:
+        """
+        Create an immutable checkpoint from the supplied state.
+
+        The source mapping is deep-copied so later mutation of the
+        caller's object cannot alter the checkpoint.
+        """
+
+        normalized_state = self._normalize_mapping(
+            state,
+            "state",
+        )
+
+        normalized_metadata = self._normalize_mapping(
+            metadata or {},
+            "metadata",
+        )
+
+        self._creation_count += 1
+
+        created_at = self._utc_now()
+
+        checkpoint_id = self._create_checkpoint_id(
+            state=normalized_state,
+            state_id=state_id,
+            created_at=created_at,
+            sequence=self._creation_count,
+        )
+
+        integrity_hash = self._calculate_integrity_hash(
+            checkpoint_id=checkpoint_id,
+            state_id=state_id,
+            created_at=created_at,
+            state=normalized_state,
+            metadata=normalized_metadata,
+        )
+
+        checkpoint = StateCheckpoint(
+            checkpoint_id=checkpoint_id,
+            state_id=state_id,
+            created_at=created_at,
+            state=copy.deepcopy(normalized_state),
+            metadata=copy.deepcopy(normalized_metadata),
+            integrity_hash=integrity_hash,
+            immutable=True,
+            executes_security_actions=False,
+        )
+
+        self._checkpoints[checkpoint_id] = checkpoint
+        self._order.append(checkpoint_id)
+
+        self._enforce_capacity()
+
+        return checkpoint
+
+    def get(
+        self,
+        checkpoint_id: str,
+    ) -> Optional[StateCheckpoint]:
+        """
+        Return a checkpoint by identifier.
+
+        Returns None when the checkpoint does not exist.
+        """
+
+        if not isinstance(checkpoint_id, str):
+            raise CheckpointValidationError(
+                "checkpoint_id must be a string"
+            )
+
+        checkpoint = self._checkpoints.get(
+            checkpoint_id
+        )
+
+        if checkpoint is None:
+            return None
+
+        return checkpoint
+
+    def latest(self) -> Optional[StateCheckpoint]:
+        """Return the newest checkpoint."""
+
+        if not self._order:
+            return None
+
+        return self._checkpoints.get(
+            self._order[-1]
+        )
+
+    def list_checkpoints(self) -> tuple[StateCheckpoint, ...]:
+        """
+        Return checkpoints in creation order.
+
+        The returned tuple prevents direct mutation of the collection.
+        """
+
+        return tuple(
+            self._checkpoints[checkpoint_id]
+            for checkpoint_id in self._order
+            if checkpoint_id in self._checkpoints
+        )
+
+    def verify(
+        self,
+        checkpoint: StateCheckpoint,
+    ) -> bool:
+        """
+        Verify checkpoint integrity.
+
+        Returns True when the stored fingerprint matches the current
+        checkpoint payload.
+        """
+
+        if not isinstance(
+            checkpoint,
+            StateCheckpoint,
+        ):
+            raise CheckpointValidationError(
+                "checkpoint must be a StateCheckpoint"
+            )
+
+        expected = self._calculate_integrity_hash(
+            checkpoint_id=checkpoint.checkpoint_id,
+            state_id=checkpoint.state_id,
+            created_at=checkpoint.created_at,
+            state=checkpoint.state,
+            metadata=checkpoint.metadata,
+        )
+
+        return expected == checkpoint.integrity_hash
+
+    def require_valid(
+        self,
+        checkpoint: StateCheckpoint,
+    ) -> StateCheckpoint:
+        """
+        Verify and return the checkpoint.
+
+        Raises CheckpointIntegrityError when verification fails.
+        """
+
+        if not self.verify(checkpoint):
+            raise CheckpointIntegrityError(
+                "Checkpoint integrity verification failed."
+            )
+
+        return checkpoint
+
+    def compare(
+        self,
+        first: StateCheckpoint,
+        second: StateCheckpoint,
+    ) -> dict[str, Any]:
+        """
+        Compare two checkpoints.
+
+        This operation is observational only.
+
+        It does not modify either checkpoint.
+        """
+
+        self.require_valid(first)
+        self.require_valid(second)
+
+        first_state = dict(first.state)
+        second_state = dict(second.state)
+
+        first_keys = set(first_state)
+        second_keys = set(second_state)
+
+        added = sorted(
+            second_keys - first_keys
+        )
+
+        removed = sorted(
+            first_keys - second_keys
+        )
+
+        changed: list[str] = []
+
+        for key in sorted(
+            first_keys & second_keys
+        ):
+            if first_state[key] != second_state[key]:
+                changed.append(key)
+
+        unchanged = sorted(
+            key
+            for key in (
+                first_keys & second_keys
+            )
+            if first_state[key] == second_state[key]
+        )
+
+        return {
+            "first_checkpoint_id": (
+                first.checkpoint_id
+            ),
+            "second_checkpoint_id": (
+                second.checkpoint_id
+            ),
+            "added_keys": added,
+            "removed_keys": removed,
+            "changed_keys": changed,
+            "unchanged_keys": unchanged,
+            "changed": bool(
+                added or removed or changed
+            ),
+        }
+
+    def remove(
+        self,
+        checkpoint_id: str,
+    ) -> bool:
+        """
+        Remove a checkpoint from the in-memory store.
+
+        This is storage management only; it does not affect enterprise
+        state.
+        """
+
+        if not isinstance(checkpoint_id, str):
+            raise CheckpointValidationError(
+                "checkpoint_id must be a string"
+            )
+
+        if checkpoint_id not in self._checkpoints:
+            return False
+
+        del self._checkpoints[
+            checkpoint_id
+        ]
+
+        self._order = [
+            item
+            for item in self._order
+            if item != checkpoint_id
+        ]
+
+        return True
+
+    def clear(self) -> None:
+        """Remove all in-memory checkpoints."""
+
+        self._checkpoints.clear()
+        self._order.clear()
+
+    def status(self) -> dict[str, Any]:
+        """Return a read-only manager status."""
+
+        return {
+            "module": "adie.checkpoint",
+            "version": MODULE_VERSION,
+            "checkpoint_count": len(
+                self._checkpoints
+            ),
+            "max_checkpoints": (
+                self._max_checkpoints
+            ),
+            "creation_count": (
+                self._creation_count
+            ),
+            "latest_checkpoint_id": (
+                self._order[-1]
+                if self._order
+                else None
+            ),
+            "executes_security_actions": False,
+        }
+
+    def health_check(self) -> dict[str, Any]:
+        """Return lightweight checkpoint subsystem health."""
+
+        try:
+            healthy = (
+                self._max_checkpoints >= 1
+                and len(self._checkpoints)
+                <= self._max_checkpoints
+            )
+
+            return {
+                "healthy": healthy,
+                "module": "adie.checkpoint",
+                "version": MODULE_VERSION,
+                "executes_security_actions": False,
+            }
+
+        except Exception as exc:
+            return {
+                "healthy": False,
+                "module": "adie.checkpoint",
+                "version": MODULE_VERSION,
+                "error": str(exc),
+                "executes_security_actions": False,
+            }
+
+    def self_test(self) -> dict[str, Any]:
+        """
+        Execute deterministic internal checkpoint tests.
+        """
+
+        tests: dict[str, bool] = {}
+
+        try:
+            self.clear()
+
+            # ----------------------------------------------------------
+            # Test 1: creation
+            # ----------------------------------------------------------
+            source_state = {
+                "risk": 0.42,
+                "status": "healthy",
+                "assets": {
+                    "servers": 5,
+                },
+            }
+
+            checkpoint = self.create(
+                source_state,
+                state_id="state-001",
+                metadata={
+                    "source": "self-test",
+                },
+            )
+
+            tests["checkpoint_creation"] = (
+                isinstance(
+                    checkpoint,
+                    StateCheckpoint,
+                )
+                and checkpoint.checkpoint_id != ""
+            )
+
+            # ----------------------------------------------------------
+            # Test 2: source isolation
+            # ----------------------------------------------------------
+            source_state["risk"] = 0.99
+            source_state["assets"]["servers"] = 999
+
+            tests["source_isolation"] = (
+                checkpoint.state["risk"] == 0.42
+                and checkpoint.state["assets"][
+                    "servers"
+                ]
+                == 5
+            )
+
+            # ----------------------------------------------------------
+            # Test 3: integrity
+            # ----------------------------------------------------------
+            tests["integrity_verification"] = (
+                self.verify(checkpoint) is True
+            )
+
+            # ----------------------------------------------------------
+            # Test 4: immutable dataclass
+            # ----------------------------------------------------------
+            immutable = False
+
+            try:
+                checkpoint.checkpoint_id = "modified"  # type: ignore
+            except Exception:
+                immutable = True
+
+            tests["immutable_checkpoint"] = immutable
+
+            # ----------------------------------------------------------
+            # Test 5: retrieval
+            # ----------------------------------------------------------
+            retrieved = self.get(
+                checkpoint.checkpoint_id
+            )
+
+            tests["checkpoint_retrieval"] = (
+                retrieved == checkpoint
+            )
+
+            # ----------------------------------------------------------
+            # Test 6: comparison
+            # ----------------------------------------------------------
+            second = self.create(
+                {
+                    "risk": 0.80,
+                    "status": "degraded",
+                    "assets": {
+                        "servers": 5,
+                    },
+                },
+                state_id="state-002",
+            )
+
+            comparison = self.compare(
+                checkpoint,
+                second,
+            )
+
+            tests["checkpoint_comparison"] = (
+                comparison["changed"] is True
+                and "risk"
+                in comparison["changed_keys"]
+                and "status"
+                in comparison["changed_keys"]
+            )
+
+            # ----------------------------------------------------------
+            # Test 7: safety boundary
+            # ----------------------------------------------------------
+            tests["execution_safety"] = (
+                checkpoint.executes_security_actions
+                is False
+                and second.executes_security_actions
+                is False
+            )
+
+            # ----------------------------------------------------------
+            # Test 8: list immutability
+            # ----------------------------------------------------------
+            checkpoints = self.list_checkpoints()
+
+            tests["collection_protection"] = (
+                isinstance(
+                    checkpoints,
+                    tuple,
+                )
+            )
+
+            passed = all(tests.values())
+
+            return {
+                "passed": passed,
+                "module": "adie.checkpoint",
+                "version": MODULE_VERSION,
+                "checkpoint_test_passed": passed,
+                "tests": tests,
+                "executes_security_actions": False,
+            }
+
+        except Exception as exc:
+            return {
+                "passed": False,
+                "module": "adie.checkpoint",
+                "version": MODULE_VERSION,
+                "checkpoint_test_passed": False,
+                "tests": tests,
+                "error": str(exc),
+                "executes_security_actions": False,
+            }
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _enforce_capacity(self) -> None:
+        """Remove oldest checkpoints when capacity is exceeded."""
+
+        while (
+            len(self._order)
+            > self._max_checkpoints
+        ):
+            oldest = self._order.pop(0)
+
+            self._checkpoints.pop(
+                oldest,
+                None,
+            )
+
+    @staticmethod
+    def _normalize_mapping(
+        value: Mapping[str, Any],
+        name: str,
+    ) -> dict[str, Any]:
+        """Validate and deep-copy a mapping."""
+
+        if not isinstance(value, Mapping):
+            raise CheckpointValidationError(
+                f"{name} must be a mapping"
+            )
+
+        try:
+            normalized = copy.deepcopy(
+                dict(value)
+            )
+        except Exception as exc:
+            raise CheckpointValidationError(
+                f"{name} could not be copied safely"
+            ) from exc
+
+        return normalized
+
+    @staticmethod
+    def _canonical_payload(
+        *,
+        checkpoint_id: str,
+        state_id: Optional[str],
+        created_at: str,
+        state: Mapping[str, Any],
+        metadata: Mapping[str, Any],
+    ) -> str:
+        """
+        Serialize checkpoint content canonically.
+
+        Canonical serialization ensures equivalent mappings produce
+        equivalent integrity payloads.
+        """
+
+        payload = {
+            "checkpoint_id": checkpoint_id,
+            "state_id": state_id,
+            "created_at": created_at,
+            "state": state,
+            "metadata": metadata,
+        }
+
+        try:
+            return json.dumps(
+                payload,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+                default=str,
+            )
+        except (TypeError, ValueError) as exc:
+            raise CheckpointValidationError(
+                "Checkpoint payload is not serializable"
+            ) from exc
+
+    @classmethod
+    def _calculate_integrity_hash(
+        cls,
+        *,
+        checkpoint_id: str,
+        state_id: Optional[str],
+        created_at: str,
+        state: Mapping[str, Any],
+        metadata: Mapping[str, Any],
+    ) -> str:
+        """Calculate SHA-256 integrity fingerprint."""
+
+        payload = cls._canonical_payload(
+            checkpoint_id=checkpoint_id,
+            state_id=state_id,
+            created_at=created_at,
+            state=state,
+            metadata=metadata,
+        )
+
+        return sha256(
+            payload.encode("utf-8")
+        ).hexdigest()
+
+    @staticmethod
+    def _create_checkpoint_id(
+        *,
+        state: Mapping[str, Any],
+        state_id: Optional[str],
+        created_at: str,
+        sequence: int,
+    ) -> str:
+        """Create a unique local checkpoint identifier."""
+
+        payload = {
+            "state": state,
+            "state_id": state_id,
+            "created_at": created_at,
+            "sequence": sequence,
+        }
+
+        serialized = json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            default=str,
+        )
+
+        digest = sha256(
+            serialized.encode("utf-8")
+        ).hexdigest()[:20]
+
+        return f"chk-{digest}"
+
+    @staticmethod
+    def _utc_now() -> str:
+        """Return an ISO-8601 UTC timestamp."""
+
+        return datetime.now(
+            timezone.utc
+        ).isoformat()
+
+
+# ----------------------------------------------------------------------
+# Default manager
+# ----------------------------------------------------------------------
+
+_default_manager: Optional[CheckpointManager] = None
+
+
+def get_checkpoint_manager() -> CheckpointManager:
+    """Return the process-local default checkpoint manager."""
+
+    global _default_manager
+
+    if _default_manager is None:
+        _default_manager = CheckpointManager()
+
+    return _default_manager
+
+
+# ----------------------------------------------------------------------
+# Module entry point
+# ----------------------------------------------------------------------
+
+def _main() -> int:
+    """Run the checkpoint self-test."""
+
+    manager = CheckpointManager()
+
+    result = manager.self_test()
+
+    print(
+        json.dumps(
+            result,
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
+
+    return 0 if result.get("passed") else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(_main())

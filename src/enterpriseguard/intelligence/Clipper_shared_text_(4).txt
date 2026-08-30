@@ -1,0 +1,81 @@
+==============================================================================
+EnterpriseGuard ML Model Layer - Self Test
+==============================================================================
+
+[1] Model status
+{
+    "name": "EnterpriseGuard Threat Intelligence Model",
+    "version": "2.0.0",
+    "available": true,
+    "trained": false,
+    "model_type": "baseline",
+    "feature_count": 7,
+    "training_samples": 0,
+    "model_file": "C:\\Users\\acer\\Desktop\\EnterpriseGuard\\assets\\models\\enterpriseguard_model.pkl",
+    "model_exists": true,
+    "model_hash": null,
+    "statistics": {
+        "predictions": 0,
+        "successful_predictions": 0,
+        "failed_predictions": 0,
+        "training_runs": 0,
+        "total_training_samples": 0,
+        "average_processing_ms": 0.0
+    }
+}
+
+[2] Prediction
+{
+    "predicted_class": 1,
+    "threat_probability": 0.674,
+    "benign_probability": 0.326,
+    "anomaly_score": 0.75,
+    "confidence": 67.4,
+    "model_available": true,
+    "model_trained": false,
+    "model_version": "2.0.0",
+    "processing_time_ms": 0.222,
+    "error": null
+}
+
+[3] Metadata
+{
+    "name": "EnterpriseGuard Threat Intelligence Model",
+    "version": "2.0.0",
+    "feature_count": 7,
+    "feature_names": [
+        "request_frequency",
+        "failure_ratio",
+        "unique_source_count",
+        "unique_user_count",
+        "failed_attempts",
+        "anomaly_score",
+        "outbound_data_volume"
+    ],
+    "trained": false,
+    "training_samples": 0,
+    "model_type": "baseline",
+    "created_at": null,
+    "updated_at": null,
+    "model_hash": null
+}
+
+[4] Feature vector
+[
+    0.95,
+    0.8,
+    0.6,
+    0.7,
+    8.0,
+    0.75,
+    0.1
+]
+
+[5] Compatibility check
+{
+    "ThreatIntelligenceModel": true,
+    "EnterpriseGuardModel": true
+}
+
+==============================================================================
+Self test completed successfully.

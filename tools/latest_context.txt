@@ -1,0 +1,108 @@
+Architectural Context Report — Generated at: 2026-08-30T19:54:54Z
+
+--- File Tree ---
+├── assets
+│   └── models
+│       ├── registry
+│       │   ├── versions
+│       │   └── model_registry.json
+│       ├── enterpriseguard_model.json
+│       ├── enterpriseguard_model.pkl
+│       └── enterpriseguard_training_metadata.json
+├── demo
+├── docs
+├── enterpriseguard
+├── logs
+│   └── audit.jsonl
+├── src
+│   ├── assets
+│   │   └── models
+│   │       ├── enterpriseguard_model.pkl
+│   │       └── enterpriseguard_training_metadata.json
+│   ├── core
+│   │   └── config.py
+│   ├── enterpriseguard
+│   │   ├── api
+│   │   │   └── dashboard_api.py
+│   │   ├── core
+│   │   │   └── config.py
+│   │   ├── monitoring
+│   │   │   └── audit.py
+│   │   ├── response
+│   │   │   ├── __init__.py
+│   │   │   ├── audit.py
+│   │   │   ├── engine.py
+│   │   │   ├── executor.py
+│   │   │   ├── integration.py
+│   │   │   └── verification.py
+│   │   └── ui
+│   │       └── dashboard.py
+│   ├── logs
+│   │   └── audit.jsonl
+│   ├── check_adie_exports.py
+│   ├── inject_mock_events.py
+│   ├── policy.py
+│   └── test_adie_integration.py
+├── tools
+│   ├── backups
+│   │   ├── activity_log_20260830T135857Z.json
+│   │   └── activity_log_20260830T140925Z.json
+│   ├── quarantine
+│   │   ├── 20260830T153155Z_'
+│   │   ├── 20260830T153155Z_Any
+│   │   ├── 20260830T153155Z_bool
+│   │   ├── 20260830T153155Z_cd
+│   │   ├── 20260830T153155Z_cls
+│   │   ├── 20260830T153155Z_dict[str
+│   │   ├── 20260830T153155Z_float
+│   │   ├── 20260830T153155Z_int
+│   │   ├── 20260830T153155Z_list[dict[str
+│   │   ├── 20260830T153155Z_Mapping
+│   │   ├── 20260830T153155Z_None
+│   │   ├── 20260830T153155Z_orchestrator.minimum_samples
+│   │   ├── 20260830T153155Z_python
+│   │   ├── 20260830T153155Z_reporting_state.pkl
+│   │   ├── 20260830T153155Z_run_claude.bat
+│   │   ├── 20260830T153155Z_set
+│   │   ├── 20260830T153155Z_start_claude.bat
+│   │   ├── 20260830T153155Z_str
+│   │   ├── 20260830T153155Z_streamlit
+│   │   └── 20260830T153155Z_TrainingOrchestrator
+│   ├── activity_log.json
+│   ├── activity_log.json.bak_20260830T172209Z
+│   ├── activity_log.json.bak_20260830T173514Z
+│   ├── activity_log.json.bak_20260830T185303Z
+│   ├── ai_diagnostics.py
+│   ├── alerts_monitor.py
+│   ├── checklist.py
+│   ├── command_center.py
+│   ├── command_center.py.bak_20260830T194431Z
+│   ├── command_center.py.bak_20260830T195453Z
+│   ├── DECISIONS_LOG.md
+│   ├── DECISIONS_LOG.md.bak_20260830T160135Z
+│   ├── discipline.py
+│   ├── errors.log
+│   ├── errors.log.bak_20260830T153155Z
+│   ├── errors.log.bak_20260830T191617Z
+│   ├── errors.log.bak_20260830T194431Z
+│   ├── errors.log.bak_20260830T194729Z
+│   ├── errors.log.bak_20260830T195453Z
+│   ├── errors.log.st_tree.archive.20260830T192128Z
+│   ├── errors.log.st_tree.archive.20260830T194729Z
+│   ├── errors.log.st_tree.archive.20260830T195453Z
+│   ├── latest_context.txt
+│   └── rag_system.py
+├── CONTRACTS.md
+├── policy.py
+├── project_files.txt
+├── PROJECT_MEMORY.md
+└── requirements.txt
+
+--- RAG Output ---
+{"query": "test", "retrieved_documents": [], "generated_answer": "Retrieval-only mode active. See retrieved documents.", "model_used": "no_models", "timestamp": "2026-08-30T19:54:53Z"}
+
+--- Latest Errors ---
+[2026-08-30T12:12:20Z] ALERT: Log spike detected by alerts_monitor. Error count in last 24h = 2.
+
+--- Recent Activity ---
+- No activity recorded.
