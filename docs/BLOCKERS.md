@@ -45,4 +45,4 @@ began. They were never committed.
    `.env*`, `.venv/`, `backups/`
 5. Commit and retry clean clone test
 
-**Status:** 🔧 IN PROGRESS
+**Status:** ✅ CLOSED (fixed by commits c1c7582 + <hash-of-removal-commit>)
