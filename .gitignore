@@ -65,3 +65,16 @@ tools/genesis_public_ecdsa.pem
 tools/innocence_chain.json
 tools/relational_memory.json
 tools/realtime_events.jsonl
+
+# --- Explicit runtime state (already tracked, need rm --cached) ---
+tools/activity_log.json
+tools/errors.log
+tools/realtime_events.jsonl
+tools/ring_storage.jsonl
+tools/events.sqlite
+tools/dimensional_history.jsonl
+tools/dimensional_state.json
+tools/innocence_chain.json
+tools/relational_memory.json
+src/logs/audit.jsonl
+logs/
