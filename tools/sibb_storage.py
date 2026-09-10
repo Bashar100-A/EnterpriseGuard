@@ -12,6 +12,7 @@ Version: 7.3 (critical fixes)
 - Orphan handling disabled by default
 - Additional safety checks
 """
+from __future__ import annotations
 
 import os
 import sys
