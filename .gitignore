@@ -1,0 +1,57 @@
+# ============================================================
+# EnterpriseGuard — .gitignore
+# ============================================================
+
+# --- Secrets (NEVER commit) ---
+.env
+.env.*
+!.env.example
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Backups (must exist on disk, not in git) ---
+*.bak
+*.bak_*
+*.bak.*
+*.save
+*.save.*
+*.orig
+*.swp
+*~
+
+# --- Runtime / dynamic state ---
+tools/activity_log.json
+tools/errors.log
+tools/realtime_events.jsonl
+tools/ring_storage.jsonl
+tools/events.sqlite
+tools/dimensional_history.jsonl
+tools/dimensional_state.json
+src/logs/audit.jsonl
+logs/
+permissions.db
+
+# --- SIBB runtime storage ---
+tools/sibb_store/
+backups/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+
+# --- Runtime lock ---
+tools/.document_bandit.lock
