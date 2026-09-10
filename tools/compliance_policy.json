@@ -1,0 +1,115 @@
+{
+  "schema_version": "2.0",
+  "default_action": "deny",
+  "rules": [
+    {
+      "name": "allow_standard_agent_commands",
+      "type": "allow",
+      "priority": 10,
+      "conditions": [
+        {
+          "field": "command",
+          "operator": "in",
+          "value": [
+            "check_balance",
+            "transfer_funds",
+            "update_kyc_status",
+            "call_openai_api",
+            "query_credit_score",
+            "approve_loan",
+            "deny_loan",
+            "notify_customer",
+            "validate_identity",
+            "log_risk_event",
+            "fetch_account",
+            "update_transaction_limit",
+            "invoke_langchain_tool",
+            "call_anthropic_api",
+            "run_compliance_check",
+            "flag_suspicious_activity",
+            "send_email",
+            "create_ticket",
+            "close_ticket",
+            "aggregate_daily_transactions"
+          ]
+        },
+        {
+          "field": "actor_type",
+          "operator": "in",
+          "value": ["agent", "human"]
+        }
+      ],
+      "logic": "AND"
+    },
+    {
+      "name": "require_core_fields",
+      "type": "require",
+      "priority": 20,
+      "conditions": [
+        {
+          "field": "timestamp",
+          "operator": "exists"
+        },
+        {
+          "field": "agent_id",
+          "operator": "exists"
+        },
+        {
+          "field": "trace_id",
+          "operator": "exists"
+        },
+        {
+          "field": "command",
+          "operator": "exists"
+        },
+        {
+          "field": "actor_type",
+          "operator": "exists"
+        }
+      ],
+      "logic": "AND"
+    },
+    {
+      "name": "latency_limit",
+      "type": "deny_if_exceed",
+      "priority": 30,
+      "conditions": [
+        {
+          "field": "latency_ms",
+          "operator": ">",
+          "value": 5000
+        }
+      ]
+    },
+    {
+      "name": "high_risk_transfer_limit",
+      "type": "deny_if_match",
+      "priority": 40,
+      "conditions": [
+        {
+          "field": "command",
+          "operator": "==",
+          "value": "transfer_funds"
+        },
+        {
+          "field": "amount",
+          "operator": ">",
+          "value": 100000
+        }
+      ],
+      "logic": "AND"
+    },
+    {
+      "name": "forbidden_commands",
+      "type": "deny",
+      "priority": 100,
+      "conditions": [
+        {
+          "field": "command",
+          "operator": "matches_regex",
+          "value": "^(hack|sql_inject|rm -rf|sudo)"
+        }
+      ]
+    }
+  ]
+}
