@@ -69,4 +69,6 @@
 
 Target: works from scratch in ≤10 steps.
 
+**Updated:** 2026-09-10 — 4 remaining components documented (paths_config, time_utils, blockchain_anchor, aaac_connector).
+
 **End of Report**
