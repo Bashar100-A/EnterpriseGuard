@@ -31,6 +31,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 # Logging to secure fileLOG_DIR = Path.home() / ".enterpriseguard" / "logs"
+LOG_DIR = Path.home() / ".enterpriseguard" / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 LOG_FILE = LOG_DIR / "cli.log"
 logging.basicConfig(
