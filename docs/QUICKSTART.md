@@ -13,22 +13,22 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # 4. Generate hardware identity
-python tools/hardware_identity.py --generate
+python3 tools/hardware_identity.py --generate
 
 # 5. Generate genesis seed
 python3 tools/genesis_seed.py --seed "my-first-seed"
 
 # 6. Initialize SIBB storage
-python tools/sibb_cli.py init --path .sibb --immutable
+python3 tools/sibb_cli.py init --path .sibb --immutable
 
 # 7. Write a test decision
-python tools/sibb_cli.py write hello.txt --data "first-decision"
+python3 tools/sibb_cli.py write hello.txt --data "first-decision"
 
 # 8. Read it back
-python tools/sibb_cli.py read hello.txt
+python3 tools/sibb_cli.py read hello.txt
 
 # 9. Verify storage integrity
-python tools/sibb_cli.py verify
+python3 tools/sibb_cli.py verify
 
 # 10. Show status
-python tools/sibb_cli.py status
+python3 tools/sibb_cli.py status
