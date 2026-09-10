@@ -45,4 +45,18 @@ began. They were never committed.
    `.env*`, `.venv/`, `backups/`
 5. Commit and retry clean clone test
 
-**Status:** ✅ CLOSED (fixed by commits c1c7582 + <hash-of-removal-commit>)
+---
+
+## BLOCKER-003: Quick Start bugs discovered by end-to-end test
+**Date:** 2026-09-10  
+**Severity:** HIGH (blocks Phase A gate)
+
+**Bugs found during fresh-clone Quick Start test:**
+
+1. `docs/QUICKSTART.md` used `genesis_seed.py --generate` which doesn't exist.
+2. `docs/QUICKSTART.md` used `python` which may not be on PATH.
+3. `tools/sibb_cli.py` did not add project root to `sys.path`.
+4. `tools/sibb_cli.py` called `append_activity` with wrong signature.
+5. `tools/sibb_cli.py` called `storage.verify()` instead of `verify_integrity()`.
+
+**Status:** ✅ CLOSED — all 5 fixed and re-tested in fresh clone.

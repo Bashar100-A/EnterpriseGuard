@@ -16,7 +16,7 @@ pip install -r requirements.txt
 python tools/hardware_identity.py --generate
 
 # 5. Generate genesis seed
-python tools/genesis_seed.py --generate --seed "my-first-seed"
+python3 tools/genesis_seed.py --seed "my-first-seed"
 
 # 6. Initialize SIBB storage
 python tools/sibb_cli.py init --path .sibb --immutable

@@ -25,8 +25,12 @@ from typing import Optional, List
 
 sys.dont_write_bytecode = True
 
-# Logging to secure file
-LOG_DIR = Path.home() / ".enterpriseguard" / "logs"
+# Ensure project root is on sys.path when running as a script
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+# Logging to secure fileLOG_DIR = Path.home() / ".enterpriseguard" / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 LOG_FILE = LOG_DIR / "cli.log"
 logging.basicConfig(
@@ -38,11 +42,21 @@ logger = logging.getLogger(__name__)
 
 # Audit chain integration (optional)
 try:
-    from tools.audit_chain import append_activity
+    from tools.audit_chain import append_activity as _audit_append
+    from tools.paths_config import ACTIVITY_LOG_PATH as _ACTIVITY_LOG
+
+    def append_activity(event_type, details):
+        """Adapt (event_type, details) to audit_chain's (entry_data, path)."""
+        try:
+            _audit_append(
+                {"activity_type": event_type, "details": details},
+                _ACTIVITY_LOG,
+            )
+        except Exception as exc:
+            logger.warning(f"Audit append failed: {exc}")
 except ImportError:
     def append_activity(event_type, details):
         logger.warning(f"Audit chain not available: {event_type} | {details}")
-
 DEFAULT_CONFIG_PATH = Path.home() / ".enterpriseguard" / "config.json"
 INVALID_FILENAME_CHARS = set(';|$&<>\\\n\r\x00\x1b\x7f')
 
@@ -264,7 +278,7 @@ def run_verify(args):
     try:
         config = load_config()
         storage = _get_storage(args, config)
-        result = storage.verify(args.filename) if args.filename else storage.verify()
+        result = storage.verify_integrity(args.filename) if args.filename else storage.verify_integrity()
         print(json.dumps(result, indent=2, default=str))
         append_activity("cli_verify", {"valid": result.get("valid", False)})
         return 0 if result.get("valid", False) else 1
