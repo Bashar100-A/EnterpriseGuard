@@ -2,26 +2,35 @@ import hashlib
 import json
 import os
 import py_compile
-import re
 import shutil
 import subprocess
 import sys
 import tempfile
-import time
 import traceback
-import uuid
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 
 import streamlit as st
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-from tools.audit_chain import append_activity, migrate_activity_log, verify_activity_chain
+from tools.time_utils import utc_now
+from tools.audit_chain import append_activity, verify_activity_chain
+from tools.governance_rule_generator import GovernanceRuleGenerator
+from tools.time_drift import analyze_time_drift
+from tools.integrity_monitor import check_integrity
+
+from tools.time_utils import utc_now
+
+import streamlit as st
+
+from tools.audit_chain import append_activity, verify_activity_chain
+from tools.governance_rule_generator import GovernanceRuleGenerator
 from tools.time_drift import analyze_time_drift
 
-ROOT = Path(__file__).resolve().parent.parent
 ROOT_DIR = ROOT
 TOOLS_DIR = ROOT / "tools"
 ACTIVITY_LOG_PATH = TOOLS_DIR / "activity_log.json"
@@ -33,25 +42,20 @@ PROTECTED_DIRS = {"adie", "intelligence"}
 EXCLUDED_DIRS = {".git", "__pycache__", "node_modules", ".venv", "venv"}
 RAG_CANDIDATES = [ROOT / "rag_system.py", TOOLS_DIR / "rag_system.py"]
 RAG_SCRIPT_CANDIDATES = RAG_CANDIDATES
-LAST_INTEGRITY_SNAPSHOT_TS = None
-
+last_integrity_snapshot_ts = None
 
 def iso_utc_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
+    return utc_now().strftime("%Y-%m-%dT%H:%M:%SZ")
 
 def get_utc_now_str() -> str:
     """Return the current UTC timestamp in ISO 8601 format."""
     return iso_utc_now()
 
-
 def ensure_tools_dir() -> None:
     TOOLS_DIR.mkdir(exist_ok=True, parents=True)
 
-
 def stderr_warn(message: str) -> None:
     print(f"[EnterpriseGuard] {message}", file=sys.stderr)
-
 
 def read_json_file(path: Path, default):
     if not path.exists():
@@ -66,7 +70,6 @@ def read_json_file(path: Path, default):
         stderr_warn(f"Warning: corrupt or unreadable JSON file at {path}. Starting fresh. Error: {exc}")
         return deepcopy(default)
 
-
 def write_json_file(path: Path, data) -> bool:
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -80,6 +83,85 @@ def write_json_file(path: Path, data) -> bool:
         return False
 
 
+def compute_file_sha256(path: Path) -> str:
+    """Return the SHA-256 of a file without modifying it."""
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def trusted_baseline_check(root_path: Path) -> dict:
+    """Validate the trusted baseline and sentinel without writing any project files."""
+    repo_root = root_path.resolve() if root_path.exists() else Path.cwd().resolve()
+    baseline_path = repo_root / "tools" / "TRUSTED_BASELINE.json"
+    sentinel_path = repo_root / "TRUSTED_BASELINE_SENTINEL.json"
+    result = {"status": "PASS", "errors": [], "warnings": []}
+
+    if not sentinel_path.exists():
+        result["status"] = "MISSING"
+        result["warnings"].append("TRUSTED_BASELINE_SENTINEL.json missing")
+        return result
+
+    try:
+        sentinel = json.loads(sentinel_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        result["status"] = "ERROR"
+        result["errors"].append(f"TRUSTED_BASELINE_SENTINEL.json malformed: {exc}")
+        return result
+
+    if not baseline_path.exists():
+        result["status"] = "MISSING"
+        result["warnings"].append("tools/TRUSTED_BASELINE.json missing")
+        return result
+
+    expected_hash = sentinel.get("sha256")
+    actual_hash = compute_file_sha256(baseline_path)
+    if expected_hash != actual_hash:
+        result["status"] = "FAIL"
+        result["errors"].append("SENTINEL_MISMATCH")
+        result["errors"].append(f"tools/TRUSTED_BASELINE.json hash mismatch: expected {expected_hash}, got {actual_hash}")
+        return result
+
+    try:
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        result["status"] = "ERROR"
+        result["errors"].append(f"tools/TRUSTED_BASELINE.json malformed: {exc}")
+        return result
+
+    files = baseline.get("files", [])
+    if not isinstance(files, list):
+        result["status"] = "ERROR"
+        result["errors"].append("tools/TRUSTED_BASELINE.json missing files list")
+        return result
+
+    for item in files:
+        if not isinstance(item, dict):
+            result["status"] = "FAIL"
+            result["errors"].append("Malformed baseline record")
+            continue
+        rel_path = item.get("path")
+        if not rel_path:
+            result["status"] = "FAIL"
+            result["errors"].append("Baseline path missing")
+            continue
+        target = repo_root / rel_path
+        if not target.exists():
+            result["status"] = "FAIL"
+            result["errors"].append(f"{rel_path}: file missing")
+            continue
+        current_hash = compute_file_sha256(target)
+        current_size = target.stat().st_size
+        expected_hash = item.get("sha256")
+        expected_size = item.get("size")
+        if current_hash != expected_hash or current_size != expected_size:
+            result["status"] = "FAIL"
+            result["errors"].append(f"{rel_path}: SHA-256 or size mismatch")
+    return result
+
+
 def append_to_errors_log(message: str) -> None:
     ensure_tools_dir()
     try:
@@ -87,7 +169,6 @@ def append_to_errors_log(message: str) -> None:
             handle.write(f"[{iso_utc_now()}] ERROR: {message}\n")
     except Exception as exc:
         stderr_warn(f"Failed to append to errors log: {exc}")
-
 
 def append_to_activity_log(entry: dict) -> None:
     ensure_tools_dir()
@@ -115,7 +196,6 @@ def append_to_activity_log(entry: dict) -> None:
         stderr_warn(f"Failed to append activity log entry: {exc}")
         append_to_errors_log(f"Activity log write failed: {exc}")
 
-
 def read_activity_entries() -> list:
     raw = read_json_file(ACTIVITY_LOG_PATH, [])
     if isinstance(raw, dict):
@@ -125,7 +205,6 @@ def read_activity_entries() -> list:
     else:
         entries = []
     return entries
-
 
 def get_activity_display_entries(limit: int = 50) -> list:
     entries = read_activity_entries()
@@ -137,7 +216,6 @@ def get_activity_display_entries(limit: int = 50) -> list:
             continue
         filtered.append(entry)
     return filtered[-limit:]
-
 
 def get_last_activity_label() -> str:
     entries = read_activity_entries()
@@ -156,7 +234,6 @@ def get_last_activity_label() -> str:
     details = last.get("details") or last.get("status") or "n/a"
     return f"{ts} :: {activity_type} :: {details}"
 
-
 def get_latest_report_timestamp() -> str:
     if not LATEST_CONTEXT_PATH.exists():
         return "Never"
@@ -170,7 +247,6 @@ def get_latest_report_timestamp() -> str:
         remainder = text.split(marker, 1)[1].splitlines()[0].strip()
         return remainder or "Never"
     return "Unknown report timestamp"
-
 
 def count_project_files_and_lines(root: Path) -> tuple[int, int]:
     file_count = 0
@@ -196,7 +272,6 @@ def count_project_files_and_lines(root: Path) -> tuple[int, int]:
             except Exception:
                 continue
     return file_count, total_lines
-
 
 def generate_file_tree(root_path: Path) -> str:
     """Return a text tree for the repository without traversing protected directories."""
@@ -231,7 +306,6 @@ def generate_file_tree(root_path: Path) -> str:
 
     walk(root_path)
     return "\n".join(lines) if lines else "Root Repository is empty."
-
 
 def generate_memory_snapshot(root_path: Path) -> dict:
     """Build a portable project-memory snapshot for handoff to another AI agent."""
@@ -442,7 +516,6 @@ def generate_memory_snapshot(root_path: Path) -> dict:
         "notes": notes,
     }
 
-
 def build_project_tree(root: Path) -> dict:
     tree: dict = {}
     for dirpath, dirnames, filenames in os.walk(root):
@@ -464,13 +537,11 @@ def build_project_tree(root: Path) -> dict:
             pointer[filename] = None
     return tree
 
-
 def scan_project_tree() -> tuple[str, int, int]:
     """Return a display tree, visible file count, and text-line count."""
     tree_text = generate_file_tree(ROOT_DIR)
     file_count, line_count = count_project_files_and_lines(ROOT_DIR)
     return tree_text, file_count, line_count
-
 
 def render_tree_lines(tree: dict, prefix: str = "") -> list[str]:
     lines = []
@@ -485,17 +556,14 @@ def render_tree_lines(tree: dict, prefix: str = "") -> list[str]:
             lines.extend(render_tree_lines(value, child_prefix))
     return lines
 
-
 def find_rag_path() -> Path | None:
     for candidate in RAG_CANDIDATES:
         if candidate.exists():
             return candidate
     return None
 
-
 def get_rag_status() -> str:
     return "Available" if find_rag_path() else "Not Found"
-
 
 def read_error_lines() -> list[str]:
     ensure_tools_dir()
@@ -507,7 +575,6 @@ def read_error_lines() -> list[str]:
     except Exception as exc:
         stderr_warn(f"Failed to read errors log: {exc}")
         return []
-
 
 def get_activity_summary(last_n: int = 20) -> str:
     entries = read_activity_entries()[-last_n:]
@@ -521,12 +588,11 @@ def get_activity_summary(last_n: int = 20) -> str:
         lines.append(f"- {entry.get('timestamp', 'unknown')} :: {entry.get('activity_type', 'activity')} :: {details}")
     return "\n".join(lines)
 
-
 def render_dashboard() -> None:
     st.title("Developer Command Center")
     st.subheader("Workspace Overview")
     st.markdown("---")
-    now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now_utc = utc_now().strftime("%Y-%m-%dT%H:%M:%SZ")
     file_count, line_count = count_project_files_and_lines(ROOT)
     rag_status = get_rag_status()
     last_report = get_latest_report_timestamp()
@@ -551,7 +617,6 @@ def render_dashboard() -> None:
     else:
         st.warning("RAG system not found — pending integration")
 
-
 def render_file_tree() -> None:
     st.title("File Tree")
     st.subheader("Project Structure")
@@ -564,7 +629,6 @@ def render_file_tree() -> None:
         st.code(tree_text, language="text")
     visible_file_count, _ = count_project_files_and_lines(ROOT)
     st.caption(f"Visible file count: {visible_file_count}")
-
 
 def render_rag_console() -> None:
     st.title("RAG Console")
@@ -621,7 +685,6 @@ def render_rag_console() -> None:
     else:
         st.info("No RAG output available yet.")
 
-
 def render_activity_log() -> None:
     st.title("Activity Log")
     if st.button("Refresh log"):
@@ -638,7 +701,6 @@ def render_activity_log() -> None:
             "details": entry.get("details") or entry.get("status") or "n/a",
         })
     st.dataframe(rows, use_container_width=True, hide_index=True)
-
 
 def render_memory_snapshot() -> None:
     st.title("Memory Snapshot")
@@ -690,7 +752,6 @@ def render_memory_snapshot() -> None:
     else:
         st.info("No snapshot has been generated in this session yet.")
 
-
 def render_system_integrity() -> None:
     st.title("System Controls")
     st.subheader("System Integrity Check")
@@ -701,12 +762,12 @@ def render_system_integrity() -> None:
             result = run_system_integrity_check(Path.cwd())
             st.session_state["last_integrity_result"] = result
             st.session_state["last_integrity_timestamp"] = result.get("timestamp")
-            global LAST_INTEGRITY_SNAPSHOT_TS
-            LAST_INTEGRITY_SNAPSHOT_TS = result.get("timestamp")
+            global last_integrity_snapshot_ts
+            last_integrity_snapshot_ts = result.get("timestamp")
 
             status = result.get("status", "WARN")
-            if status == "OK":
-                st.success("The operation was successful")
+            if status == "PASS":
+                st.success("System integrity check passed.")
             elif status == "FAIL":
                 st.error("System integrity check failed. See details below.")
             else:
@@ -747,7 +808,6 @@ def render_system_integrity() -> None:
     if st.session_state.get("last_repair_report_path"):
         st.caption(f"Generated report: {st.session_state['last_repair_report_path']}")
 
-
 def run_system_integrity_check(root_path: Path) -> dict:
     """Run a safe repository health check without traversing protected directories."""
     repo_root = root_path.resolve() if root_path.exists() else Path.cwd().resolve()
@@ -769,6 +829,8 @@ def run_system_integrity_check(root_path: Path) -> dict:
             "out_of_order_count": 0,
             "skipped_ambiguous_count": 0,
         },
+        "trusted_baseline_check": {"status": "MISSING", "errors": [], "warnings": []},
+        "self_doubt_check": {"status": "MISSING", "errors": [], "warnings": []},
     }
 
     protected_paths = [
@@ -870,7 +932,7 @@ def run_system_integrity_check(root_path: Path) -> dict:
             repo_root / "tools" / "activity_log.json",
             repo_root / "tools" / "latest_context.txt",
         ]
-        drift_result = analyze_time_drift(drift_paths)
+        drift_result = analyze_time_drift(drift_paths, skip_ordering=True)
         drift_status = str(drift_result.get("overall_status", "PASS"))
         checks["time_drift_check"] = {
             "status": drift_status,
@@ -890,7 +952,32 @@ def run_system_integrity_check(root_path: Path) -> dict:
         errors.append(f"time_drift_check: {exc}")
         warnings.append("time_drift_check: exception prevented drift analysis")
 
-    status = "FAIL" if errors else ("WARN" if warnings else "OK")
+    baseline_result = trusted_baseline_check(repo_root)
+    checks["trusted_baseline_check"] = baseline_result
+    if baseline_result.get("status") == "FAIL":
+        errors.extend(baseline_result.get("errors", []))
+    elif baseline_result.get("status") in {"MISSING", "ERROR"}:
+        warnings.extend(baseline_result.get("warnings", []))
+        warnings.extend(baseline_result.get("errors", []))
+    else:
+        warnings.extend(baseline_result.get("warnings", []))
+
+    integrity_baseline_path = repo_root / "tools" / "integrity_baseline.json"
+    try:
+        self_doubt_result = check_integrity(repo_root, integrity_baseline_path)
+        checks["self_doubt_check"] = self_doubt_result
+        if self_doubt_result.get("status") == "FAIL":
+            errors.extend(self_doubt_result.get("errors", []))
+        elif self_doubt_result.get("status") in {"MISSING", "ERROR"}:
+            warnings.extend(self_doubt_result.get("warnings", []))
+            warnings.extend(self_doubt_result.get("errors", []))
+        else:
+            warnings.extend(self_doubt_result.get("warnings", []))
+    except Exception as exc:
+        checks["self_doubt_check"] = {"status": "ERROR", "errors": [str(exc)], "warnings": ["self_doubt_check: exception prevented integrity baseline validation"]}
+        errors.append(f"self_doubt_check: {exc}")
+
+    status = "FAIL" if errors else ("WARN" if warnings else "PASS")
     return {
         "timestamp": iso_utc_now(),
         "status": status,
@@ -902,16 +989,17 @@ def run_system_integrity_check(root_path: Path) -> dict:
             "protected_dirs_check": checks["protected_dirs_check"],
             "audit_chain_check": checks["audit_chain_check"],
             "time_drift_check": checks["time_drift_check"],
+            "trusted_baseline_check": checks["trusted_baseline_check"],
+            "self_doubt_check": checks["self_doubt_check"],
         },
         "errors": errors,
         "warnings": warnings,
     }
 
-
 def generate_repair_recommendation(error_details: dict, root_path: Path) -> Path:
     """Create a JSON repair recommendation report without performing any repair."""
     snapshot_timestamp = (
-        getattr(sys.modules[__name__], "LAST_INTEGRITY_SNAPSHOT_TS", None)
+        getattr(sys.modules[__name__], "last_integrity_snapshot_ts", None)
         or error_details.get("timestamp")
         or iso_utc_now()
     )
@@ -951,9 +1039,10 @@ def generate_repair_recommendation(error_details: dict, root_path: Path) -> Path
     if not analysis:
         analysis.append("No blocking failures were identified in the integrity check; confirm the status with a repository owner before any action.")
 
+    status = "FAIL" if syntax_errors or import_errors or log_errors else ("WARN" if missing_governance else "PASS")
     report = {
         "timestamp": snapshot_timestamp,
-        "status": "FAILED",
+        "status": status,
         "failed_checks": {
             "syntax_errors": syntax_errors,
             "import_errors": import_errors,
@@ -970,6 +1059,42 @@ def generate_repair_recommendation(error_details: dict, root_path: Path) -> Path
     os.replace(temp_path, report_path)
     return report_path
 
+def render_governance_rule_generator() -> None:
+    st.title("Governance Rule Generator")
+    st.warning("These are proposals only. They require owner approval before any activation.")
+
+    if st.button("Generate Governance Proposals"):
+        try:
+            generator = GovernanceRuleGenerator()
+            observations = []
+            observations.extend(generator.analyze_recent_activity(ACTIVITY_LOG_PATH, limit=100))
+            observations.extend(generator.analyze_error_log(ERROR_LOG_PATH, limit=200))
+            observations.extend(generator.analyze_decision_log(TOOLS_DIR / "DECISIONS_LOG.md"))
+            proposals = generator.generate_proposals(observations)
+            proposals = proposals[:10]
+            proposals_file = generator.save_proposals(
+                proposals,
+                TOOLS_DIR / f"governance_proposals_{iso_utc_now()}.json",
+            )
+            st.session_state["governance_proposals"] = proposals
+            st.session_state["governance_proposals_file"] = str(proposals_file)
+            st.success("Governance proposals generated for review. They remain proposals until owner approval.")
+            st.json(proposals)
+            if proposals_file.exists():
+                st.download_button(
+                    label="Download Governance Proposals",
+                    data=proposals_file.read_text(encoding="utf-8"),
+                    file_name=proposals_file.name,
+                    mime="application/json",
+                )
+        except Exception as exc:
+            msg = f"Governance proposal generation failed: {exc}"
+            append_to_errors_log(msg)
+            st.error(msg)
+
+    if st.session_state.get("governance_proposals"):
+        st.caption(f"Latest proposals file: {st.session_state.get('governance_proposals_file', 'not available')}")
+        st.json(st.session_state["governance_proposals"])
 
 def render_report_generator() -> None:
     st.title("Report Generator")
@@ -1019,7 +1144,6 @@ def render_report_generator() -> None:
     else:
         st.info("No report generated yet.")
 
-
 def initialize_session_state() -> None:
     if "rag_output" not in st.session_state:
         st.session_state["rag_output"] = ""
@@ -1035,6 +1159,10 @@ def initialize_session_state() -> None:
         st.session_state["last_integrity_timestamp"] = ""
     if "last_repair_report_path" not in st.session_state:
         st.session_state["last_repair_report_path"] = ""
+    if "governance_proposals" not in st.session_state:
+        st.session_state["governance_proposals"] = []
+    if "governance_proposals_file" not in st.session_state:
+        st.session_state["governance_proposals_file"] = ""
     if "app_started_logged" not in st.session_state:
         append_to_activity_log({
             "activity_type": "app_started",
@@ -1044,7 +1172,6 @@ def initialize_session_state() -> None:
         st.session_state["app_started_logged"] = True
     if "lockdown_active" not in st.session_state:
         st.session_state["lockdown_active"] = False
-
 
 def main() -> None:
     st.set_page_config(
@@ -1073,7 +1200,7 @@ def main() -> None:
     st.sidebar.markdown("---")
     st.sidebar.info("EnterpriseGuard Governance Layer Active\n\nProtected areas (adie/, intelligence/) are strictly isolated.")
     st.sidebar.markdown("---")
-    page = st.sidebar.radio("Navigation", ["Dashboard", "File Tree", "RAG Console", "Activity Log", "Report Generator", "Memory Snapshot", "System Controls"])
+    page = st.sidebar.radio("Navigation", ["Dashboard", "File Tree", "RAG Console", "Activity Log", "Report Generator", "Memory Snapshot", "System Controls", "Governance Rule Generator"])
     st.sidebar.markdown("---")
     if st.sidebar.button("EMERGENCY STOP / CIRCUIT BREAKER"):
         append_to_activity_log({
@@ -1099,10 +1226,11 @@ def main() -> None:
         render_memory_snapshot()
     elif page == "System Controls":
         render_system_integrity()
+    elif page == "Governance Rule Generator":
+        render_governance_rule_generator()
 
     st.markdown("---")
     st.caption("Developer Command Center v1.0 • Governance enforced • Protected directories remain outside scope.")
-
 
 if __name__ == "__main__":
     try:

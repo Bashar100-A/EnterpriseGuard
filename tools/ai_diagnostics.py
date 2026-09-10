@@ -1,16 +1,20 @@
-#!/usr/bin/env python3
-"""Read-only AI diagnostics and model health checker for EnterpriseGuard.
-
-The script inspects the project's AI assets and configuration status without
-modifying protected runtime directories or implementation logic.
-"""
-
-from __future__ import annotations
-
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.time_utils import utc_now
+from tools.audit_chain import append_activity as audit_append_activity
+
+from tools.time_utils import utc_now
+from typing import Any
+
+from tools.audit_chain import append_activity as audit_append_activity
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 TOOLS_DIR = PROJECT_ROOT / "tools"
@@ -21,36 +25,24 @@ MODEL_META_PATH = MODEL_ROOT / "enterpriseguard_model.json"
 ACTIVITY_LOG_PATH = TOOLS_DIR / "activity_log.json"
 ERROR_LOG_PATH = TOOLS_DIR / "errors.log"
 
-
 def utc_timestamp() -> str:
-    return datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
-
+    return utc_now().strftime("%Y-%m-%d %H:%M:%S %Z")
 
 def ensure_tools_dir() -> None:
     TOOLS_DIR.mkdir(exist_ok=True, parents=True)
 
-
-def append_activity(event: str) -> None:
+def append_activity(event: str, path: Path | str | None = None) -> None:
     ensure_tools_dir()
+    target_path = Path(path) if path is not None else ACTIVITY_LOG_PATH
     try:
-        if ACTIVITY_LOG_PATH.exists():
-            with ACTIVITY_LOG_PATH.open("r", encoding="utf-8") as handle:
-                try:
-                    payload = json.load(handle)
-                except json.JSONDecodeError:
-                    payload = []
-        else:
-            payload = []
-
-        if not isinstance(payload, list):
-            payload = []
-
-        payload.append({"timestamp": utc_timestamp(), "event": event})
-        with ACTIVITY_LOG_PATH.open("w", encoding="utf-8") as handle:
-            json.dump(payload, handle, indent=2)
+        audit_append_activity({
+            "activity_type": "ai_diagnostics",
+            "event": event,
+            "details": event,
+            "status": "success",
+        }, target_path)
     except Exception:
         pass
-
 
 def log_error(message: str) -> None:
     ensure_tools_dir()
@@ -59,7 +51,6 @@ def log_error(message: str) -> None:
             handle.write(f"[{utc_timestamp()}] {message}\n")
     except Exception:
         pass
-
 
 def read_json(path: Path) -> dict[str, Any] | None:
     try:
@@ -70,7 +61,6 @@ def read_json(path: Path) -> dict[str, Any] | None:
         log_error(f"Read error on {path}: {exc}")
         return None
 
-
 def iter_model_artifacts(root: Path) -> list[Path]:
     if not root.exists():
         return []
@@ -79,7 +69,6 @@ def iter_model_artifacts(root: Path) -> list[Path]:
         if item.is_file():
             files.append(item)
     return files
-
 
 def summarize_registry(registry_path: Path) -> dict[str, Any]:
     registry_data = read_json(registry_path)
@@ -102,7 +91,6 @@ def summarize_registry(registry_path: Path) -> dict[str, Any]:
         "version": str(version),
         "model_count": model_count,
     }
-
 
 def summarize_training_metadata(metadata_path: Path) -> dict[str, Any]:
     metadata = read_json(metadata_path)
@@ -128,7 +116,6 @@ def summarize_training_metadata(metadata_path: Path) -> dict[str, Any]:
         "trained": trained,
     }
 
-
 def summarize_model_meta(model_meta_path: Path) -> dict[str, Any]:
     model_data = read_json(model_meta_path)
     if model_data is None:
@@ -150,7 +137,6 @@ def summarize_model_meta(model_meta_path: Path) -> dict[str, Any]:
         "trained": trained,
     }
 
-
 def summarize_artifacts(root: Path) -> dict[str, Any]:
     artifacts = iter_model_artifacts(root)
     if not artifacts:
@@ -171,7 +157,6 @@ def summarize_artifacts(root: Path) -> dict[str, Any]:
         "files": files,
     }
 
-
 def print_report(report: list[dict[str, Any]]) -> int:
     success_count = sum(1 for item in report if item["status"] == "SUCCESS")
     warning_count = sum(1 for item in report if item["status"] == "WARNING")
@@ -189,7 +174,6 @@ def print_report(report: list[dict[str, Any]]) -> int:
     print("======================================\n")
     return 0 if failure_count == 0 else 1
 
-
 def main() -> int:
     ensure_tools_dir()
 
@@ -199,7 +183,7 @@ def main() -> int:
     report.append(summarize_model_meta(MODEL_META_PATH))
     report.append(summarize_artifacts(MODEL_ROOT))
 
-    append_activity("AI diagnostics run executed")
+    append_activity("AI diagnostics run executed", ACTIVITY_LOG_PATH)
     exit_code = print_report(report)
 
     if exit_code != 0:
@@ -209,7 +193,6 @@ def main() -> int:
     print("AI diagnostics completed successfully: model assets and metadata are readable.")
     return 0
 
-
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
@@ -217,6 +200,6 @@ if __name__ == "__main__":
         raise
     except Exception as exc:  # pragma: no cover
         log_error(f"Unexpected AI diagnostics execution error: {exc}")
-        append_activity("AI diagnostics run failed due to unexpected execution error")
+        append_activity("AI diagnostics run failed due to unexpected execution error", ACTIVITY_LOG_PATH)
         print(f"Unexpected error: {exc}")
         raise SystemExit(1)

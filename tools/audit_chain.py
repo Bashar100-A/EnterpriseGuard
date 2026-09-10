@@ -1,12 +1,20 @@
 import hashlib
 import json
 import os
+import sys
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
-ACTIVITY_LOG_ROOT_TYPE = "list"
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
+from tools.time_utils import utc_now
+
+from tools.time_utils import utc_now
+
+ACTIVITY_LOG_ROOT_TYPE = "list"
 
 def _write_atomic_json(path: Path, payload) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -14,7 +22,6 @@ def _write_atomic_json(path: Path, payload) -> None:
         json.dump(payload, handle, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         temp_path = Path(handle.name)
     os.replace(temp_path, path)
-
 
 def load_activity_log(path: Path) -> list:
     global ACTIVITY_LOG_ROOT_TYPE
@@ -33,13 +40,11 @@ def load_activity_log(path: Path) -> list:
         return raw["activities"]
     raise ValueError(f"Malformed activity log at {path}: expected a list or an object with an 'activities' list.")
 
-
 def compute_entry_hash(entry: dict, prev_hash: str) -> str:
     data = {key: value for key, value in entry.items() if key not in {"prev_hash", "current_hash"}}
     canonical = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     digest_input = canonical + str(prev_hash)
     return hashlib.sha256(digest_input.encode("utf-8")).hexdigest()
-
 
 def append_activity(entry_data: dict, path: Path) -> dict:
     entries = load_activity_log(path)
@@ -48,7 +53,7 @@ def append_activity(entry_data: dict, path: Path) -> dict:
         prev_hash = str(entries[-1].get("current_hash") or "GENESIS")
 
     new_entry = dict(entry_data)
-    new_entry.setdefault("timestamp", datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+    new_entry.setdefault("timestamp", utc_now().strftime("%Y-%m-%dT%H:%M:%SZ"))
     new_entry.setdefault("activity_type", "command_center_action")
     new_entry.setdefault("status", "success")
     new_entry.setdefault("details", "n/a")
@@ -59,7 +64,6 @@ def append_activity(entry_data: dict, path: Path) -> dict:
     payload = entries if ACTIVITY_LOG_ROOT_TYPE == "list" else {"activities": entries}
     _write_atomic_json(path, payload)
     return new_entry
-
 
 def verify_activity_chain(path: Path) -> tuple[bool, str]:
     if not path.exists():
@@ -85,7 +89,6 @@ def verify_activity_chain(path: Path) -> tuple[bool, str]:
         previous_hash = stored_current
 
     return True, "Chain valid"
-
 
 def migrate_activity_log(path: Path) -> int:
     if not path.exists():

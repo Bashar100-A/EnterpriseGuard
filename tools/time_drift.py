@@ -1,8 +1,15 @@
 import json
 import re
+import sys
 from collections import deque
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.time_utils import ensure_aware, parse_utc_timestamp, safe_subtract
 
 LOCAL_TZ_OFFSETS = {
     "EDT": -4,
@@ -35,37 +42,24 @@ def _to_utc_datetime(raw: str) -> datetime:
     candidate = raw.strip()
 
     if candidate.endswith("Z"):
-        for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d %H:%M:%SZ"):
-            try:
-                return datetime.strptime(candidate, fmt).replace(tzinfo=timezone.utc)
-            except ValueError:
-                continue
+        return parse_utc_timestamp(candidate)
 
     if re.search(r"[+-]\d{2}:\d{2}$", candidate):
-        for fmt in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d %H:%M:%S%z"):
-            try:
-                dt = datetime.strptime(candidate, fmt)
-                return dt.astimezone(timezone.utc)
-            except ValueError:
-                continue
+        return parse_utc_timestamp(candidate)
 
     if candidate.endswith(" UTC") or candidate.endswith(" GMT"):
-        base = candidate.rsplit(" ", 1)[0]
-        for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
-            try:
-                return datetime.strptime(base, fmt).replace(tzinfo=timezone.utc)
-            except ValueError:
-                continue
+        return parse_utc_timestamp(candidate)
 
     if " " in candidate:
         base, tz_token = candidate.rsplit(" ", 1)
     else:
         base = candidate[:-3]
         tz_token = candidate[-3:]
+
     if tz_token in LOCAL_TZ_OFFSETS:
         for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
             try:
-                dt = datetime.strptime(base, fmt)
+                dt = ensure_aware(datetime.strptime(base, fmt))
                 offset = timedelta(hours=LOCAL_TZ_OFFSETS[tz_token])
                 return dt - offset
             except ValueError:
@@ -132,8 +126,8 @@ def is_chronologically_consistent(ts_list: list[dict]) -> tuple[bool, str, list]
                 raw_name = raw.rsplit(" ", 1)[-1] if " " in raw else raw[-3:]
                 if raw_name in LOCAL_TZ_OFFSETS:
                     base = raw.rsplit(" ", 1)[0] if " " in raw else raw[:-3]
-                    dt = datetime.strptime(base, "%Y-%m-%dT%H:%M:%S") if "T" in base else datetime.strptime(base, "%Y-%m-%d %H:%M:%S")
-                    comparable.append((dt - timedelta(hours=LOCAL_TZ_OFFSETS[raw_name]), raw))
+                    dt = ensure_aware(datetime.strptime(base, "%Y-%m-%dT%H:%M:%S") if "T" in base else datetime.strptime(base, "%Y-%m-%d %H:%M:%S"))
+                    comparable.append((safe_subtract(dt, timedelta(hours=LOCAL_TZ_OFFSETS[raw_name])), raw))
                 else:
                     skipped.append(raw)
             except ValueError:
@@ -173,7 +167,7 @@ def read_tail_lines(path: Path, max_lines: int) -> tuple[list[str], int]:
     return lines, start_line
 
 
-def analyze_time_drift(paths: list[Path], max_lines_per_file: int = 2000) -> dict:
+def analyze_time_drift(paths: list[Path], max_lines_per_file: int = 2000, skip_ordering: bool = False) -> dict:
     report = {
         "files_analyzed": [],
         "total_timestamps_found": 0,
@@ -262,15 +256,16 @@ def analyze_time_drift(paths: list[Path], max_lines_per_file: int = 2000) -> dic
 
             report["skipped_ambiguous_in_ordering"].extend(skipped)
 
-            for index in range(1, len(comparable)):
-                previous = comparable[index - 1]
-                current = comparable[index]
-                if current["dt"] < previous["dt"]:
-                    report["out_of_order_timestamps"].append({
-                        "file": str(file_path),
-                        "previous": previous["raw"],
-                        "current": current["raw"],
-                    })
+            if not skip_ordering:
+                for index in range(1, len(comparable)):
+                    previous = comparable[index - 1]
+                    current = comparable[index]
+                    if current["dt"] < previous["dt"]:
+                        report["out_of_order_timestamps"].append({
+                            "file": str(file_path),
+                            "previous": previous["raw"],
+                            "current": current["raw"],
+                        })
             continue
 
         lines, start_line = read_tail_lines(file_path, max_lines_per_file)
@@ -336,8 +331,8 @@ def analyze_time_drift(paths: list[Path], max_lines_per_file: int = 2000) -> dic
                 try:
                     raw_name = raw.rsplit(" ", 1)[-1] if " " in raw else raw[-3:]
                     base = raw.rsplit(" ", 1)[0] if " " in raw else raw[:-3]
-                    dt = datetime.strptime(base, "%Y-%m-%dT%H:%M:%S") if "T" in base else datetime.strptime(base, "%Y-%m-%d %H:%M:%S")
-                    sequence.append({"raw": raw, "dt": dt - timedelta(hours=LOCAL_TZ_OFFSETS[raw_name])})
+                    dt = ensure_aware(datetime.strptime(base, "%Y-%m-%dT%H:%M:%S") if "T" in base else datetime.strptime(base, "%Y-%m-%d %H:%M:%S"))
+                    sequence.append({"raw": raw, "dt": safe_subtract(dt, timedelta(hours=LOCAL_TZ_OFFSETS[raw_name]))})
                 except ValueError:
                     skipped.append({"file": str(file_path), "raw": raw, "classification": classification})
             elif classification == "AMBIGUOUS":
@@ -351,15 +346,16 @@ def analyze_time_drift(paths: list[Path], max_lines_per_file: int = 2000) -> dic
                 })
 
         report["skipped_ambiguous_in_ordering"].extend(skipped)
-        for index in range(1, len(sequence)):
-            previous = sequence[index - 1]
-            current = sequence[index]
-            if current["dt"] < previous["dt"]:
-                report["out_of_order_timestamps"].append({
-                    "file": str(file_path),
-                    "previous": previous["raw"],
-                    "current": current["raw"],
-                })
+        if not skip_ordering:
+            for index in range(1, len(sequence)):
+                previous = sequence[index - 1]
+                current = sequence[index]
+                if current["dt"] < previous["dt"]:
+                    report["out_of_order_timestamps"].append({
+                        "file": str(file_path),
+                        "previous": previous["raw"],
+                        "current": current["raw"],
+                    })
 
     has_invalid = bool(report["invalid_timestamps"]) or bool(report["out_of_order_timestamps"])
     has_warn = bool(report["ambiguous_timestamps"]) or bool(report["skipped_ambiguous_in_ordering"])

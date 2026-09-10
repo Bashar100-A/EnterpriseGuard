@@ -1,0 +1,41 @@
+# ============================================================
+# EnterpriseGuard Governance Check Service (Template)
+# ============================================================
+# This is a SYSTEMD SERVICE TEMPLATE.
+# During installation, tools/installer.py will generate the
+# active service file with the actual install_root path.
+# Do NOT use this template directly in production.
+# ============================================================
+
+[Unit]
+Description=EnterpriseGuard Governance Check Service
+After=network.target
+
+[Service]
+Type=oneshot
+User=enterpriseguard
+Group=enterpriseguard
+WorkingDirectory=/opt/enterpriseguard
+ExecStart=/opt/enterpriseguard/.venv/bin/python3 /opt/enterpriseguard/tools/checklist.py
+StandardOutput=append:/var/log/enterpriseguard/checklist.log
+StandardError=append:/var/log/enterpriseguard/checklist.log
+Environment=PYTHONDONTWRITEBYTECODE=1
+
+# Prevent hanging indefinitely
+TimeoutStartSec=300
+
+# Do not restart automatically
+Restart=no
+
+# Hardening
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+ReadOnlyPaths=/opt/enterpriseguard/tools
+
+# Block access to protected directories even if filesystem permissions are misconfigured
+InaccessiblePaths=/opt/enterpriseguard/adie /opt/enterpriseguard/intelligence /opt/enterpriseguard/src/enterpriseguard/adie /opt/enterpriseguard/src/enterpriseguard/intelligence
+
+[Install]
+WantedBy=multi-user.target

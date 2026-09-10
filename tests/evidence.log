@@ -1,0 +1,29 @@
+[ST-001] 2026-09-02T16:53:44Z - Starting permission test
+[ST-001] PASS: permissions are 600
+[ST-002] 2026-09-02T16:55:31Z - Starting protected dirs absence test
+[ST-002] PASS: adie absent
+[ST-002] PASS: intelligence absent
+[ST-002] PASS: src/enterpriseguard/adie absent
+[ST-002] PASS: src/enterpriseguard/intelligence absent
+[ST-002] ALL PROTECTED DIRS ABSENT
+[ST-003] Starting relational_memory input validation test
+[ST-003] PASS: empty event_id rejected
+[ST-003] PASS: empty cause rejected
+[ST-003] OK: first event recorded
+[ST-003] PASS: duplicate event_id rejected
+[ST-003] ALL RELATIONAL MEMORY INPUT VALIDATION TESTS PASSED
+[ST-004] Starting innocence_chain tamper detection test
+[ST-004] PASS: clean chain verified
+[ST-004] PASS: tampered chain rejected
+[ST-004] ALL INNOCENCE CHAIN TAMPER TESTS PASSED
+[ST-005] 2026-09-02T17:00:02Z - Starting distributed_proof missing shard test
+proof_digest: 9731331f801eaf8955d3132ae348794b5391c07ce8eb02e6f63efd9dac56ac51
+shards:
+  local: /tmp/enterpriseguard_test/tools/proof_shard_local.json
+  external: /tmp/enterpriseguard_test/external_proof/proof_shard_external.json
+  physical: /tmp/enterpriseguard_test/tools/proof_shard_physical.json
+VERIFIED_OK
+Verification failed: Required file not found: /tmp/enterpriseguard_test/external_proof/proof_shard_external.json
+VERIFICATION_FAILED
+[ST-005] PASS: verification failed after shard deletion (exit 1)
+[ST-005] ALL DISTRIBUTED PROOF SHARD TESTS PASSED

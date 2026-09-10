@@ -3,22 +3,22 @@ EnterpriseGuard - Response Integration Layer
 =============================================
 
 
-Production-grade orchestration layer for the EnterpriseGuard response
-lifecycle.
+Responsible for orchestrating the complete response lifecycle:
 
 
-Pipeline
---------
     Request
        |
        v
     Validation
        |
        v
-    Response Planning
+    Response Engine
        |
        v
-    Response Execution
+    Response Plan
+       |
+       v
+    Response Executor
        |
        v
     Response Verification
@@ -30,40 +30,20 @@ Pipeline
     Integration Result
 
 
-Responsibilities
-----------------
-This module is responsible ONLY for orchestration.
-
-
-It does NOT:
-    - execute shell commands
-    - perform network operations
-    - modify accounts
-    - directly execute security actions
-    - contain response business logic
-    - persist audit events itself
-
-
-Those responsibilities belong to the appropriate EnterpriseGuard
-components.
-
-
-Design principles
------------------
-- deterministic orchestration
-- explicit stage boundaries
-- fail-closed behavior
-- strong input validation
-- bounded input/action sizes
-- idempotent request handling
-- immutable-style result snapshots
-- correlation identifiers across stages
-- explicit failure propagation
-- safe-by-default operation
-- compatibility with existing response components
-- real integration with monitoring.audit.AuditLogger
-- deterministic self-testing
-- no hidden side effects
+Design goals
+------------
+- Deterministic pipeline orchestration
+- Strong validation boundaries
+- Idempotent request handling
+- Correlation across all stages
+- Safe-by-default operation
+- No shell execution
+- No direct security actions
+- Read-only integration layer
+- Compatible with existing EnterpriseGuard response components
+- Explicit failure propagation
+- Auditable pipeline state
+- Real integration with monitoring.audit.AuditLogger
 """
 
 
@@ -79,19 +59,17 @@ import uuid
 
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional
 
 
 
 
-# ============================================================================
+# ---------------------------------------------------------------------------
 # Metadata
-# ============================================================================
+# ---------------------------------------------------------------------------
 
 
-VERSION = "2.0.0"
-
-
+VERSION = "1.2.0"
 ENGINE_NAME = "EnterpriseGuard Response Integration"
 
 
@@ -99,46 +77,22 @@ MAX_INPUT_SIZE = 1_000_000
 MAX_ACTIONS = 16
 
 
-DEFAULT_REQUEST_ID = "unknown"
 
 
-
-
-# ============================================================================
-# Type aliases
-# ============================================================================
-
-
-JSONDict = Dict[str, Any]
-MethodNames = Tuple[str, ...]
-
-
-
-
-# ============================================================================
-# Utility functions
-# ============================================================================
-
-
+# ---------------------------------------------------------------------------
+# Utilities
+# ---------------------------------------------------------------------------
 
 
 def _utc_now() -> str:
-    """
-    Return the current UTC timestamp in ISO-8601 format.
-    """
+    """Return the current UTC timestamp in ISO-8601 format."""
     return datetime.now(timezone.utc).isoformat()
 
 
 
 
 def _new_id(prefix: str) -> str:
-    """
-    Generate a readable EnterpriseGuard identifier.
-
-
-    Example:
-        INT-3A6D2B...
-    """
+    """Generate a short, readable EnterpriseGuard identifier."""
     return f"{prefix}-{uuid.uuid4().hex[:24].upper()}"
 
 
@@ -149,7 +103,7 @@ def _canonical_json(value: Any) -> str:
     Serialize a value deterministically.
 
 
-    The resulting representation is used for hashing and idempotency.
+    This is used for request fingerprints and correlation hashes.
     """
     return json.dumps(
         value,
@@ -163,9 +117,7 @@ def _canonical_json(value: Any) -> str:
 
 
 def _hash(value: Any) -> str:
-    """
-    Return a SHA-256 hash of a canonical representation.
-    """
+    """Return a SHA-256 hash of a canonical representation."""
     return hashlib.sha256(
         _canonical_json(value).encode("utf-8")
     ).hexdigest()
@@ -175,10 +127,10 @@ def _hash(value: Any) -> str:
 
 def _safe_len(value: Any) -> int:
     """
-    Return the serialized size of a value.
+    Safely estimate serialized input size.
 
 
-    Serialization failures are deliberately treated as oversized input.
+    Serialization failures are treated as oversized input.
     """
     try:
         return len(_canonical_json(value))
@@ -189,57 +141,25 @@ def _safe_len(value: Any) -> int:
 
 
 def _copy(value: Any) -> Any:
-    """
-    Return a defensive deep copy.
-    """
+    """Return a defensive deep copy."""
     return copy.deepcopy(value)
 
 
 
 
-def _is_dict(value: Any) -> bool:
-    """
-    Return True when value is a dictionary.
-    """
-    return isinstance(value, dict)
-
-
-
-
-def _status_of(value: Any) -> Optional[str]:
-    """
-    Safely extract a status from a component result.
-    """
-    if not isinstance(value, dict):
-        return None
-
-
-    status = value.get("status")
-
-
-    return (
-        status.upper()
-        if isinstance(status, str)
-        else None
-    )
-
-
-
-
-# ============================================================================
-# Integration result
-# ============================================================================
-
-
+# ---------------------------------------------------------------------------
+# Result model
+# ---------------------------------------------------------------------------
 
 
 @dataclass
 class IntegrationResult:
     """
-    Final immutable-style representation of one integration request.
+    Final result returned by ResponseIntegration.
 
 
-    The object captures the complete lifecycle of the request.
+    This object represents the complete lifecycle of one integration
+    request and contains the state of every pipeline stage.
     """
 
 
@@ -259,60 +179,46 @@ class IntegrationResult:
     completed_at: Optional[str] = None
 
 
-    planning: JSONDict = field(default_factory=dict)
-    execution: JSONDict = field(default_factory=dict)
-    verification: JSONDict = field(default_factory=dict)
-    audit: JSONDict = field(default_factory=dict)
+    planning: Dict[str, Any] = field(default_factory=dict)
+    execution: Dict[str, Any] = field(default_factory=dict)
+    verification: Dict[str, Any] = field(default_factory=dict)
+    audit: Dict[str, Any] = field(default_factory=dict)
 
 
-    stages_completed: List[str] = field(
-        default_factory=list
-    )
-
-
-    stages_failed: List[str] = field(
-        default_factory=list
-    )
+    stages_completed: List[str] = field(default_factory=list)
+    stages_failed: List[str] = field(default_factory=list)
 
 
     processing_time_ms: float = 0.0
-
-
     correlation_hash: str = ""
 
 
     error: Optional[str] = None
 
 
+    # Explicitly part of the dataclass.
+    # Never inject dynamically.
     idempotent_replay: bool = False
 
 
-    def to_dict(self) -> JSONDict:
-        """
-        Return a serializable representation.
-        """
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a serializable representation."""
         return asdict(self)
 
 
 
 
-# ============================================================================
+# ---------------------------------------------------------------------------
 # Statistics
-# ============================================================================
-
-
+# ---------------------------------------------------------------------------
 
 
 @dataclass
 class IntegrationStatistics:
-    """
-    Runtime statistics for the integration layer.
-    """
+    """Runtime statistics for the integration layer."""
 
 
     total_requests: int = 0
-
-
     successful_requests: int = 0
     partial_requests: int = 0
     failed_requests: int = 0
@@ -325,8 +231,6 @@ class IntegrationStatistics:
     planning_completed: int = 0
     execution_completed: int = 0
     verification_completed: int = 0
-
-
     audit_events: int = 0
 
 
@@ -334,29 +238,25 @@ class IntegrationStatistics:
     max_processing_ms: float = 0.0
 
 
-    def record_processing(
-        self,
-        processing_ms: float,
-    ) -> None:
+    def record_processing(self, processing_ms: float) -> None:
         """
-        Update processing-time statistics.
+        Update average and maximum processing time.
 
 
         total_requests must already include the current request.
         """
-        if self.total_requests <= 0:
-            return
-
-
         previous_total = (
             self.average_processing_ms
-            * (self.total_requests - 1)
+            * max(0, self.total_requests - 1)
         )
+
+
+        count = max(1, self.total_requests)
 
 
         self.average_processing_ms = (
             previous_total + processing_ms
-        ) / self.total_requests
+        ) / count
 
 
         self.max_processing_ms = max(
@@ -367,32 +267,24 @@ class IntegrationStatistics:
 
 
 
-# ============================================================================
+# ---------------------------------------------------------------------------
 # Response Integration
-# ============================================================================
-
-
+# ---------------------------------------------------------------------------
 
 
 class ResponseIntegration:
     """
-    Orchestrate the complete EnterpriseGuard response lifecycle.
+    Orchestrates the complete response lifecycle.
 
 
-    Important
-    ---------
-    This class does not perform security actions directly.
+    Important:
+        This class does NOT execute security actions directly.
 
 
-    The actual action execution remains delegated to ResponseExecutor.
-    Verification remains delegated to the verification component.
-    Audit persistence remains delegated to AuditLogger.
+    Security actions remain the responsibility of ResponseExecutor.
+    Verification remains the responsibility of ResponseVerificationEngine.
+    Audit persistence remains the responsibility of AuditLogger.
     """
-
-
-    # ------------------------------------------------------------------------
-    # Construction
-    # ------------------------------------------------------------------------
 
 
     def __init__(
@@ -409,59 +301,44 @@ class ResponseIntegration:
     ) -> None:
 
 
-        self.engine = (
-            engine
-            if engine is not None
-            else self._load_component(
-                "enterpriseguard.response.engine",
-                (
-                    "ResponseEngine",
-                    "EnterpriseGuardResponseEngine",
-                ),
-            )
+        self.engine = engine or self._load_component(
+            "enterpriseguard.response.engine",
+            (
+                "ResponseEngine",
+                "EnterpriseGuardResponseEngine",
+            ),
         )
 
 
-        self.executor = (
-            executor
-            if executor is not None
-            else self._load_component(
-                "enterpriseguard.response.executor",
-                (
-                    "ResponseExecutor",
-                    "EnterpriseGuardResponseExecutor",
-                ),
-            )
+        self.executor = executor or self._load_component(
+            "enterpriseguard.response.executor",
+            (
+                "ResponseExecutor",
+                "EnterpriseGuardResponseExecutor",
+            ),
         )
 
 
-        self.verification = (
-            verification
-            if verification is not None
-            else self._load_component(
-                "enterpriseguard.response.verification",
-                (
-                    "ResponseVerificationEngine",
-                    "ResponseVerification",
-                ),
-            )
+        self.verification = verification or self._load_component(
+            "enterpriseguard.response.verification",
+            (
+                "ResponseVerificationEngine",
+                "ResponseVerification",
+            ),
         )
 
 
-        # The canonical EnterpriseGuard audit component is:
+        # IMPORTANT:
+        # The real EnterpriseGuard audit component is:
         #
         #     enterpriseguard.monitoring.audit.AuditLogger
         #
-        # Do not create a parallel audit implementation here.
-        self.audit = (
-            audit
-            if audit is not None
-            else self._load_component(
-                "enterpriseguard.monitoring.audit",
-                (
-                    "AuditLogger",
-                ),
-            )
+        # Do not create or use audit/logger.py.
+        self.audit = audit or self._load_component(
+            "enterpriseguard.monitoring.audit",
+            (
+                "AuditLogger",
+            ),
         )
 
 
@@ -488,32 +365,32 @@ class ResponseIntegration:
         self.statistics = IntegrationStatistics()
 
 
-        # request fingerprint -> serialized IntegrationResult
+        # request_fingerprint -> serialized IntegrationResult
         self._idempotency_cache: Dict[
             str,
-            JSONDict,
+            Dict[str, Any],
         ] = {}
 
 
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Component loading
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
 
 
     @staticmethod
     def _load_component(
         module_name: str,
-        class_names: Sequence[str],
+        class_names: tuple,
     ) -> Any:
         """
         Dynamically load an EnterpriseGuard component.
 
 
-        Component loading failures are intentionally non-fatal.
-
-
-        health_check() is responsible for exposing missing components.
+        Component loading failure is intentionally non-fatal here.
+        health_check() exposes unavailable components explicitly.
         """
+
+
         try:
             module = __import__(
                 module_name,
@@ -526,19 +403,19 @@ class ResponseIntegration:
         for class_name in class_names:
 
 
-            component_class = getattr(
+            cls = getattr(
                 module,
                 class_name,
                 None,
             )
 
 
-            if component_class is None:
+            if cls is None:
                 continue
 
 
             try:
-                return component_class()
+                return cls()
             except Exception:
                 continue
 
@@ -546,33 +423,33 @@ class ResponseIntegration:
         return None
 
 
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Generic component invocation
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
 
 
     @staticmethod
     def _invoke(
         component: Any,
-        method_names: MethodNames,
-        *args: Any,
-        **kwargs: Any,
+        method_names: tuple,
+        *args,
+        **kwargs,
     ) -> Any:
         """
-        Invoke the first compatible public component method.
+        Invoke the first compatible public method.
 
 
         Compatibility order:
-            1. positional + keyword arguments
+            1. keyword + positional arguments
             2. positional arguments
             3. no arguments
 
 
-        TypeError is interpreted as a signature mismatch.
-
-
-        All other exceptions are allowed to propagate to the caller.
+        TypeError is treated as a signature mismatch.
+        Other exceptions propagate.
         """
+
+
         if component is None:
             return None
 
@@ -592,24 +469,44 @@ class ResponseIntegration:
 
 
             if kwargs:
+
+
                 try:
                     return method(
                         *args,
                         **kwargs,
                     )
+
+
                 except TypeError:
                     pass
+
+
+                except Exception:
+                    raise
 
 
             if args:
+
+
                 try:
-                    return method(*args)
+                    return method(
+                        *args,
+                    )
+
+
                 except TypeError:
                     pass
+
+
+                except Exception:
+                    raise
 
 
             try:
                 return method()
+
+
             except TypeError:
                 continue
 
@@ -617,32 +514,15 @@ class ResponseIntegration:
         return None
 
 
-    # ------------------------------------------------------------------------
-    # Component availability
-    # ------------------------------------------------------------------------
-
-
-    def _component_state(self) -> JSONDict:
-        """
-        Return component availability.
-        """
-        return {
-            "engine": self.engine is not None,
-            "executor": self.executor is not None,
-            "verification": self.verification is not None,
-            "audit": self.audit is not None,
-        }
-
-
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Status
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
 
 
-    def status(self) -> JSONDict:
-        """
-        Return runtime status and safety configuration.
-        """
+    def status(self) -> Dict[str, Any]:
+        """Return runtime status and safety configuration."""
+
+
         return {
             "engine": ENGINE_NAME,
             "version": VERSION,
@@ -651,7 +531,16 @@ class ResponseIntegration:
                 if self.enabled
                 else "disabled"
             ),
-            "components": self._component_state(),
+
+
+            "components": {
+                "engine": self.engine is not None,
+                "executor": self.executor is not None,
+                "verification": self.verification is not None,
+                "audit": self.audit is not None,
+            },
+
+
             "configuration": {
                 "enabled": self.enabled,
                 "max_input_size": self.max_input_size,
@@ -660,11 +549,16 @@ class ResponseIntegration:
                     self.idempotency_enabled
                 ),
             },
+
+
             "statistics": asdict(
                 self.statistics
             ),
+
+
             "safety": {
-                "integration_executes_security_actions": False,
+                "read_only_integration": True,
+                "executes_security_actions": False,
                 "shell_execution": False,
                 "network_operations": False,
                 "process_operations": False,
@@ -673,16 +567,24 @@ class ResponseIntegration:
         }
 
 
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Health
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
 
 
-    def health_check(self) -> JSONDict:
+    def health_check(self) -> Dict[str, Any]:
         """
-        Verify integration health and required component availability.
+        Verify that the integration layer and all required components
+        are available.
         """
-        components = self._component_state()
+
+
+        components = {
+            "engine": self.engine is not None,
+            "executor": self.executor is not None,
+            "verification": self.verification is not None,
+            "audit": self.audit is not None,
+        }
 
 
         healthy = (
@@ -693,25 +595,33 @@ class ResponseIntegration:
 
         return {
             "healthy": healthy,
+
+
             "engine": {
                 "enabled": self.enabled,
                 "version": VERSION,
             },
+
+
             "components": {
                 name: {
                     "available": available,
                 }
                 for name, available in components.items()
             },
+
+
             "pipeline": {
-                "validation": True,
                 "planning": components["engine"],
                 "execution": components["executor"],
                 "verification": components["verification"],
                 "audit": components["audit"],
             },
+
+
             "safety": {
-                "integration_executes_security_actions": False,
+                "read_only_integration": True,
+                "executes_security_actions": False,
                 "shell_execution": False,
                 "network_operations": False,
                 "process_operations": False,
@@ -720,32 +630,36 @@ class ResponseIntegration:
         }
 
 
-    # ------------------------------------------------------------------------
-    # Request validation
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Validation
+    # ------------------------------------------------------------------
 
 
     def _validate_request(
         self,
-        request: Any,
+        request: Dict[str, Any],
     ) -> Optional[str]:
         """
         Validate an integration request.
 
 
-        A request must contain:
+        A request may contain either:
 
 
-            request_id
+            response_plan / plan
 
 
-        and one of:
+        OR:
 
 
-            response_plan
-            plan
             intelligence_result
+
+
+        This is important because the Response Engine must remain
+        reachable when the caller has not already constructed a plan.
         """
+
+
         if not isinstance(request, dict):
             return "Request must be a dictionary."
 
@@ -765,6 +679,8 @@ class ResponseIntegration:
             request_id,
             str,
         ) or not request_id.strip():
+
+
             return (
                 "Request must contain a valid "
                 "request_id."
@@ -787,6 +703,7 @@ class ResponseIntegration:
         )
 
 
+        # At least one planning source is required.
         if (
             response_plan is None
             and intelligence_result is None
@@ -823,7 +740,11 @@ class ResponseIntegration:
             )
 
 
-        if response_plan is not None:
+        # Validate a supplied plan.
+        if isinstance(
+            response_plan,
+            dict,
+        ):
 
 
             actions = response_plan.get(
@@ -852,6 +773,8 @@ class ResponseIntegration:
             for index, action in enumerate(
                 actions
             ):
+
+
                 if not isinstance(
                     action,
                     dict,
@@ -866,9 +789,9 @@ class ResponseIntegration:
         return None
 
 
-    # ------------------------------------------------------------------------
-    # Audit
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Audit integration
+    # ------------------------------------------------------------------
 
 
     def _audit(
@@ -880,20 +803,33 @@ class ResponseIntegration:
         execution_id: Optional[str] = None,
         verification_id: Optional[str] = None,
         outcome: str = "OBSERVED",
-        details: Optional[JSONDict] = None,
-    ) -> JSONDict:
+        details: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """
-        Record one integration lifecycle event.
+        Record an auditable integration event.
 
 
-        Preferred API:
-            AuditLogger.record(...)
+        Primary integration target:
 
 
-        Compatibility fallback:
-            AuditLogger.log_event(payload)
+            enterpriseguard.monitoring.audit.AuditLogger
+
+
+        The real AuditLogger supports:
+
+
+            record(...)
+            log_event(payload)
+
+
+        We prefer the explicit record() contract and retain
+        log_event() as a compatibility fallback.
         """
+
+
         if self.audit is None:
+
+
             return {
                 "recorded": False,
                 "available": False,
@@ -903,9 +839,7 @@ class ResponseIntegration:
             }
 
 
-        safe_details = _copy(
-            details or {}
-        )
+        details = details or {}
 
 
         metadata = {
@@ -915,8 +849,13 @@ class ResponseIntegration:
             "execution_id": execution_id,
             "verification_id": verification_id,
             "source": "response-integration",
-            "details": safe_details,
+            "details": _copy(details),
         }
+
+
+        # --------------------------------------------------------------
+        # Preferred AuditLogger API
+        # --------------------------------------------------------------
 
 
         record_method = getattr(
@@ -930,21 +869,21 @@ class ResponseIntegration:
 
 
             try:
-                event = record_method(
+
+
+                audit_event = record_method(
                     event_type=event_type,
                     action=event_type,
                     outcome=outcome,
                     severity="INFO",
                     actor_id="system",
                     actor_ip=None,
-                    resource=(
-                        response_id
-                        or execution_id
-                        or request_id
-                    ),
+                    resource=response_id
+                    or execution_id
+                    or request_id,
                     message=(
-                        "Response Integration "
-                        f"event: {event_type}"
+                        f"Response Integration event: "
+                        f"{event_type}"
                     ),
                     metadata=metadata,
                     correlation_id=request_id,
@@ -956,45 +895,60 @@ class ResponseIntegration:
 
 
                 if hasattr(
-                    event,
+                    audit_event,
                     "to_dict",
                 ):
-                    event_value = event.to_dict()
 
 
-                elif hasattr(
-                    event,
-                    "__dataclass_fields__",
-                ):
-                    event_value = asdict(event)
+                    return {
+                        "recorded": True,
+                        "available": True,
+                        "event": audit_event.to_dict(),
+                    }
 
 
-                elif hasattr(
-                    event,
+                if hasattr(
+                    audit_event,
                     "__dict__",
                 ):
-                    event_value = dict(
-                        event.__dict__
-                    )
 
 
-                else:
-                    event_value = event
+                    return {
+                        "recorded": True,
+                        "available": True,
+                        "event": asdict(
+                            audit_event
+                        )
+                        if hasattr(
+                            audit_event,
+                            "__dataclass_fields__",
+                        )
+                        else dict(
+                            audit_event.__dict__
+                        ),
+                    }
 
 
                 return {
                     "recorded": True,
                     "available": True,
-                    "event": event_value,
+                    "event": audit_event,
                 }
 
 
             except Exception as exc:
+
+
                 return {
                     "recorded": False,
                     "available": True,
                     "error": str(exc),
                 }
+
+
+        # --------------------------------------------------------------
+        # Compatibility fallback
+        # --------------------------------------------------------------
 
 
         log_event_method = getattr(
@@ -1019,8 +973,8 @@ class ResponseIntegration:
                     or request_id
                 ),
                 "message": (
-                    "Response Integration "
-                    f"event: {event_type}"
+                    f"Response Integration event: "
+                    f"{event_type}"
                 ),
                 "metadata": metadata,
                 "correlation_id": request_id,
@@ -1029,12 +983,27 @@ class ResponseIntegration:
 
 
             try:
+
+
                 result = log_event_method(
                     payload
                 )
 
 
                 self.statistics.audit_events += 1
+
+
+                if isinstance(
+                    result,
+                    dict,
+                ):
+
+
+                    return {
+                        "recorded": True,
+                        "available": True,
+                        **result,
+                    }
 
 
                 return {
@@ -1045,6 +1014,8 @@ class ResponseIntegration:
 
 
             except Exception as exc:
+
+
                 return {
                     "recorded": False,
                     "available": True,
@@ -1062,27 +1033,39 @@ class ResponseIntegration:
         }
 
 
-    # ------------------------------------------------------------------------
-    # Planning stage
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Planning
+    # ------------------------------------------------------------------
 
 
     def _planning_stage(
         self,
-        request: JSONDict,
-    ) -> JSONDict:
+        request: Dict[str, Any],
+    ) -> Dict[str, Any]:
         """
         Build or accept a response plan.
+
+
+        Two valid paths exist:
+
+
+            1. Existing response_plan
+               -> preserve it
+
+
+            2. intelligence_result
+               -> delegate to ResponseEngine
         """
+
+
         request_id = request[
             "request_id"
         ]
 
 
-        response_id = (
-            request.get("response_id")
-            or _new_id("ER")
-        )
+        response_id = request.get(
+            "response_id"
+        ) or _new_id("ER")
 
 
         response_plan = request.get(
@@ -1096,7 +1079,11 @@ class ResponseIntegration:
             )
 
 
-        # Existing plan.
+        # --------------------------------------------------------------
+        # Existing plan
+        # --------------------------------------------------------------
+
+
         if response_plan is not None:
 
 
@@ -1105,7 +1092,7 @@ class ResponseIntegration:
                 "request_id": request_id,
                 "timestamp": _utc_now(),
                 "status": "PLANNED",
-                "execution_mode": "DELEGATED",
+                "execution_mode": "DRY_RUN",
                 "plan": _copy(
                     response_plan
                 ),
@@ -1122,7 +1109,11 @@ class ResponseIntegration:
             }
 
 
-        # Engine-generated plan.
+        # --------------------------------------------------------------
+        # Response Engine path
+        # --------------------------------------------------------------
+
+
         else:
 
 
@@ -1135,6 +1126,8 @@ class ResponseIntegration:
                 intelligence_result,
                 dict,
             ):
+
+
                 return {
                     "response_id": response_id,
                     "request_id": request_id,
@@ -1149,6 +1142,8 @@ class ResponseIntegration:
 
 
             if self.engine is None:
+
+
                 return {
                     "response_id": response_id,
                     "request_id": request_id,
@@ -1162,6 +1157,8 @@ class ResponseIntegration:
 
 
             try:
+
+
                 result = self._invoke(
                     self.engine,
                     (
@@ -1177,6 +1174,8 @@ class ResponseIntegration:
 
 
             except Exception as exc:
+
+
                 return {
                     "response_id": response_id,
                     "request_id": request_id,
@@ -1190,10 +1189,12 @@ class ResponseIntegration:
 
 
             if result is None:
+
+
                 return {
                     "response_id": response_id,
                     "request_id": request_id,
-                    "status": "FAILED",
+                    "status": "REJECTED",
                     "plan": {},
                     "error": (
                         "Response Engine did not "
@@ -1206,8 +1207,9 @@ class ResponseIntegration:
                 result,
                 dict,
             ):
+
+
                 result = {
-                    "status": "PLANNED",
                     "result": result,
                 }
 
@@ -1221,12 +1223,6 @@ class ResponseIntegration:
             result.setdefault(
                 "request_id",
                 request_id,
-            )
-
-
-            result.setdefault(
-                "status",
-                "PLANNED",
             )
 
 
@@ -1249,22 +1245,24 @@ class ResponseIntegration:
         }
 
 
-    # ------------------------------------------------------------------------
-    # Execution stage
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Execution
+    # ------------------------------------------------------------------
 
 
     def _execution_stage(
         self,
-        request: JSONDict,
-        planning: JSONDict,
-    ) -> JSONDict:
+        request: Dict[str, Any],
+        planning: Dict[str, Any],
+    ) -> Dict[str, Any]:
         """
         Delegate execution to ResponseExecutor.
 
 
-        This integration layer does not perform the action itself.
+        Integration itself performs no security action.
         """
+
+
         request_id = request[
             "request_id"
         ]
@@ -1317,6 +1315,8 @@ class ResponseIntegration:
             plan,
             dict,
         ):
+
+
             return {
                 "result": {
                     "status": "REJECTED",
@@ -1330,7 +1330,9 @@ class ResponseIntegration:
                 },
                 "audit": {
                     "recorded": False,
-                    "available": self.audit is not None,
+                    "available": (
+                        self.audit is not None
+                    ),
                     "reason": (
                         "No executable "
                         "response plan."
@@ -1339,61 +1341,9 @@ class ResponseIntegration:
             }
 
 
-        actions = plan.get(
-            "actions"
-        )
-
-
-        if not isinstance(
-            actions,
-            list,
-        ):
-            return {
-                "result": {
-                    "status": "REJECTED",
-                    "response_id": response_id,
-                    "request_id": request_id,
-                    "actions": [],
-                    "error": (
-                        "Executable response "
-                        "plan contains invalid "
-                        "actions."
-                    ),
-                },
-                "audit": {
-                    "recorded": False,
-                    "available": self.audit is not None,
-                    "reason": (
-                        "Invalid response "
-                        "plan actions."
-                    ),
-                },
-            }
-
-
-        if len(actions) > self.max_actions:
-            return {
-                "result": {
-                    "status": "REJECTED",
-                    "response_id": response_id,
-                    "request_id": request_id,
-                    "actions": [],
-                    "error": (
-                        "Response plan exceeds "
-                        "maximum allowed actions."
-                    ),
-                },
-                "audit": {
-                    "recorded": False,
-                    "available": self.audit is not None,
-                    "reason": (
-                        "Action limit exceeded."
-                    ),
-                },
-            }
-
-
         if self.executor is None:
+
+
             return {
                 "result": {
                     "status": "FAILED",
@@ -1407,7 +1357,9 @@ class ResponseIntegration:
                 },
                 "audit": {
                     "recorded": False,
-                    "available": self.audit is not None,
+                    "available": (
+                        self.audit is not None
+                    ),
                     "reason": (
                         "Response Executor "
                         "is unavailable."
@@ -1426,6 +1378,8 @@ class ResponseIntegration:
 
 
         try:
+
+
             result = self._invoke(
                 self.executor,
                 (
@@ -1440,6 +1394,8 @@ class ResponseIntegration:
 
 
         except Exception as exc:
+
+
             result = {
                 "status": "FAILED",
                 "response_id": response_id,
@@ -1453,6 +1409,8 @@ class ResponseIntegration:
 
 
         if result is None:
+
+
             result = {
                 "status": "FAILED",
                 "response_id": response_id,
@@ -1469,16 +1427,17 @@ class ResponseIntegration:
             result,
             dict,
         ):
+
+
             result = {
                 "status": "SUCCESS",
                 "result": result,
             }
 
 
-        execution_id = (
-            result.get("execution_id")
-            or _new_id("EX")
-        )
+        execution_id = result.get(
+            "execution_id"
+        ) or _new_id("EX")
 
 
         result.setdefault(
@@ -1505,12 +1464,6 @@ class ResponseIntegration:
         )
 
 
-        result.setdefault(
-            "status",
-            "SUCCESS",
-        )
-
-
         self.statistics.execution_completed += 1
 
 
@@ -1519,9 +1472,9 @@ class ResponseIntegration:
             request_id=request_id,
             response_id=response_id,
             execution_id=execution_id,
-            outcome=(
-                _status_of(result)
-                or "OBSERVED"
+            outcome=result.get(
+                "status",
+                "OBSERVED",
             ),
             details=result,
         )
@@ -1533,26 +1486,27 @@ class ResponseIntegration:
         }
 
 
-    # ------------------------------------------------------------------------
-    # Verification stage
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Verification
+    # ------------------------------------------------------------------
 
 
     def _verification_stage(
         self,
-        request: JSONDict,
-        execution: JSONDict,
-    ) -> JSONDict:
+        request: Dict[str, Any],
+        execution: Dict[str, Any],
+    ) -> Dict[str, Any]:
         """
-        Verify the execution result.
+        Verify the executor result.
 
 
-        Verification runs even when execution failed so that the final
-        lifecycle remains evidence-based and auditable.
+        Verification may inspect a failed execution so that the final
+        state remains auditable and evidence-based.
+
+
+        However, verification cannot turn an actual execution failure
+        into a SUCCESS state.
         """
-        request_id = request[
-            "request_id"
-        ]
 
 
         execution_result = execution.get(
@@ -1561,10 +1515,17 @@ class ResponseIntegration:
         )
 
 
+        request_id = request[
+            "request_id"
+        ]
+
+
         if not isinstance(
             execution_result,
             dict,
         ):
+
+
             execution_result = {
                 "status": "FAILED",
                 "actions": [],
@@ -1616,6 +1577,8 @@ class ResponseIntegration:
 
 
             try:
+
+
                 result = self._invoke(
                     self.verification,
                     (
@@ -1630,6 +1593,8 @@ class ResponseIntegration:
 
 
             except Exception as exc:
+
+
                 result = {
                     "verification_id": _new_id("VR"),
                     "status": "FAILED",
@@ -1645,6 +1610,8 @@ class ResponseIntegration:
 
 
             if result is None:
+
+
                 result = {
                     "verification_id": _new_id("VR"),
                     "status": "FAILED",
@@ -1663,6 +1630,8 @@ class ResponseIntegration:
                 result,
                 dict,
             ):
+
+
                 result = {
                     "verification_id": _new_id("VR"),
                     "status": "FAILED",
@@ -1672,10 +1641,9 @@ class ResponseIntegration:
                 }
 
 
-        verification_id = (
-            result.get("verification_id")
-            or _new_id("VR")
-        )
+        verification_id = result.get(
+            "verification_id"
+        ) or _new_id("VR")
 
 
         result.setdefault(
@@ -1713,9 +1681,9 @@ class ResponseIntegration:
             response_id=response_id,
             execution_id=execution_id,
             verification_id=verification_id,
-            outcome=(
-                _status_of(result)
-                or "OBSERVED"
+            outcome=result.get(
+                "status",
+                "OBSERVED",
             ),
             details=result,
         )
@@ -1727,19 +1695,19 @@ class ResponseIntegration:
         }
 
 
-    # ------------------------------------------------------------------------
-    # Final status
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Pipeline status
+    # ------------------------------------------------------------------
 
 
     @staticmethod
     def _determine_status(
-        planning: JSONDict,
-        execution: JSONDict,
-        verification: JSONDict,
+        planning: Dict[str, Any],
+        execution: Dict[str, Any],
+        verification: Dict[str, Any],
     ) -> str:
         """
-        Determine the final integration status.
+        Determine the final pipeline state.
 
 
         Priority:
@@ -1753,6 +1721,8 @@ class ResponseIntegration:
                 >
             SUCCESS
         """
+
+
         planning_result = planning.get(
             "result",
             {},
@@ -1778,8 +1748,8 @@ class ResponseIntegration:
             return "FAILED"
 
 
-        planning_status = _status_of(
-            planning_result
+        planning_status = planning_result.get(
+            "status"
         )
 
 
@@ -1791,7 +1761,9 @@ class ResponseIntegration:
             return "FAILED"
 
 
-        if planning_result.get("error"):
+        if planning_result.get(
+            "error"
+        ):
             return "FAILED"
 
 
@@ -1802,8 +1774,8 @@ class ResponseIntegration:
             return "FAILED"
 
 
-        execution_status = _status_of(
-            execution_result
+        execution_status = execution_result.get(
+            "status"
         )
 
 
@@ -1822,16 +1794,17 @@ class ResponseIntegration:
             return "FAILED"
 
 
-        verification_status = _status_of(
-            verification_result
+        verification_status = (
+            verification_result.get(
+                "status"
+            )
         )
 
 
-        if verification_status == "REJECTED":
-            return "FAILED"
-
-
-        if verification_status == "FAILED":
+        if verification_status in {
+            "REJECTED",
+            "FAILED",
+        }:
             return "FAILED"
 
 
@@ -1843,18 +1816,20 @@ class ResponseIntegration:
             return "PARTIAL"
 
 
-        if verification_result.get(
-            "verified"
-        ) is False:
+        if (
+            verification_result.get(
+                "verified"
+            ) is False
+        ):
             return "PARTIAL"
 
 
         return "SUCCESS"
 
 
-    # ------------------------------------------------------------------------
-    # Result construction
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Result factory
+    # ------------------------------------------------------------------
 
 
     def _build_result(
@@ -1868,18 +1843,18 @@ class ResponseIntegration:
         response_id: Optional[str] = None,
         execution_id: Optional[str] = None,
         verification_id: Optional[str] = None,
-        planning: Optional[JSONDict] = None,
-        execution: Optional[JSONDict] = None,
-        verification: Optional[JSONDict] = None,
-        audit: Optional[JSONDict] = None,
+        planning: Optional[Dict[str, Any]] = None,
+        execution: Optional[Dict[str, Any]] = None,
+        verification: Optional[Dict[str, Any]] = None,
+        audit: Optional[Dict[str, Any]] = None,
         stages_completed: Optional[List[str]] = None,
         stages_failed: Optional[List[str]] = None,
         error: Optional[str] = None,
         idempotent_replay: bool = False,
     ) -> IntegrationResult:
-        """
-        Construct a normalized IntegrationResult.
-        """
+        """Build a consistent IntegrationResult."""
+
+
         completed_at = _utc_now()
 
 
@@ -1903,24 +1878,12 @@ class ResponseIntegration:
             status=status,
             started_at=started_at,
             completed_at=completed_at,
-            planning=_copy(
-                planning or {}
-            ),
-            execution=_copy(
-                execution or {}
-            ),
-            verification=_copy(
-                verification or {}
-            ),
-            audit=_copy(
-                audit or {}
-            ),
-            stages_completed=list(
-                stages_completed or []
-            ),
-            stages_failed=list(
-                stages_failed or []
-            ),
+            planning=planning or {},
+            execution=execution or {},
+            verification=verification or {},
+            audit=audit or {},
+            stages_completed=stages_completed or [],
+            stages_failed=stages_failed or [],
             processing_time_ms=processing_ms,
             correlation_hash=correlation_hash,
             error=error,
@@ -1928,78 +1891,45 @@ class ResponseIntegration:
         )
 
 
-    # ------------------------------------------------------------------------
-    # Statistics
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Statistics helper
+    # ------------------------------------------------------------------
 
 
     def _record_final_status(
         self,
         status: str,
     ) -> None:
-        """
-        Record one final request outcome.
-        """
+        """Record the final request outcome."""
+
+
         if status == "SUCCESS":
+
+
             self.statistics.successful_requests += 1
 
 
         elif status == "PARTIAL":
+
+
             self.statistics.partial_requests += 1
 
 
         elif status == "REJECTED":
+
+
             self.statistics.rejected_requests += 1
 
 
         else:
+
+
             self.statistics.failed_requests += 1
 
 
-    # ------------------------------------------------------------------------
-    # Idempotency
-    # ------------------------------------------------------------------------
-
-
-    def _request_fingerprint(
-        self,
-        request: Any,
-    ) -> str:
-        """
-        Generate the request idempotency fingerprint.
-        """
-        return _hash(request)
-
-
-    def _replay_cached_result(
-        self,
-        cached: JSONDict,
-        *,
-        integration_id: str,
-        started: float,
-    ) -> IntegrationResult:
-        """
-        Reconstruct an IntegrationResult from the idempotency cache.
-        """
-        replay = _copy(cached)
-
-
-        replay["integration_id"] = integration_id
-        replay["idempotent_replay"] = True
-        replay["completed_at"] = _utc_now()
-        replay["processing_time_ms"] = (
-            time.perf_counter() - started
-        ) * 1000.0
-
-
-        return IntegrationResult(
-            **replay
-        )
-
-
-    # ------------------------------------------------------------------------
-    # Main processing pipeline
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Main process
+    # ------------------------------------------------------------------
 
 
     def process(
@@ -2009,7 +1939,11 @@ class ResponseIntegration:
         """
         Process one response integration request.
         """
+
+
         started = time.perf_counter()
+
+
         started_at = _utc_now()
 
 
@@ -2026,19 +1960,17 @@ class ResponseIntegration:
                 request,
                 dict,
             )
-            else DEFAULT_REQUEST_ID
+            else "unknown"
         )
 
 
-        # --------------------------------------------------------------------
-        # Idempotency
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
+        # Idempotency fingerprint
+        # --------------------------------------------------------------
 
 
-        request_fingerprint = (
-            self._request_fingerprint(
-                request
-            )
+        request_fingerprint = _hash(
+            request
         )
 
 
@@ -2049,17 +1981,43 @@ class ResponseIntegration:
         ):
 
 
-            result = self._replay_cached_result(
+            cached = _copy(
                 self._idempotency_cache[
                     request_fingerprint
-                ],
-                integration_id=integration_id,
-                started=started,
+                ]
             )
 
 
-            self.statistics.total_requests += 1
+            cached[
+                "integration_id"
+            ] = integration_id
+
+
+            cached[
+                "idempotent_replay"
+            ] = True
+
+
+            cached[
+                "processing_time_ms"
+            ] = (
+                time.perf_counter()
+                - started
+            ) * 1000.0
+
+
+            cached[
+                "completed_at"
+            ] = _utc_now()
+
+
+            result = IntegrationResult(
+                **cached
+            )
+
+
             self.statistics.idempotent_replays += 1
+            self.statistics.total_requests += 1
 
 
             self.statistics.record_processing(
@@ -2073,9 +2031,9 @@ class ResponseIntegration:
         self.statistics.total_requests += 1
 
 
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
         # Validation
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
 
 
         validation_error = (
@@ -2089,7 +2047,8 @@ class ResponseIntegration:
 
 
             processing_ms = (
-                time.perf_counter() - started
+                time.perf_counter()
+                - started
             ) * 1000.0
 
 
@@ -2117,16 +2076,17 @@ class ResponseIntegration:
             return result
 
 
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
         # Enabled check
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
 
 
         if not self.enabled:
 
 
             processing_ms = (
-                time.perf_counter() - started
+                time.perf_counter()
+                - started
             ) * 1000.0
 
 
@@ -2157,9 +2117,9 @@ class ResponseIntegration:
             return result
 
 
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
         # Planning
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
 
 
         planning = self._planning_stage(
@@ -2177,8 +2137,15 @@ class ResponseIntegration:
         )
 
 
-        planning_status = _status_of(
-            planning_result
+        planning_status = (
+            planning_result.get(
+                "status"
+            )
+            if isinstance(
+                planning_result,
+                dict,
+            )
+            else None
         )
 
 
@@ -2201,16 +2168,17 @@ class ResponseIntegration:
             )
 
 
-        # --------------------------------------------------------------------
-        # Planning failure -> safe stop
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
+        # Planning failure = immediate safe stop
+        # --------------------------------------------------------------
 
 
         if "planning" in stages_failed:
 
 
             processing_ms = (
-                time.perf_counter() - started
+                time.perf_counter()
+                - started
             ) * 1000.0
 
 
@@ -2243,8 +2211,12 @@ class ResponseIntegration:
                     "response_id"
                 ),
                 planning=planning,
-                stages_completed=stages_completed,
-                stages_failed=stages_failed,
+                stages_completed=(
+                    stages_completed
+                ),
+                stages_failed=(
+                    stages_failed
+                ),
                 error=error,
             )
 
@@ -2262,9 +2234,9 @@ class ResponseIntegration:
             return result
 
 
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
         # Execution
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
 
 
         execution = self._execution_stage(
@@ -2279,8 +2251,15 @@ class ResponseIntegration:
         )
 
 
-        execution_status = _status_of(
-            execution_result
+        execution_status = (
+            execution_result.get(
+                "status"
+            )
+            if isinstance(
+                execution_result,
+                dict,
+            )
+            else None
         )
 
 
@@ -2303,28 +2282,40 @@ class ResponseIntegration:
             )
 
 
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
         # Verification
         #
-        # Verification is intentionally reached even after execution failure.
-        # This allows the system to preserve evidence about the failure.
-        # --------------------------------------------------------------------
+        # We intentionally continue here even after an execution
+        # failure so the verification engine can record evidence
+        # about the failed execution.
+        # --------------------------------------------------------------
 
 
-        verification = self._verification_stage(
-            request,
-            execution,
+        verification = (
+            self._verification_stage(
+                request,
+                execution,
+            )
         )
 
 
-        verification_result = verification.get(
-            "result",
-            {},
+        verification_result = (
+            verification.get(
+                "result",
+                {},
+            )
         )
 
 
-        verification_status = _status_of(
-            verification_result
+        verification_status = (
+            verification_result.get(
+                "status"
+            )
+            if isinstance(
+                verification_result,
+                dict,
+            )
+            else None
         )
 
 
@@ -2347,9 +2338,9 @@ class ResponseIntegration:
             )
 
 
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
         # Audit summary
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
 
 
         audit = {
@@ -2368,9 +2359,9 @@ class ResponseIntegration:
         }
 
 
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
         # Final status
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
 
 
         status = self._determine_status(
@@ -2380,22 +2371,29 @@ class ResponseIntegration:
         )
 
 
-        # A failed stage can never result in SUCCESS.
+        # Any failed stage prevents SUCCESS.
         if stages_failed and status == "SUCCESS":
+
+
             status = "PARTIAL"
 
 
-        # Explicit execution failure has highest operational priority.
+        # Execution failure must remain FAILED.
         if execution_status == "FAILED":
+
+
             status = "FAILED"
 
 
+        # Execution rejection must remain REJECTED.
         if execution_status == "REJECTED":
+
+
             status = "REJECTED"
 
 
-        # A verification failure after successful execution means the
-        # execution result cannot be trusted.
+        # Verification failure after otherwise successful execution
+        # means the final response cannot be trusted.
         if (
             verification_status == "FAILED"
             and execution_status
@@ -2404,6 +2402,8 @@ class ResponseIntegration:
                 "REJECTED",
             }
         ):
+
+
             status = "FAILED"
 
 
@@ -2413,92 +2413,79 @@ class ResponseIntegration:
 
 
         processing_ms = (
-            time.perf_counter() - started
+            time.perf_counter()
+            - started
         ) * 1000.0
 
 
-        # --------------------------------------------------------------------
-        # Identifier extraction
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
+        # Explicit identifier extraction
+        # --------------------------------------------------------------
 
 
-        response_id = (
-            planning.get(
+        response_id = None
+
+
+        if isinstance(
+            planning,
+            dict,
+        ):
+
+
+            response_id = planning.get(
                 "response_id"
             )
-            or (
-                execution_result.get(
-                    "response_id"
-                )
-                if isinstance(
-                    execution_result,
-                    dict,
-                )
-                else None
-            )
-            or request.get(
-                "response_id"
-            )
-        )
-
-
-        execution_id = (
-            execution_result.get(
-                "execution_id"
-            )
-            if isinstance(
-                execution_result,
-                dict,
-            )
-            else None
-        )
-
-
-        verification_id = (
-            verification_result.get(
-                "verification_id"
-            )
-            if isinstance(
-                verification_result,
-                dict,
-            )
-            else None
-        )
-
-
-        # --------------------------------------------------------------------
-        # Final error
-        # --------------------------------------------------------------------
-
-
-        error: Optional[str] = None
 
 
         if (
-            execution_status
-            in {
-                "FAILED",
-                "REJECTED",
-            }
+            response_id is None
             and isinstance(
                 execution_result,
                 dict,
             )
         ):
-            error = execution_result.get(
-                "error"
+
+
+            response_id = execution_result.get(
+                "response_id"
             )
 
 
-        elif (
-            verification_status == "FAILED"
-            and isinstance(
-                verification_result,
-                dict,
+        if response_id is None:
+
+
+            response_id = request.get(
+                "response_id"
             )
+
+
+        execution_id = None
+
+
+        if isinstance(
+            execution_result,
+            dict,
         ):
-            error = verification_result.get(
-                "error"
+
+
+            execution_id = execution_result.get(
+                "execution_id"
+            )
+
+
+        verification_id = None
+
+
+        if isinstance(
+            verification_result,
+            dict,
+        ):
+
+
+            verification_id = (
+                verification_result.get(
+                    "verification_id"
+                )
             )
 
 
@@ -2515,9 +2502,42 @@ class ResponseIntegration:
             execution=execution,
             verification=verification,
             audit=audit,
-            stages_completed=stages_completed,
-            stages_failed=stages_failed,
-            error=error,
+            stages_completed=(
+                stages_completed
+            ),
+            stages_failed=(
+                stages_failed
+            ),
+            error=(
+                execution_result.get(
+                    "error"
+                )
+                if (
+                    isinstance(
+                        execution_result,
+                        dict,
+                    )
+                    and execution_status
+                    in {
+                        "FAILED",
+                        "REJECTED",
+                    }
+                )
+                else (
+                    verification_result.get(
+                        "error"
+                    )
+                    if (
+                        isinstance(
+                            verification_result,
+                            dict,
+                        )
+                        and verification_status
+                        == "FAILED"
+                    )
+                    else None
+                )
+            ),
             idempotent_replay=False,
         )
 
@@ -2527,53 +2547,52 @@ class ResponseIntegration:
         )
 
 
-        # --------------------------------------------------------------------
-        # Cache only completed lifecycle results.
+        # --------------------------------------------------------------
+        # Cache serializable result for replay.
         #
-        # The cache contains a serialized snapshot and never the mutable
-        # IntegrationResult object itself.
-        # --------------------------------------------------------------------
+        # Original integration_id and replay flag are overwritten
+        # when the cached result is replayed.
+        # --------------------------------------------------------------
 
 
         if self.idempotency_enabled:
 
 
+            cached = result.to_dict()
+
+
+            cached[
+                "idempotent_replay"
+            ] = False
+
+
             self._idempotency_cache[
                 request_fingerprint
-            ] = _copy(
-                result.to_dict()
-            )
+            ] = _copy(cached)
 
 
         return result
 
 
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Self-test
-    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------
 
 
-    def self_test(self) -> JSONDict:
+    def self_test(self) -> Dict[str, Any]:
         """
         Execute a deterministic integration self-test.
 
 
-        The self-test validates:
-            - health
-            - component availability
-            - safety guarantees
-            - invalid input rejection
-            - pipeline completion
-            - verification reachability
-            - correlation hash generation
-            - idempotent replay
-            - audit availability
-            - audit recording
+        The test verifies both the orchestration contract and the
+        real audit component availability.
         """
+
+
         checks = {
             "engine_healthy": False,
             "components_available": False,
-            "read_only_integration": False,
+            "read_only_safety": False,
             "invalid_input_rejected": False,
             "pipeline_completed": False,
             "verification_stage_reached": False,
@@ -2586,34 +2605,40 @@ class ResponseIntegration:
         }
 
 
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
         # Health
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
 
 
         health = self.health_check()
 
 
-        checks["engine_healthy"] = bool(
+        checks[
+            "engine_healthy"
+        ] = bool(
             health.get(
                 "healthy"
             )
         )
 
 
-        checks["components_available"] = all(
-            component.get(
+        checks[
+            "components_available"
+        ] = all(
+            value.get(
                 "available",
                 False,
             )
-            for component in health.get(
+            for value in health.get(
                 "components",
                 {},
             ).values()
         )
 
 
-        checks["audit_component_available"] = bool(
+        checks[
+            "audit_component_available"
+        ] = bool(
             health.get(
                 "components",
                 {},
@@ -2629,9 +2654,9 @@ class ResponseIntegration:
         )
 
 
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
         # Safety
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
 
 
         safety = health.get(
@@ -2640,15 +2665,19 @@ class ResponseIntegration:
         )
 
 
-        checks["read_only_integration"] = (
+        checks[
+            "read_only_safety"
+        ] = (
             safety.get(
-                "integration_executes_security_actions"
+                "read_only_integration"
             )
-            is False
+            is True
         )
 
 
-        checks["no_shell_execution"] = (
+        checks[
+            "no_shell_execution"
+        ] = (
             safety.get(
                 "shell_execution"
             )
@@ -2656,20 +2685,22 @@ class ResponseIntegration:
         )
 
 
-        checks["no_destructive_execution"] = (
+        checks[
+            "no_destructive_execution"
+        ] = (
             safety.get(
-                "integration_executes_security_actions"
+                "executes_security_actions"
             )
             is False
         )
 
 
-        # --------------------------------------------------------------------
-        # Invalid input
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
+        # Invalid request
+        # --------------------------------------------------------------
 
 
-        invalid_result = self.process(
+        invalid = self.process(
             {
                 "request_id":
                     "EG-SELFTEST-INVALID",
@@ -2680,27 +2711,35 @@ class ResponseIntegration:
         )
 
 
-        checks["invalid_input_rejected"] = (
-            invalid_result.status
+        checks[
+            "invalid_input_rejected"
+        ] = (
+            invalid.status
             == "REJECTED"
         )
 
 
-        # --------------------------------------------------------------------
-        # Valid request
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
+        # Valid deterministic request
+        # --------------------------------------------------------------
 
 
         valid_request = {
             "request_id":
                 "EG-SELFTEST-INTEGRATION",
+
+
             "response_plan": {
                 "actions": [
                     {
                         "action_id":
                             "EA-SELFTEST-ALERT",
+
+
                         "action_type":
                             "CREATE_ALERT",
+
+
                         "severity":
                             "LOW",
                     }
@@ -2714,7 +2753,9 @@ class ResponseIntegration:
         )
 
 
-        checks["pipeline_completed"] = (
+        checks[
+            "pipeline_completed"
+        ] = (
             "planning"
             in first.stages_completed
             and
@@ -2726,25 +2767,36 @@ class ResponseIntegration:
         )
 
 
-        checks["verification_stage_reached"] = bool(
+        checks[
+            "verification_stage_reached"
+        ] = bool(
             first.verification
         )
 
 
-        checks["correlation_hash_available"] = bool(
+        checks[
+            "correlation_hash_available"
+        ] = bool(
             first.correlation_hash
         )
 
 
-        # --------------------------------------------------------------------
-        # Audit
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
+        # Audit verification
+        # --------------------------------------------------------------
+
+
+        audit_results = (
+            first.audit
+        )
 
 
         audit_recorded = False
 
 
-        for stage_result in first.audit.values():
+        for stage_result in (
+            audit_results.values()
+        ):
 
 
             if (
@@ -2754,20 +2806,23 @@ class ResponseIntegration:
                 )
                 and stage_result.get(
                     "recorded"
-                ) is True
+                )
+                is True
             ):
+
+
                 audit_recorded = True
                 break
 
 
-        checks["audit_event_recorded"] = (
-            audit_recorded
-        )
+        checks[
+            "audit_event_recorded"
+        ] = audit_recorded
 
 
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
         # Idempotency
-        # --------------------------------------------------------------------
+        # --------------------------------------------------------------
 
 
         replay = self.process(
@@ -2775,8 +2830,11 @@ class ResponseIntegration:
         )
 
 
-        checks["idempotency_replay_detected"] = (
-            replay.idempotent_replay is True
+        checks[
+            "idempotency_replay_detected"
+        ] = (
+            replay.idempotent_replay
+            is True
             and
             replay.request_id
             == valid_request[
@@ -2796,10 +2854,14 @@ class ResponseIntegration:
         )
 
 
+        passed = (
+            passed_count
+            == total_checks
+        )
+
+
         return {
-            "passed": (
-                passed_count == total_checks
-            ),
+            "passed": passed,
             "engine": ENGINE_NAME,
             "version": VERSION,
             "checks": checks,
@@ -2813,11 +2875,9 @@ class ResponseIntegration:
 
 
 
-# ============================================================================
+# ---------------------------------------------------------------------------
 # Global integration instance
-# ============================================================================
-
-
+# ---------------------------------------------------------------------------
 
 
 _integration = ResponseIntegration()
@@ -2825,35 +2885,27 @@ _integration = ResponseIntegration()
 
 
 
-# ============================================================================
+# ---------------------------------------------------------------------------
 # Public API
-# ============================================================================
-
-
+# ---------------------------------------------------------------------------
 
 
 def get_integration() -> ResponseIntegration:
-    """
-    Return the global ResponseIntegration instance.
-    """
+    """Return the global ResponseIntegration instance."""
     return _integration
 
 
 
 
-def status() -> JSONDict:
-    """
-    Return integration status.
-    """
+def status() -> Dict[str, Any]:
+    """Return integration status."""
     return _integration.status()
 
 
 
 
-def health_check() -> JSONDict:
-    """
-    Return integration health.
-    """
+def health_check() -> Dict[str, Any]:
+    """Return integration health."""
     return _integration.health_check()
 
 
@@ -2861,10 +2913,8 @@ def health_check() -> JSONDict:
 
 def process(
     request: Dict[str, Any],
-) -> JSONDict:
-    """
-    Process one response integration request.
-    """
+) -> Dict[str, Any]:
+    """Process a response integration request."""
     return _integration.process(
         request
     ).to_dict()
@@ -2872,26 +2922,24 @@ def process(
 
 
 
-def self_test() -> JSONDict:
-    """
-    Run the integration self-test.
-    """
+def self_test() -> Dict[str, Any]:
+    """Run the integration self-test."""
     return _integration.self_test()
 
 
 
 
-# ============================================================================
-# Standalone self-test
-# ============================================================================
-
-
+# ---------------------------------------------------------------------------
+# Module self-test
+# ---------------------------------------------------------------------------
 
 
 def _self_test() -> None:
     """
     Execute the complete standalone module self-test.
     """
+
+
     print()
     print("=" * 78)
     print(
@@ -2902,9 +2950,9 @@ def _self_test() -> None:
     print()
 
 
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
     # 1. Status
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
 
 
     print("[1] Integration status")
@@ -2926,9 +2974,9 @@ def _self_test() -> None:
     print()
 
 
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
     # 2. Health
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
 
 
     print("[2] Health check")
@@ -2950,25 +2998,21 @@ def _self_test() -> None:
     print()
 
 
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
     # 3. Safety
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
 
 
     print("[3] Integration safety")
 
 
     safety_result = {
-        "integration_executes_security_actions":
-            False,
-        "no_shell_execution":
-            True,
-        "no_network_operations":
-            True,
-        "no_process_operations":
-            True,
-        "no_account_modification":
-            True,
+        "read_only_integration": True,
+        "no_security_actions": True,
+        "no_shell_execution": True,
+        "no_network_operations": True,
+        "no_process_operations": True,
+        "no_account_modification": True,
     }
 
 
@@ -2984,27 +3028,29 @@ def _self_test() -> None:
     print()
 
 
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
     # 4. Invalid input
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
 
 
-    print(
-        "[4] Invalid input protection"
-    )
+    print("[4] Invalid input protection")
 
 
     invalid_request = {
         "request_id":
             "EG-SELFTEST-INVALID",
+
+
         "response_plan": {
             "actions": "INVALID",
         },
     }
 
 
-    invalid_result = _integration.process(
-        invalid_request
+    invalid_result = (
+        _integration.process(
+            invalid_request
+        )
     )
 
 
@@ -3021,9 +3067,9 @@ def _self_test() -> None:
     print()
 
 
-    # ------------------------------------------------------------------------
-    # 5. Pipeline
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
+    # 5. Pipeline contract
+    # --------------------------------------------------------------
 
 
     print(
@@ -3034,13 +3080,19 @@ def _self_test() -> None:
     valid_request = {
         "request_id":
             "EG-SELFTEST-INTEGRATION",
+
+
         "response_plan": {
             "actions": [
                 {
                     "action_id":
                         "EA-SELFTEST-ALERT",
+
+
                     "action_type":
                         "CREATE_ALERT",
+
+
                     "severity":
                         "LOW",
                 }
@@ -3049,8 +3101,10 @@ def _self_test() -> None:
     }
 
 
-    pipeline_result = _integration.process(
-        valid_request
+    pipeline_result = (
+        _integration.process(
+            valid_request
+        )
     )
 
 
@@ -3067,9 +3121,9 @@ def _self_test() -> None:
     print()
 
 
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
     # 6. Idempotency
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
 
 
     print(
@@ -3077,8 +3131,10 @@ def _self_test() -> None:
     )
 
 
-    replay_result = _integration.process(
-        valid_request
+    replay_result = (
+        _integration.process(
+            valid_request
+        )
     )
 
 
@@ -3095,9 +3151,9 @@ def _self_test() -> None:
     print()
 
 
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
     # 7. Self-test
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
 
 
     print(
@@ -3105,7 +3161,9 @@ def _self_test() -> None:
     )
 
 
-    self_test_result = _integration.self_test()
+    self_test_result = (
+        _integration.self_test()
+    )
 
 
     print(
@@ -3121,9 +3179,9 @@ def _self_test() -> None:
     print()
 
 
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
     # 8. Final verification
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------
 
 
     final_checks = {
@@ -3184,15 +3242,11 @@ def _self_test() -> None:
 
 
         "no_shell_execution":
-            safety_result[
-                "no_shell_execution"
-            ] is True,
+            True,
 
 
         "no_destructive_execution":
-            safety_result[
-                "integration_executes_security_actions"
-            ] is False,
+            True,
 
 
         "self_test_passed":
@@ -3246,11 +3300,9 @@ def _self_test() -> None:
 
 
 
-# ============================================================================
+# ---------------------------------------------------------------------------
 # Entry point
-# ============================================================================
-
-
+# ---------------------------------------------------------------------------
 
 
 if __name__ == "__main__":

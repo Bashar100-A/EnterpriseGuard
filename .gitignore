@@ -55,3 +55,13 @@ Thumbs.db
 
 # --- Runtime lock ---
 tools/.document_bandit.lock
+
+# --- Per-machine state (must NOT be in git) ---
+tools/hardware_identity.json
+tools/hardware_identity.enc
+tools/genesis_baseline.json
+tools/genesis_public_key.pem
+tools/genesis_public_ecdsa.pem
+tools/innocence_chain.json
+tools/relational_memory.json
+tools/realtime_events.jsonl

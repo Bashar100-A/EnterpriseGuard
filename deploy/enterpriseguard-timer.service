@@ -1,0 +1,24 @@
+# ============================================================
+# EnterpriseGuard Periodic Governance Timer (Template)
+# ============================================================
+# This is a SYSTEMD TIMER TEMPLATE.
+# During installation, tools/installer.py will generate the
+# active timer file with the actual interval value taken from
+# `checklist_interval_minutes` in enterpriseguard.conf.
+# Do NOT use this template directly in production.
+# ============================================================
+
+[Unit]
+Description=EnterpriseGuard Periodic Governance Timer
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=60min
+Unit=enterpriseguard.service
+Persistent=true
+
+# Randomize start time to distribute load across multiple systems
+RandomizedDelaySec=30
+
+[Install]
+WantedBy=timers.target

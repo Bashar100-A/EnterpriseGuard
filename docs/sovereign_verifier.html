@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AAAC Sovereign Verifier</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsrsasign@10.9.0/lib/jsrsasign-all-min.js"></script>
+    <style>
+        :root {
+            --bg: #f6f8fc;
+            --surface: #ffffff;
+            --primary: #0d6efd;
+            --primary-hover: #0b5ed7;
+            --success: #198754;
+            --danger: #dc3545;
+            --text: #212529;
+            --muted: #6c757d;
+            --border: #dee2e6;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            --radius: 16px;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            font-family: var(--font);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 900px;
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #0d6efd, #6610f2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+
+        .title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .language-switch {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .lang-btn {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .card {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: border-color 0.2s, background 0.2s;
+            background: #fcfdff;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fafbfe;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--primary);
+            background: #f0f7ff;
+        }
+
+        .drop-zone p {
+            margin: 0.25rem 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .drop-zone .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .input-group input[type="text"] {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            width: 100%;
+            transition: border 0.2s;
+        }
+
+        .input-group input[type="text"]:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .file-name {
+            font-size: 0.85rem;
+            color: var(--success);
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .btn {
+            padding: 0.7rem 1.4rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-pill {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-ready { background: #e9ecef; color: #495057; }
+        .status-processing { background: #fff3cd; color: #856404; }
+        .status-success { background: #d4edda; color: #155724; }
+        .status-error { background: #f8d7da; color: #721c24; }
+
+        .result-area {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .log-area {
+            margin-top: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 250px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .footer {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        @media (max-width: 600px) {
+            .app { padding: 1rem; }
+            .actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">A</div>
+                <div>
+                    <div class="title">AAAC Sovereign Verifier</div>
+                    <div class="subtitle" data-i18n="subtitle">Cryptographically verify the innocence chain</div>
+                </div>
+            </div>
+            <div class="language-switch">
+                <button class="lang-btn active" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="ar">العربية</button>
+            </div>
+        </div>
+
+        <div class="status-pill status-ready" data-i18n="status_ready">Ready</div>
+
+        <div class="card">
+            <div class="drop-zone" id="dropChain">
+                <div class="icon">📄</div>
+                <p data-i18n="chain_drop_title">Drop chain file here</p>
+                <p data-i18n="chain_drop_sub">or click to browse (innocence_chain.json)</p>
+                <div class="file-name" id="chainFileName"></div>
+            </div>
+            <input type="file" id="chainFile" accept=".json" style="display:none;">
+        </div>
+
+        <div class="card">
+            <div class="drop-zone" id="dropPubKey">
+                <div class="icon">🔑</div>
+                <p data-i18n="pubkey_drop_title">Drop public key file here</p>
+                <p data-i18n="pubkey_drop_sub">or click to browse (public_key.pem)</p>
+                <div class="file-name" id="pubKeyFileName"></div>
+            </div>
+            <input type="file" id="pubKeyFile" accept=".pem,.key,.pub" style="display:none;">
+        </div>
+
+        <div class="card">
+            <div class="drop-zone" id="dropGenesisKey">
+                <div class="icon">🧬</div>
+                <p data-i18n="genesis_drop_title">Drop genesis public key file here</p>
+                <p data-i18n="genesis_drop_sub">or click to browse (genesis_public_key.pem)</p>
+                <div class="file-name" id="genesisKeyFileName"></div>
+            </div>
+            <input type="file" id="genesisKeyFile" accept=".pem,.key,.pub" style="display:none;">
+        </div>
+
+        <div class="input-group">
+            <label data-i18n="identity_label">Identity Key</label>
+            <input type="text" id="identityKey" placeholder="identity_key from hardware_identity.json" />
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" id="verifyBtn" disabled data-i18n="verify_btn">Verify Chain</button>
+            <button class="btn" id="resetBtn" data-i18n="reset_btn">Reset</button>
+        </div>
+
+        <div class="result-area" id="resultArea"></div>
+        <div class="log-area" id="logArea"></div>
+
+        <div class="footer" data-i18n="footer_text">All operations performed locally in your browser. No data leaves your device.</div>
+    </div>
+
+    <script>
+        const translations = {
+            en: {
+                subtitle: 'Cryptographically verify the innocence chain',
+                status_ready: 'Ready',
+                status_processing: 'Processing…',
+                status_success: 'Verification successful',
+                status_error: 'Verification failed',
+                chain_drop_title: 'Drop chain file here',
+                chain_drop_sub: 'or click to browse (innocence_chain.json)',
+                pubkey_drop_title: 'Drop public key file here',
+                pubkey_drop_sub: 'or click to browse (public_key.pem)',
+                genesis_drop_title: 'Drop genesis public key file here',
+                genesis_drop_sub: 'or click to browse (genesis_public_key.pem)',
+                identity_label: 'Identity Key',
+                verify_btn: 'Verify Chain',
+                reset_btn: 'Reset',
+                footer_text: 'All operations performed locally in your browser. No data leaves your device.',
+                result_ok: 'Chain is authentic',
+                result_bad: 'Chain verification failed',
+                missing_files: 'Please upload all required files and provide identity key',
+                invalid_json: 'Invalid JSON in chain file',
+                no_rings: 'No rings found in chain',
+                missing_genesis: 'Missing genesis signature or chain ID',
+                genesis_invalid: 'Genesis signature invalid',
+                hash_mismatch: 'Hash mismatch at ring',
+                signature_invalid: 'Signature invalid at ring',
+                unsigned_ring: 'Unsigned ring',
+                linkage_break: 'Linkage break at ring',
+                chain_id_mismatch: 'Chain ID mismatch at ring'
+            },
+            ar: {
+                subtitle: 'تحقق تشفيري من سلسلة البراءة',
+                status_ready: 'جاهز',
+                status_processing: 'جارٍ المعالجة…',
+                status_success: 'تم التحقق بنجاح',
+                status_error: 'فشل التحقق',
+                chain_drop_title: 'أسقط ملف السلسلة هنا',
+                chain_drop_sub: 'أو انقر للاختيار (innocence_chain.json)',
+                pubkey_drop_title: 'أسقط ملف المفتاح العام هنا',
+                pubkey_drop_sub: 'أو انقر للاختيار (public_key.pem)',
+                genesis_drop_title: 'أسقط مفتاح Genesis العام هنا',
+                genesis_drop_sub: 'أو انقر للاختيار (genesis_public_key.pem)',
+                identity_label: 'مفتاح الهوية',
+                verify_btn: 'تحقق الآن',
+                reset_btn: 'إعادة تعيين',
+                footer_text: 'جميع العمليات تتم محليًا في متصفحك. لا تغادر بياناتك جهازك.',
+                result_ok: 'السلسلة أصلية',
+                result_bad: 'فشل التحقق من السلسلة',
+                missing_files: 'يرجى رفع جميع الملفات المطلوبة وإدخال مفتاح الهوية',
+                invalid_json: 'ملف السلسلة يحتوي على JSON غير صالح',
+                no_rings: 'لا توجد حلقات في السلسلة',
+                missing_genesis: 'توقيع Genesis أو معرف السلسلة مفقود',
+                genesis_invalid: 'توقيع Genesis غير صالح',
+                hash_mismatch: 'عدم تطابق الهاش في الحلقة',
+                signature_invalid: 'توقيع غير صالح في الحلقة',
+                unsigned_ring: 'حلقة غير موقعة',
+                linkage_break: 'انقطاع السلسلة عند الحلقة',
+                chain_id_mismatch: 'عدم تطابق معرف السلسلة عند الحلقة'
+            }
+        };
+
+        let currentLang = 'en';
+
+        function t(key) {
+            return translations[currentLang][key] || key;
+        }
+
+        function applyLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                el.textContent = t(el.getAttribute('data-i18n'));
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+            updateStatus('ready');
+        }
+
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
+        });
+
+        const chainFileInput = document.getElementById('chainFile');
+        const pubKeyFileInput = document.getElementById('pubKeyFile');
+        const genesisKeyFileInput = document.getElementById('genesisKeyFile');
+
+        function setupDrop(dropZoneId, fileInputId, fileNameId) {
+            const dropZone = document.getElementById(dropZoneId);
+            const fileInput = document.getElementById(fileInputId);
+            const fileName = document.getElementById(fileNameId);
+
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', (e) => {
+                if (fileInput.files.length > 0) {
+                    fileName.textContent = fileInput.files[0].name;
+                    fileName.style.display = 'block';
+                }
+                updateReadyState();
+            });
+
+            ['dragover', 'dragenter'].forEach(event => {
+                dropZone.addEventListener(event, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('dragover');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(event => {
+                dropZone.addEventListener(event, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('dragover');
+                });
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                if (dt.files.length) {
+                    fileInput.files = dt.files;
+                    fileName.textContent = dt.files[0].name;
+                    fileName.style.display = 'block';
+                    updateReadyState();
+                }
+            });
+        }
+
+        setupDrop('dropChain', 'chainFile', 'chainFileName');
+        setupDrop('dropPubKey', 'pubKeyFile', 'pubKeyFileName');
+        setupDrop('dropGenesisKey', 'genesisKeyFile', 'genesisKeyFileName');
+
+        const verifyBtn = document.getElementById('verifyBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const statusPill = document.querySelector('.status-pill');
+        const resultArea = document.getElementById('resultArea');
+        const logArea = document.getElementById('logArea');
+        const identityKeyInput = document.getElementById('identityKey');
+
+        function updateReadyState() {
+            const ok = chainFileInput.files.length > 0 && pubKeyFileInput.files.length > 0 && identityKeyInput.value.trim() !== '';
+            verifyBtn.disabled = !ok;
+        }
+
+        identityKeyInput.addEventListener('input', updateReadyState);
+
+        function updateStatus(status) {
+            statusPill.className = 'status-pill';
+            if (status === 'ready') {
+                statusPill.classList.add('status-ready');
+                statusPill.textContent = t('status_ready');
+            } else if (status === 'processing') {
+                statusPill.classList.add('status-processing');
+                statusPill.textContent = t('status_processing');
+            } else if (status === 'success') {
+                statusPill.classList.add('status-success');
+                statusPill.textContent = t('status_success');
+            } else if (status === 'error') {
+                statusPill.classList.add('status-error');
+                statusPill.textContent = t('status_error');
+            }
+        }
+
+        function bufferToHex(buffer) {
+            return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
+        }
+
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            return bufferToHex(hashBuffer);
+        }
+
+        async function verifySignatureWithJsrsasign(publicKeyPem, data, signatureHex) {
+            try {
+                // Ensure signature is hex string
+                if (!/^[0-9a-fA-F]+$/.test(signatureHex)) {
+                    return false;
+                }
+                const pubKey = new KEYUTIL.getKey(publicKeyPem);
+                const sig = new KJUR.crypto.Signature({alg: 'SHA256withRSA'});
+                sig.init(pubKey);
+                sig.updateString(data);
+                return sig.verify(signatureHex);
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function computeRingHash(prev, identity, status, snapshot, realtime, chainId, agentHash) {
+            const combined = `${prev}${identity}${status}${snapshot}${realtime}${chainId}${agentHash}`;
+            return sha256(combined);
+        }
+
+        function addLog(msg) {
+            const div = document.createElement('div');
+            div.textContent = `[${new Date().toISOString()}] ${msg}`;
+            logArea.appendChild(div);
+            logArea.style.display = 'block';
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        async function runVerification() {
+            resultArea.style.display = 'none';
+            logArea.innerHTML = '';
+            updateStatus('processing');
+            addLog('Starting verification...');
+
+            try {
+                if (!chainFileInput.files[0] || !pubKeyFileInput.files[0]) {
+                    throw new Error(t('missing_files'));
+                }
+
+                const chainText = await chainFileInput.files[0].text();
+                let chainData;
+                try {
+                    chainData = JSON.parse(chainText);
+                } catch {
+                    throw new Error(t('invalid_json'));
+                }
+
+                const rings = chainData.rings;
+                if (!Array.isArray(rings) || rings.length === 0) {
+                    throw new Error(t('no_rings'));
+                }
+
+                const publicKeyPem = await pubKeyFileInput.files[0].text();
+
+                let genesisPublicKeyPem = null;
+                if (genesisKeyFileInput.files[0]) {
+                    genesisPublicKeyPem = await genesisKeyFileInput.files[0].text();
+                } else if (rings[0].genesis_public_key_pem) {
+                    genesisPublicKeyPem = rings[0].genesis_public_key_pem;
+                }
+
+                if (!genesisPublicKeyPem) {
+                    throw new Error('Genesis public key is required');
+                }
+
+                const firstRing = rings[0];
+                if (!firstRing.genesis_signature || !firstRing.chain_id) {
+                    throw new Error(t('missing_genesis'));
+                }
+
+                const genesisValid = await verifySignatureWithJsrsasign(genesisPublicKeyPem, firstRing.chain_id, firstRing.genesis_signature);
+                if (!genesisValid) {
+                    throw new Error(t('genesis_invalid'));
+                }
+                addLog('Genesis signature valid');
+
+                const identityKey = identityKeyInput.value.trim();
+                if (!identityKey) {
+                    throw new Error(t('missing_files'));
+                }
+
+                let prev = 'genesis';
+                for (let i = 0; i < rings.length; i++) {
+                    const ring = rings[i];
+                    if (i === 0 && ring.prev_ring_hash !== 'genesis') {
+                        throw new Error(`${t('linkage_break')} ${i}`);
+                    }
+                    if (i > 0 && ring.prev_ring_hash !== prev) {
+                        throw new Error(`${t('linkage_break')} ${i}`);
+                    }
+                    if (ring.chain_id !== firstRing.chain_id) {
+                        throw new Error(`${t('chain_id_mismatch')} ${i}`);
+                    }
+
+                    const expectedHash = await computeRingHash(
+                        ring.prev_ring_hash,
+                        identityKey,
+                        ring.integrity_status,
+                        ring.relational_memory_snapshot,
+                        ring.realtime_events_hash || 'none',
+                        ring.chain_id,
+                        ring.agent_events_hash || 'none'
+                    );
+
+                    if (ring.ring_hash !== expectedHash) {
+                        throw new Error(`${t('hash_mismatch')} ${i}`);
+                    }
+
+                    if (ring.signature) {
+                        const sigValid = await verifySignatureWithJsrsasign(publicKeyPem, ring.ring_hash, ring.signature);
+                        if (!sigValid) {
+                            throw new Error(`${t('signature_invalid')} ${i}`);
+                        }
+                    } else {
+                        throw new Error(`${t('unsigned_ring')} ${i}`);
+                    }
+
+                    addLog(`Ring ${i} verified`);
+                    prev = ring.ring_hash;
+                }
+
+                resultArea.style.display = 'block';
+                resultArea.innerHTML = `<div class="status-pill status-success">${t('result_ok')}</div>`;
+                updateStatus('success');
+                addLog('Verification completed successfully');
+            } catch (err) {
+                resultArea.style.display = 'block';
+                resultArea.innerHTML = `<div class="status-pill status-error">${t('result_bad')}: ${err.message}</div>`;
+                updateStatus('error');
+                addLog(`Error: ${err.message}`);
+            }
+        }
+
+        verifyBtn.addEventListener('click', runVerification);
+
+        resetBtn.addEventListener('click', () => {
+            chainFileInput.value = '';
+            pubKeyFileInput.value = '';
+            genesisKeyFileInput.value = '';
+            identityKeyInput.value = '';
+            document.getElementById('chainFileName').style.display = 'none';
+            document.getElementById('pubKeyFileName').style.display = 'none';
+            document.getElementById('genesisKeyFileName').style.display = 'none';
+            resultArea.style.display = 'none';
+            logArea.style.display = 'none';
+            logArea.innerHTML = '';
+            updateStatus('ready');
+            updateReadyState();
+        });
+
+        applyLanguage('en');
+        updateReadyState();
+    </script>
+</body>
+</html>

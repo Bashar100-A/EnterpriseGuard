@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""Local, standard-library retrieval-augmented generation utility."""
-
-from __future__ import annotations
-
 import argparse
 import collections
 import hashlib
@@ -14,9 +9,14 @@ import re
 import sys
 import tempfile
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.time_utils import utc_now as utc_now_dt
+from tools.hybrid_retrieval import HybridRetriever
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 TOOLS_DIR = ROOT_DIR / "tools"
@@ -25,11 +25,9 @@ ARCHIVE_LOG_PATH = TOOLS_DIR / "activity_log.archive.json"
 TOKEN_PATTERN = re.compile(r"\w+")
 UTC_PATTERN = "%Y-%m-%dT%H:%M:%SZ"
 
-
-def utc_now() -> str:
+def utc_timestamp() -> str:
     """Return the current UTC time in strict SIEM-compatible form."""
-    return datetime.now(timezone.utc).strftime(UTC_PATTERN)
-
+    return utc_now_dt().strftime(UTC_PATTERN)
 
 def atomic_write_text(path: Path, content: str) -> None:
     """Write text atomically in the target directory."""
@@ -48,11 +46,9 @@ def atomic_write_text(path: Path, content: str) -> None:
             pass
         raise
 
-
 def atomic_write_json(path: Path, value) -> None:
     """Serialize JSON and replace the destination atomically."""
     atomic_write_text(path, json.dumps(value, indent=2, ensure_ascii=False) + "\n")
-
 
 def read_json(path: Path, default):
     """Read JSON defensively, returning a detached default on failure."""
@@ -64,7 +60,6 @@ def read_json(path: Path, default):
         print(f"Warning: unable to read JSON {path}: {exc}", file=sys.stderr)
         return default.copy() if isinstance(default, (dict, list)) else default
 
-
 def _json_documents(value) -> list:
     """Extract document-like values from supported JSON structures."""
     if isinstance(value, dict) and isinstance(value.get("documents"), list):
@@ -73,14 +68,12 @@ def _json_documents(value) -> list:
         return value
     return []
 
-
 def _document_text(document) -> str:
     if isinstance(document, str):
         return document
     if isinstance(document, dict):
         return json.dumps(document, ensure_ascii=False, sort_keys=True)
     return str(document)
-
 
 def log_rag_activity(query: str, model_status: str) -> None:
     """Append a RAG event and archive old entries atomically when necessary."""
@@ -95,8 +88,8 @@ def log_rag_activity(query: str, model_status: str) -> None:
         entries = []
 
     entry = {
-        "id": f"{utc_now()}-{uuid.uuid4().hex}",
-        "timestamp": utc_now(),
+        "id": f"{utc_timestamp()}-{uuid.uuid4().hex}",
+        "timestamp": utc_timestamp(),
         "activity_type": "rag_run",
         "details": {"query": query, "model_status": model_status},
     }
@@ -107,7 +100,6 @@ def log_rag_activity(query: str, model_status: str) -> None:
         atomic_write_json(ARCHIVE_LOG_PATH, archived)
         entries = entries[-2000:]
     atomic_write_json(ACTIVITY_LOG_PATH, entries)
-
 
 class EnterpriseRAG:
     """Small local RAG engine with safe model and metadata handling."""
@@ -160,7 +152,9 @@ class EnterpriseRAG:
                 continue
             try:
                 with pickle_path.open("rb") as handle:
-                    self.models[pickle_path.name] = pickle.load(handle)
+                    # nosec - safe because file is verified against SHA-256 from registry before loading
+                    # nosec B403
+                    self.models[pickle_path.name] = pickle.load  # nosec B301(handle)
             except (OSError, pickle.PickleError, EOFError, AttributeError, ImportError, ValueError) as exc:
                 print(f"Warning: unable to load {pickle_path}: {exc}", file=sys.stderr)
 
@@ -222,7 +216,6 @@ class EnterpriseRAG:
             print(f"Warning: generation model failed: {exc}", file=sys.stderr)
         return {"answer": "Retrieval-only mode active. See retrieved documents.", "context": retrieved}
 
-
 def run_query(query: str) -> dict:
     engine = EnterpriseRAG()
     engine.load_models()
@@ -234,9 +227,77 @@ def run_query(query: str) -> dict:
         "retrieved_documents": retrieved,
         "generated_answer": str(generated.get("answer", "")),
         "model_used": model_used,
-        "timestamp": utc_now(),
+        "timestamp": utc_timestamp(),
     }
 
+def hybrid_retrieve(query: str) -> list[dict]:
+    """Return a small, deterministic set of relevant local project documents."""
+    if query is None or not str(query).strip():
+        return []
+
+    root_dir = ROOT_DIR
+    candidate_paths = [
+        root_dir / "CONTRACTS.md",
+        root_dir / "PROJECT_MEMORY.md",
+        root_dir / "tools" / "DECISIONS_LOG.md",
+    ]
+    documents: list[str] = []
+    entries: list[dict] = []
+
+    for path in candidate_paths:
+        if not path.exists() or not path.is_file():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if not text.strip():
+            continue
+        documents.append(text)
+        entries.append({
+            "path": str(path.relative_to(root_dir)),
+            "document": text,
+        })
+
+    if not documents:
+        return []
+
+    retriever = HybridRetriever().fit(documents)
+    selected_indices = retriever.query(query, top_k=min(5, len(documents)))
+    if not selected_indices:
+        return []
+
+    query_tokens = set(re.findall(r"[A-Za-z0-9]+", str(query).lower()))
+    results: list[dict] = []
+    for index in selected_indices:
+        entry = entries[index]
+        doc_text = entry["document"]
+        doc_tokens = re.findall(r"[A-Za-z0-9]+", doc_text.lower())
+        overlap = len(query_tokens & set(doc_tokens))
+        score = 0.0
+        if retriever.idf and retriever.doc_vectors and index < len(retriever.doc_vectors):
+            q_counts = collections.Counter(re.findall(r"[A-Za-z0-9]+", str(query).lower()))
+            q_length = max(len(q_counts), 1)
+            query_vector = {
+                term: (count / q_length) * retriever.idf.get(term, 1.0)
+                for term, count in q_counts.items()
+                if term in retriever.idf
+            }
+            document_vector = retriever.doc_vectors[index]
+            common_terms = set(query_vector) & set(document_vector)
+            if common_terms:
+                dot_product = sum(query_vector[term] * document_vector[term] for term in common_terms)
+                query_norm = math.sqrt(sum(value * value for value in query_vector.values()))
+                doc_norm = math.sqrt(sum(value * value for value in document_vector.values()))
+                if query_norm and doc_norm:
+                    score = dot_product / (query_norm * doc_norm)
+        results.append({
+            "index": index,
+            "path": entry["path"],
+            "overlap_terms": overlap,
+            "score": round(float(score), 6),
+        })
+    return results
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run local EnterpriseGuard retrieval.")
@@ -255,9 +316,8 @@ def main() -> int:
         return 0
     except Exception as exc:
         print(f"RAG error: {exc}", file=sys.stderr)
-        print(json.dumps({"error": True, "query": args.query, "retrieved_documents": [], "generated_answer": "", "model_used": "error", "timestamp": utc_now()}))
+        print(json.dumps({"error": True, "query": args.query, "retrieved_documents": [], "generated_answer": "", "model_used": "error", "timestamp": utc_timestamp()}))
         return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

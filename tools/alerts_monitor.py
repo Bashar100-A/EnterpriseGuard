@@ -1,54 +1,45 @@
-#!/usr/bin/env python3
-"""Read-only alert monitor for EnterpriseGuard project logs.
-
-This tool inspects the project activity and error logs, derives health trends,
-and reports system severity without modifying protected implementation files.
-"""
-
-from __future__ import annotations
-
 import json
 import re
+import sys
 from collections import Counter
 from datetime import datetime, timedelta
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.time_utils import ensure_aware, parse_utc_timestamp, safe_subtract, utc_now
+from tools.audit_chain import append_activity as audit_append_activity
+
+from tools.time_utils import ensure_aware, parse_utc_timestamp, safe_subtract, utc_now
 from typing import Any
+
+from tools.audit_chain import append_activity as audit_append_activity
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 TOOLS_DIR = PROJECT_ROOT / "tools"
 ACTIVITY_LOG_PATH = TOOLS_DIR / "activity_log.json"
 ERROR_LOG_PATH = TOOLS_DIR / "errors.log"
 
-
 def utc_timestamp() -> str:
-    return datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
-
+    return utc_now().strftime("%Y-%m-%d %H:%M:%S %Z")
 
 def ensure_tools_dir() -> None:
     TOOLS_DIR.mkdir(exist_ok=True, parents=True)
 
-
-def append_activity(event: str) -> None:
+def append_activity(event: str, path: Path | str | None = None) -> None:
     ensure_tools_dir()
+    target_path = Path(path) if path is not None else ACTIVITY_LOG_PATH
     try:
-        if ACTIVITY_LOG_PATH.exists():
-            with ACTIVITY_LOG_PATH.open("r", encoding="utf-8") as handle:
-                try:
-                    payload = json.load(handle)
-                except json.JSONDecodeError:
-                    payload = []
-        else:
-            payload = []
-
-        if not isinstance(payload, list):
-            payload = []
-
-        payload.append({"timestamp": utc_timestamp(), "event": event})
-        with ACTIVITY_LOG_PATH.open("w", encoding="utf-8") as handle:
-            json.dump(payload, handle, indent=2)
+        audit_append_activity({
+            "activity_type": "alert_monitor",
+            "event": event,
+            "details": event,
+            "status": "success",
+        }, target_path)
     except Exception:
         pass
-
 
 def log_error(message: str) -> None:
     ensure_tools_dir()
@@ -58,16 +49,14 @@ def log_error(message: str) -> None:
     except Exception:
         pass
 
-
 def parse_timestamp(raw: str) -> datetime | None:
     try:
-        return datetime.strptime(raw, "%Y-%m-%d %H:%M:%S %Z")
+        return parse_utc_timestamp(raw)
     except ValueError:
         try:
-            return datetime.fromisoformat(raw)
+            return parse_utc_timestamp(raw)
         except ValueError:
             return None
-
 
 def read_activity_log() -> list[dict[str, Any]]:
     if not ACTIVITY_LOG_PATH.exists():
@@ -80,7 +69,6 @@ def read_activity_log() -> list[dict[str, Any]]:
         log_error(f"Unable to read activity log: {exc}")
         return []
 
-
 def read_error_log() -> list[str]:
     if not ERROR_LOG_PATH.exists():
         return []
@@ -90,7 +78,6 @@ def read_error_log() -> list[str]:
     except Exception as exc:
         log_error(f"Unable to read error log: {exc}")
         return []
-
 
 def summarize_activity(entries: list[dict[str, Any]]) -> dict[str, Any]:
     if not entries:
@@ -102,7 +89,7 @@ def summarize_activity(entries: list[dict[str, Any]]) -> dict[str, Any]:
             "event_types": {},
         }
 
-    now = datetime.now()
+    now = utc_now()
     recent_24h = 0
     recent_7d = 0
     event_types: Counter[str] = Counter()
@@ -113,7 +100,7 @@ def summarize_activity(entries: list[dict[str, Any]]) -> dict[str, Any]:
         ts_value = entry.get("timestamp")
         parsed = parse_timestamp(str(ts_value)) if ts_value else None
         if parsed is not None:
-            delta = now - parsed
+            delta = safe_subtract(now, parsed)
             if delta <= timedelta(days=1):
                 recent_24h += 1
             if delta <= timedelta(days=7):
@@ -128,9 +115,8 @@ def summarize_activity(entries: list[dict[str, Any]]) -> dict[str, Any]:
         "event_types": dict(event_types.most_common(10)),
     }
 
-
 def summarize_errors(lines: list[str]) -> dict[str, Any]:
-    now = datetime.now()
+    now = utc_now()
     recent_24h = 0
     total_errors = len(lines)
     recent_occurrences = []
@@ -143,7 +129,7 @@ def summarize_errors(lines: list[str]) -> dict[str, Any]:
         parsed = parse_timestamp(match.group("timestamp"))
         if parsed is None:
             continue
-        delta = now - parsed
+        delta = safe_subtract(now, parsed)
         if delta <= timedelta(days=1):
             recent_24h += 1
             recent_occurrences.append(line)
@@ -153,7 +139,6 @@ def summarize_errors(lines: list[str]) -> dict[str, Any]:
         "recent_24h": recent_24h,
         "recent_occurrences": recent_occurrences,
     }
-
 
 def determine_severity(error_summary: dict[str, Any], activity_summary: dict[str, Any]) -> str:
     recent_errors = error_summary["recent_24h"]
@@ -165,7 +150,6 @@ def determine_severity(error_summary: dict[str, Any], activity_summary: dict[str
     if total_errors >= 3 or recent_errors >= 2 or recent_activity == 0:
         return "NOTICE"
     return "HEALTHY"
-
 
 def build_report() -> dict[str, Any]:
     activity_summary = summarize_activity(read_activity_log())
@@ -179,7 +163,6 @@ def build_report() -> dict[str, Any]:
         "generated_at": utc_timestamp(),
     }
     return report
-
 
 def print_report(report: dict[str, Any]) -> None:
     print("\n=== EnterpriseGuard Alert Monitor ===")
@@ -206,13 +189,12 @@ def print_report(report: dict[str, Any]) -> None:
 
     print("===================================\n")
 
-
 def main() -> int:
     ensure_tools_dir()
     report = build_report()
     print_report(report)
 
-    append_activity(f"Alert monitor run: {report['severity']}")
+    append_activity(f"Alert monitor run: {report['severity']}", ACTIVITY_LOG_PATH)
 
     if report["severity"] == "ALERT":
         log_error(f"ALERT: Log spike detected by alerts_monitor. Error count in last 24h = {report['error_summary']['recent_24h']}.")
@@ -226,7 +208,6 @@ def main() -> int:
     print("System health looks stable. No active alert conditions detected.")
     return 0
 
-
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
@@ -234,6 +215,6 @@ if __name__ == "__main__":
         raise
     except Exception as exc:  # pragma: no cover
         log_error(f"Unexpected alert monitor execution error: {exc}")
-        append_activity("Alert monitor run: FAILURE (unexpected execution error)")
+        append_activity("Alert monitor run: FAILURE (unexpected execution error)", ACTIVITY_LOG_PATH)
         print(f"Unexpected error: {exc}")
         raise SystemExit(1)

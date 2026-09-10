@@ -1,0 +1,61 @@
+services:
+  langfuse:
+    image: langfuse/langfuse:latest
+    container_name: langfuse
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/postgres"
+      NEXTAUTH_SECRET: "mysecret"
+      SALT: "mysalt"
+      ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      NEXTAUTH_URL: "http://localhost:3000"
+      TELEMETRY_ENABLED: "false"
+      CLICKHOUSE_URL: "clickhouse://clickhouse:clickhouse@clickhouse:9000/langfuse?dial_timeout=10s"
+      CLICKHOUSE_MIGRATION_URL: "clickhouse://clickhouse:clickhouse@clickhouse:9000/langfuse?dial_timeout=10s"
+      CLICKHOUSE_USER: "clickhouse"
+      CLICKHOUSE_PASSWORD: "clickhouse"
+      CLICKHOUSE_DB: "langfuse"
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+    depends_on:
+      - db
+      - clickhouse
+
+  db:
+    image: postgres:15-alpine
+    container_name: langfuse-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - langfuse-db:/var/lib/postgresql/data
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8
+    container_name: langfuse-clickhouse
+    environment:
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: clickhouse
+      CLICKHOUSE_DB: langfuse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - langfuse-clickhouse:/var/lib/clickhouse
+
+  aaac-server:
+    build: .
+    container_name: aaac-server
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./tools/hardware_identity.json:/app/tools/hardware_identity.json:ro
+      - ./tools/innocence_chain.json:/app/tools/innocence_chain.json
+      - ./tools/ring_storage.jsonl:/app/tools/ring_storage.jsonl
+      - ~/.enterpriseguard:/root/.enterpriseguard:ro
+    restart: unless-stopped
+
+volumes:
+  langfuse-db:
+  langfuse-clickhouse:
