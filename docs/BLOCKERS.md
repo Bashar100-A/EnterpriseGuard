@@ -60,3 +60,46 @@ began. They were never committed.
 5. `tools/sibb_cli.py` called `storage.verify()` instead of `verify_integrity()`.
 
 **Status:** ✅ CLOSED — all 5 fixed and re-tested in fresh clone.
+
+---
+
+## BLOCKER-004: GPG Signing Key Lost
+
+**Date:** 2026-09-12
+**Severity:** HIGH
+**Category:** Release integrity / Governance
+
+**Issue:**
+The GPG signing key created in DC-041 for release file signatures was lost. The keyring at `/home/bashar/.gnupg/` was destroyed when the original OS installation was reformatted to a new user profile (`/home/biss/`).
+
+**Affected files (now archived):**
+- `VERSION.asc`
+- `CHANGELOG.md.asc`
+- `TRUSTED_BASELINE_SENTINEL.json.asc`
+- `integrity_baseline_sentinel.json.asc`
+- `tools/TRUSTED_BASELINE.json.asc`
+- `tools/integrity_baseline.json.asc`
+
+**Key identity:**
+- UID: `EnterpriseGuard ADIE <adie@enterpriseguard.local>`
+- Long Key ID: `9188569AD7F609C869730CFB20AB83C64E6B50CB`
+- Full fingerprint: never recorded (systematic failure)
+
+**Root cause:**
+1. Full fingerprint was not recorded at creation time.
+2. No backup of the private key was taken.
+3. The public key was never exported to a persistent location.
+
+**Immediate action taken:**
+- Files moved to `archive/signatures-2026-09-01-lost-key/`
+- Retrospective documented as new DC entry
+
+**Resolution plan:**
+1. Modify `tools/sign_release.py` to pin a `GPG_KEY_ID`.
+2. Generate new Ed25519 key with a strong passphrase.
+3. Export public key to `deploy/keys/release_key_public.asc`.
+4. Export encrypted private key to two external backup media.
+5. Create `docs/RELEASE_KEY.md` with full fingerprint.
+6. Re-sign the six critical files.
+
+**Status:** 🔄 IN PROGRESS — key generation pending
