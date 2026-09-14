@@ -162,3 +162,4 @@ Thumbs.db
 # END OF GITIGNORE-CONTENT-v1
 *.tar.gz*
 *_report.json
+.bandit
