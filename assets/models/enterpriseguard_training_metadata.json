@@ -5,7 +5,7 @@
   },
   "training_run": {
     "success": true,
-    "trained_at": "2026-08-24T19:50:50.019759+00:00",
+    "trained_at": "2026-08-23T15:46:50.253748+00:00",
     "training_samples": 8,
     "feature_count": 7,
     "feature_names": [
@@ -20,7 +20,7 @@
     "benign_samples": 4,
     "threat_samples": 4,
     "class_balance": 0.5,
-    "training_time_ms": 3160.207
+    "training_time_ms": 1307.83
   },
   "validation": {
     "valid": true,
@@ -49,9 +49,9 @@
     "trained": true,
     "training_samples": 8,
     "model_type": "LogisticRegression",
-    "created_at": "2026-08-24T19:50:50.019759+00:00",
-    "updated_at": "2026-08-24T19:50:50.019759+00:00",
-    "model_hash": "549b9ac92e88cd2f4a125e7d0de0a986b1e1dfd35033d2a8d3f034c1647d04c2",
+    "created_at": "2026-08-23T15:46:50.253748+00:00",
+    "updated_at": "2026-08-23T15:46:50.253748+00:00",
+    "model_hash": "a0a84fddd190cb07a886f7d36a92cf46fd2d4373b181fd63de091679efb52efb",
     "training_accuracy": 1.0,
     "training_correct": 8,
     "training_incorrect": 0,
@@ -59,10 +59,10 @@
     "validation_correct": null,
     "validation_incorrect": null,
     "validation_samples": null,
-    "fit_time_ms": 2107.629,
-    "metrics_time_ms": 3.054,
-    "persistence_time_ms": 909.778,
-    "training_time_ms": 3032.596,
+    "fit_time_ms": 777.875,
+    "metrics_time_ms": 1.704,
+    "persistence_time_ms": 512.002,
+    "training_time_ms": 1292.207,
     "ml_backend_available": true,
     "training_status": "SUCCESS",
     "training_metrics": {
@@ -73,10 +73,10 @@
       "training_evaluated_samples": 8
     },
     "timing": {
-      "total_training_time_ms": 3032.596,
-      "fit_time_ms": 2107.629,
-      "metrics_time_ms": 3.054,
-      "persistence_time_ms": 909.778
+      "total_training_time_ms": 1292.207,
+      "fit_time_ms": 777.875,
+      "metrics_time_ms": 1.704,
+      "persistence_time_ms": 512.002
     }
   },
   "verification": {
@@ -85,7 +85,7 @@
     "model_available": true,
     "model_type": "LogisticRegression",
     "model_version": "3.0.0",
-    "model_hash": "549b9ac92e88cd2f4a125e7d0de0a986b1e1dfd35033d2a8d3f034c1647d04c2",
+    "model_hash": "a0a84fddd190cb07a886f7d36a92cf46fd2d4373b181fd63de091679efb52efb",
     "prediction": {
       "predicted_class": 0,
       "threat_probability": 0.02732,
@@ -95,7 +95,7 @@
       "model_available": true,
       "model_trained": true,
       "model_version": "3.0.0",
-      "processing_time_ms": 56.145,
+      "processing_time_ms": 2.065,
       "error": null
     }
   },
@@ -112,12 +112,12 @@
     "training_accuracy": 1.0,
     "training_correct": 8,
     "training_incorrect": 0,
-    "training_time_ms": 3160.207,
-    "fit_time_ms": 2107.629,
-    "persistence_time_ms": 909.778,
+    "training_time_ms": 1307.83,
+    "fit_time_ms": 777.875,
+    "persistence_time_ms": 512.002,
     "model_file": "C:\\Users\\acer\\Desktop\\EnterpriseGuard\\assets\\models\\enterpriseguard_model.pkl",
-    "model_hash": "549b9ac92e88cd2f4a125e7d0de0a986b1e1dfd35033d2a8d3f034c1647d04c2",
-    "trained_at": "2026-08-24T19:50:50.019759+00:00",
+    "model_hash": "a0a84fddd190cb07a886f7d36a92cf46fd2d4373b181fd63de091679efb52efb",
+    "trained_at": "2026-08-23T15:46:50.253748+00:00",
     "validation_errors": [],
     "validation_warnings": [
       "Dataset contains an equal number of benign and threat samples."
@@ -128,7 +128,7 @@
       "model_available": true,
       "model_type": "LogisticRegression",
       "model_version": "3.0.0",
-      "model_hash": "549b9ac92e88cd2f4a125e7d0de0a986b1e1dfd35033d2a8d3f034c1647d04c2",
+      "model_hash": "a0a84fddd190cb07a886f7d36a92cf46fd2d4373b181fd63de091679efb52efb",
       "prediction": {
         "predicted_class": 0,
         "threat_probability": 0.02732,
@@ -138,7 +138,7 @@
         "model_available": true,
         "model_trained": true,
         "model_version": "3.0.0",
-        "processing_time_ms": 56.145,
+        "processing_time_ms": 2.065,
         "error": null
       }
     },
