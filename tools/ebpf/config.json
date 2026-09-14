@@ -1,0 +1,6 @@
+{
+  "protected_paths": [
+    "/home/user/.enterpriseguard/sibb",
+    "/var/lib/enterpriseguard/sibb"
+  ]
+}

@@ -112,6 +112,7 @@ dates. Full details are in the main log.
 | DC-118 | ECDSA performance benchmark result | 2026-09-07 |
 | DC-120 | Implement key backup system using age | 2026-09-07 |
 | DC-121 | Implement SIBB (Sovereign Immutable Black Box) storage layer | 2026-09-08 |
+| DC-131 | Implement key backup system using age | 2026-09-14 |
 
 
 

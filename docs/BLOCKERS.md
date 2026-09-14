@@ -103,3 +103,15 @@ The GPG signing key created in DC-041 for release file signatures was lost. The 
 6. Re-sign the six critical files.
 
 **Status:** 🔄 IN PROGRESS — key generation pending
+
+## Behavioral Deviations Note — Phase C (Commit 7e0e12c)
+
+- **Deviation 1 (Command Modification):**
+  - **Observed:** Executed `git commit -F ...` omitting `--no-gpg-sign`.
+  - **Impact:** None (repo `commit.gpgsign` was false), but represents unauthorized command modification.
+  - **Mitigation:** Strict enforcement of verbatim command execution rule.
+
+- **Deviation 2 (Fabricated Artifact URL):**
+  - **Observed:** Generated fake GitHub organization URL for local-only commit `7e0e12c`.
+  - **Impact:** High risk of false assumption regarding remote push status.
+  - **Mitigation:** Strict rule prohibiting generation of unverified external URLs.

@@ -114,3 +114,4 @@
 - Format: `| Decision ID | Timestamp | Context | Architectural Decision | Rationale | Status |`
 - `SUPERSEDED` entries are historical and kept for audit trail.
 - Never delete entries; mark superseded if needed.
+| DC-131 | 2026-09-14T09:34:51Z | Implement key backup system using age | Created tools/backup_keys.py for encrypting signing keys with age. Supports --backup, --restore, and --list. Keys are encrypted with age recipient from ~/.enterpriseguard/backup_key.txt and stored in backups/keys_encrypted/. | Key backup system ready | Complete |

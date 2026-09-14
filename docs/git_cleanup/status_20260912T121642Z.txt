@@ -1,0 +1,263 @@
+ M .claude/instructions.md
+ M .vscode/settings.json
+ M CONTRACTS.md
+ M PROJECT_MEMORY.md
+ D __pycache__/policy.cpython-312.pyc
+ M assets/models/enterpriseguard_model.pkl
+ M assets/models/enterpriseguard_training_metadata.json
+ D enterpriseguard/intelligence/training/__pycache__/__init__.cpython-312.pyc
+ D enterpriseguard/intelligence/training/__pycache__/dataset.cpython-312.pyc
+ D enterpriseguard/intelligence/training/__pycache__/trainer.cpython-312.pyc
+ D enterpriseguard/intelligence/training/__pycache__/validator.cpython-312.pyc
+ M project_files.txt
+ D src/enterpriseguard/adie/__pycache__/__init__.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/__init__.cpython-314.pyc
+ D src/enterpriseguard/adie/__pycache__/__main__.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/__main__.cpython-314.pyc
+ D src/enterpriseguard/adie/__pycache__/approval.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/audit.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/checkpoint.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/checkpoint.cpython-314.pyc
+ D src/enterpriseguard/adie/__pycache__/decision.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/decision.cpython-314.pyc
+ D src/enterpriseguard/adie/__pycache__/execution_authorization.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/execution_contract.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/execution_manifest.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/feedback.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/feedback.cpython-314.pyc
+ D src/enterpriseguard/adie/__pycache__/governance.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/governance.cpython-314.pyc
+ D src/enterpriseguard/adie/__pycache__/integration.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/integration.cpython-314.pyc
+ D src/enterpriseguard/adie/__pycache__/orchestrator.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/orchestrator.cpython-314.pyc
+ D src/enterpriseguard/adie/__pycache__/playbook.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/playbook.cpython-314.pyc
+ D src/enterpriseguard/adie/__pycache__/policy.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/policy.cpython-314.pyc
+ D src/enterpriseguard/adie/__pycache__/prediction.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/prediction.cpython-314.pyc
+ D src/enterpriseguard/adie/__pycache__/rollback.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/rollback.cpython-314.pyc
+ D src/enterpriseguard/adie/__pycache__/state.cpython-312.pyc
+ D src/enterpriseguard/adie/__pycache__/state.cpython-314.pyc
+ M src/enterpriseguard/adie/approval.py
+ M src/enterpriseguard/adie/execution_authorization.py
+ M src/enterpriseguard/adie/execution_contract.py
+ M src/enterpriseguard/adie/execution_manifest.py
+ D src/enterpriseguard/intelligence/__pycache__/__init__.cpython-312.pyc
+ D src/enterpriseguard/intelligence/__pycache__/dashboard_service.cpython-312.pyc
+ D src/enterpriseguard/intelligence/__pycache__/dashboard_service.cpython-314.pyc
+ D src/enterpriseguard/intelligence/__pycache__/decision_orchestrator.cpython-312.pyc
+ D src/enterpriseguard/intelligence/__pycache__/decision_orchestrator.cpython-314.pyc
+ D src/enterpriseguard/intelligence/__pycache__/detection_service.cpython-312.pyc
+ D src/enterpriseguard/intelligence/__pycache__/detection_service.cpython-314.pyc
+ D src/enterpriseguard/intelligence/__pycache__/detector.cpython-312.pyc
+ M src/enterpriseguard/intelligence/__pycache__/detector.cpython-314.pyc
+ D src/enterpriseguard/intelligence/__pycache__/engine.cpython-312.pyc
+ M src/enterpriseguard/intelligence/__pycache__/engine.cpython-314.pyc
+ D src/enterpriseguard/intelligence/__pycache__/features.cpython-312.pyc
+ D src/enterpriseguard/intelligence/__pycache__/integration.cpython-312.pyc
+ D src/enterpriseguard/intelligence/__pycache__/integration_bootstrap.cpython-312.pyc
+ D src/enterpriseguard/intelligence/__pycache__/integration_test.cpython-312.pyc
+ D src/enterpriseguard/intelligence/__pycache__/models.cpython-312.pyc
+ D src/enterpriseguard/intelligence/__pycache__/reporting_service.cpython-312.pyc
+ D src/enterpriseguard/intelligence/__pycache__/reporting_service.cpython-314.pyc
+ D src/enterpriseguard/intelligence/__pycache__/state.cpython-312.pyc
+ D src/enterpriseguard/intelligence/__pycache__/state.cpython-314.pyc
+ D src/enterpriseguard/intelligence/__pycache__/trainer.cpython-312.pyc
+ D src/enterpriseguard/intelligence/decision/__pycache__/contracts.cpython-312.pyc
+ D src/enterpriseguard/intelligence/decision/__pycache__/contracts.cpython-314.pyc
+ D src/enterpriseguard/intelligence/decision/__pycache__/engine.cpython-312.pyc
+ D src/enterpriseguard/intelligence/decision/__pycache__/engine.cpython-314.pyc
+ M src/enterpriseguard/intelligence/detector.py
+ M src/enterpriseguard/intelligence/engine.py
+ D src/enterpriseguard/intelligence/policy/__pycache__/contracts.cpython-312.pyc
+ D src/enterpriseguard/intelligence/policy/__pycache__/contracts.cpython-314.pyc
+ D src/enterpriseguard/intelligence/policy/__pycache__/engine.cpython-312.pyc
+ D src/enterpriseguard/intelligence/policy/__pycache__/engine.cpython-314.pyc
+ D src/enterpriseguard/intelligence/prediction/__pycache__/contracts.cpython-312.pyc
+ D src/enterpriseguard/intelligence/prediction/__pycache__/contracts.cpython-314.pyc
+ D src/enterpriseguard/intelligence/prediction/__pycache__/engine.cpython-312.pyc
+ D src/enterpriseguard/intelligence/prediction/__pycache__/engine.cpython-314.pyc
+ M src/enterpriseguard/intelligence/trainer.py
+ D src/enterpriseguard/intelligence/training/__pycache__/__init__.cpython-312.pyc
+ D src/enterpriseguard/intelligence/training/__pycache__/__main__.cpython-312.pyc
+ D src/enterpriseguard/intelligence/training/__pycache__/__main__.cpython-314.pyc
+ D src/enterpriseguard/intelligence/training/__pycache__/dataset.cpython-312.pyc
+ D src/enterpriseguard/intelligence/training/__pycache__/model_loader.cpython-312.pyc
+ D src/enterpriseguard/intelligence/training/__pycache__/model_loader.cpython-314.pyc
+ D src/enterpriseguard/intelligence/training/__pycache__/model_manager.cpython-312.pyc
+ D src/enterpriseguard/intelligence/training/__pycache__/model_manager.cpython-314.pyc
+ D src/enterpriseguard/intelligence/training/__pycache__/model_registry.cpython-312.pyc
+ D src/enterpriseguard/intelligence/training/__pycache__/model_registry.cpython-314.pyc
+ D src/enterpriseguard/intelligence/training/__pycache__/orchestrator.cpython-312.pyc
+ D src/enterpriseguard/intelligence/training/__pycache__/trainer.cpython-312.pyc
+ D src/enterpriseguard/intelligence/training/__pycache__/training_service.cpython-312.pyc
+ D src/enterpriseguard/intelligence/training/__pycache__/training_service.cpython-314.pyc
+ D src/enterpriseguard/intelligence/training/__pycache__/validator.cpython-312.pyc
+ M src/enterpriseguard/intelligence/training/__pycache__/validator.cpython-314.pyc
+ M src/enterpriseguard/intelligence/training/trainer.py
+ M src/enterpriseguard/intelligence/training/validator.py
+ M tools/DECISIONS_LOG.md
+ D tools/__pycache__/ai_diagnostics.cpython-312.pyc
+ D tools/__pycache__/alerts_monitor.cpython-312.pyc
+ D tools/__pycache__/audit_chain.cpython-312.pyc
+ D tools/__pycache__/checklist.cpython-312.pyc
+ D tools/__pycache__/command_center.cpython-312.pyc
+ D tools/__pycache__/command_center.tmp.cpython-312.pyc
+ D tools/__pycache__/discipline.cpython-312.pyc
+ D tools/__pycache__/rag_system.cpython-312.pyc
+ D tools/__pycache__/time_drift.cpython-312.pyc
+ M tools/backups/activity_log_20260830T135857Z.json
+ M tools/backups/activity_log_20260830T140925Z.json
+ M tools/latest_context.txt
+ D tools/memory_snapshot_2026-08-30T20:38:44Z.json
+ M tools/memory_snapshot_20260830T202820Z.json
+ M tools/sibb_cli.py
+?? .bandit
+?? CHANGELOG.md.asc
+?? TRUSTED_BASELINE_SENTINEL.json
+?? TRUSTED_BASELINE_SENTINEL.json.asc
+?? VERSION.asc
+?? add_cloud_backends_to_innocence.py
+?? add_compliance_report.py
+?? add_compliance_to_cli.py
+?? add_dashboard.py
+?? add_decision_dc115.py
+?? add_decision_new_phase.py
+?? add_dedup_to_cli.py
+?? add_mock_branch.py
+?? add_rfc3161.py
+?? add_tsa_failover.py
+?? add_tsa_verification.py
+?? all.py
+?? all.sh
+?? all_project_files.md
+?? bandit_report.json
+?? chain_simple_test.sh
+?? chain_spoof_test.sh
+?? chain_tamper_test.sh
+?? collision_test.sh
+?? create_compliance_docs.py
+?? ddos_test.sh
+?? docs/git_cleanup/
+?? fix_aaac_cli_verify.py
+?? fix_agents_endpoint.py
+?? fix_agents_regex.py
+?? fix_bandit_issues.py
+?? fix_dashboard_auth.py
+?? fix_dashboard_auth_restore.py
+?? fix_dashboard_safe.py
+?? fix_datetime_import.py
+?? fix_docs_agents.py
+?? fix_docs_status.py
+?? fix_duplicate.py
+?? fix_missing_function.py
+?? fix_open_verifier_hex.py
+?? fix_open_verifier_import.py
+?? fix_server_verify.py
+?? fix_signing_manual.py
+?? fix_tsa_dynamic.py
+?? fix_tsa_strict.py
+?? fix_utc_now_iso.py
+?? fuzz_test.sh
+?? genesis_seed.txt
+?? hardfork_test.sh
+?? improve_dashboard.py
+?? improve_tsa_verification.py
+?? integrity_baseline_sentinel.json
+?? integrity_baseline_sentinel.json.asc
+?? live_demo.sh
+?? make_open_verifier_standalone.py
+?? merge.py
+?? modify_chain.py
+?? modify_docs.py
+?? pip_audit_report.json
+?? refactor_signing.py
+?? resource_starvation_test.sh
+?? restore_open_verifier_import.py
+?? sample_20260903T082413Z.txt
+?? test_compliance_advanced.py
+?? test_concurrency.sh
+?? test_dos.sh
+?? test_dos_improved.sh
+?? test_toctou.sh
+?? test_toctou_improved.sh
+?? time_spoof_test.sh
+?? tools/ARCHITECTURE_ADAPTIVE_ISOLATION.md
+?? tools/ARCHITECTURE_INTERNAL_ATTACK_SIMULATOR.md
+?? tools/Anchor.sol
+?? tools/SECURITY_FUZZING.md
+?? tools/TRUSTED_BASELINE.json
+?? tools/TRUSTED_BASELINE.json.asc
+?? tools/audit_fallback.jsonl
+?? tools/backups_fix_datetime_2026-08-31T07_30_47Z/
+?? tools/backups_fix_interface_2026-08-31T08_33_59Z/
+?? tools/bandit_report.json
+?? tools/bandit_report_sibb.json
+?? tools/bandit_report_sibb_cli.json
+?? tools/bandit_report_sibb_distributed.json
+?? tools/bandit_report_sibb_innocence.json
+?? tools/bandit_report_sibb_keys.json
+?? tools/certum_chain.pem
+?? tools/certum_root.cer
+?? tools/certum_root.pem
+?? tools/certum_subca.cer
+?? tools/certum_subca.pem
+?? tools/certum_tsa_ca.pem
+?? tools/ebpf/
+?? tools/errors.log.st_tree.archive.20260830T192128Z
+?? tools/errors.log.st_tree.archive.20260830T194729Z
+?? tools/errors.log.st_tree.archive.20260830T195453Z
+?? tools/governance_proposals_2026-08-31T00_46_44Z.json
+?? tools/governance_proposals_20260831T004050Z.json
+?? tools/governance_proposals_attack_20260831T191735Z.json
+?? tools/integrity_baseline.json
+?? tools/integrity_baseline.json.asc
+?? tools/integrity_report_2026-08-30T23_56_55Z.json
+?? tools/integrity_report_2026-08-31T00_00_00Z.json
+?? tools/integrity_report_2026-08-31T00_07_39Z.json
+?? tools/integrity_report_2026-08-31T00_09_03Z.json
+?? tools/integrity_report_2026-08-31T00_11_20Z.json
+?? tools/integrity_report_2026-08-31T00_11_45Z.json
+?? tools/integrity_report_2026-08-31T00_21_18Z.json
+?? tools/integrity_report_2026-08-31T00_46_57Z.json
+?? tools/memory_snapshot_2026-08-30T20_38_44Z.json
+?? tools/memory_snapshot_2026-08-30T23_56_31Z.json
+?? tools/memory_snapshot_2026-08-31T00_08_00Z.json
+?? tools/memory_snapshot_2026-08-31T14_58_18Z.json
+?? tools/requirements.lock.txt
+?? tools/sibb_immutable_protect.sh
+?? update_decision_index.py
+?? update_docs_for_phase2.py
+?? update_memory_aaac_cli.py
+?? update_memory_advanced_compliance.py
+?? update_memory_after_phase2.py
+?? update_memory_blockchain_anchor.py
+?? update_memory_compliance_docs.py
+?? update_memory_compliance_engine.py
+?? update_memory_compliance_report.py
+?? update_memory_dashboard.py
+?? update_memory_dc119.py
+?? update_memory_dedup_cli.py
+?? update_memory_ecdsa.py
+?? update_memory_final_batch.py
+?? update_memory_hsm_cloud.py
+?? update_memory_hsm_tpm.py
+?? update_memory_html_deferred.py
+?? update_memory_key_reset.py
+?? update_memory_native_connectors.py
+?? update_memory_open_verifier_rollback.py
+?? update_memory_openverifier_revert.py
+?? update_memory_perf.py
+?? update_memory_readme.py
+?? update_memory_self_imposing.py
+?? update_memory_sepolia.py
+?? update_memory_sibb.py
+?? update_memory_signing_backend.py
+?? update_memory_tsa_improve.py
+?? update_memory_tsa_strict.py
+?? update_memory_tsa_tests.py
+?? update_memory_tsa_verified.py
+?? update_memory_verifier_ui.py

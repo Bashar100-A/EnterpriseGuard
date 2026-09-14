@@ -1,31 +1,226 @@
-Architectural Context Report — Generated at: 2026-08-30T19:54:54Z
+Architectural Context Report — Generated at: 2026-08-31T15:00:52Z
 
 --- File Tree ---
-├── assets
-│   └── models
-│       ├── registry
-│       │   ├── versions
-│       │   └── model_registry.json
-│       ├── enterpriseguard_model.json
-│       ├── enterpriseguard_model.pkl
-│       └── enterpriseguard_training_metadata.json
-├── demo
-├── docs
-├── enterpriseguard
-├── logs
-│   └── audit.jsonl
+├── CONTRACTS.md
+├── PROJECT_MEMORY.md
+├── TRUSTED_BASELINE_SENTINEL.json
+├── integrity_baseline_sentinel.json
+├── integrity_baseline_sentinel.json.bak_2026-08-31T13:18:45Z
+├── integrity_baseline_sentinel.json.bak_2026-08-31T13:22:05Z
+├── integrity_baseline_sentinel.json.bak_2026-08-31T13:46:32Z
+├── integrity_baseline_sentinel.json.bak_2026-08-31T13:56:54Z
+├── policy.py
+├── project_files.txt
+├── requirements.txt
+├── tools
+│   ├── ARCHITECTURE_ADAPTIVE_ISOLATION.md
+│   ├── ARCHITECTURE_INTERNAL_ATTACK_SIMULATOR.md
+│   ├── DECISIONS_LOG.md
+│   ├── DECISIONS_LOG.md.bak_2026-08-31T02:21:48Z
+│   ├── DECISIONS_LOG.md.bak_2026-08-31T02:26:43Z
+│   ├── DECISIONS_LOG.md.bak_2026-08-31T06:11:44Z
+│   ├── DECISIONS_LOG.md.bak_2026-08-31T06:51:06Z
+│   ├── DECISIONS_LOG.md.bak_2026-08-31T10:27:57Z
+│   ├── DECISIONS_LOG.md.bak_2026-08-31T12:32:50Z
+│   ├── DECISIONS_LOG.md.bak_2026-08-31T13:29:33Z
+│   ├── DECISIONS_LOG.md.bak_2026-08-31T13:54:35Z
+│   ├── DECISIONS_LOG.md.bak_2026-08-31T14:06:47Z
+│   ├── DECISIONS_LOG.md.bak_2026-08-31T14:08:36Z
+│   ├── DECISIONS_LOG.md.bak_20260830T160135Z
+│   ├── DECISIONS_LOG.md.bak_20260831T093422Z
+│   ├── SECURITY_FUZZING.md
+│   ├── TRUSTED_BASELINE.json
+│   ├── activity_log.json
+│   ├── activity_log.json.bak_2026-08-31T12:32:50Z
+│   ├── activity_log.json.bak_2026-08-31T13:29:33Z
+│   ├── activity_log.json.bak_2026-08-31T13:54:35Z
+│   ├── activity_log.json.bak_20260830T172209Z
+│   ├── activity_log.json.bak_20260830T173514Z
+│   ├── activity_log.json.bak_20260830T185303Z
+│   ├── activity_log.json.bak_20260830T214252Z
+│   ├── activity_log.json.bak_20260831T010909Z
+│   ├── activity_log.json.bak_20260831T093422Z
+│   ├── ai_diagnostics.py
+│   ├── ai_diagnostics.py.bak_2026-08-31T12:32:50Z
+│   ├── ai_diagnostics.py.bak_2026-08-31T13:29:33Z
+│   ├── ai_diagnostics.py.bak_2026-08-31T13:54:35Z
+│   ├── ai_diagnostics.py.bak_20260831T010909Z
+│   ├── ai_diagnostics.py.bak_20260831T093422Z
+│   ├── alerts_monitor.py
+│   ├── alerts_monitor.py.bak_2026-08-31T12:32:50Z
+│   ├── alerts_monitor.py.bak_2026-08-31T13:29:33Z
+│   ├── alerts_monitor.py.bak_2026-08-31T13:54:35Z
+│   ├── alerts_monitor.py.bak_20260831T010909Z
+│   ├── alerts_monitor.py.bak_20260831T093422Z
+│   ├── audit_chain.py
+│   ├── audit_chain.py.bak_2026-08-31T12:32:50Z
+│   ├── audit_chain.py.bak_2026-08-31T13:29:33Z
+│   ├── audit_chain.py.bak_2026-08-31T13:54:35Z
+│   ├── audit_chain.py.bak_20260831T093422Z
+│   ├── checklist.py
+│   ├── checklist.py.bak_2026-08-31T12:32:50Z
+│   ├── checklist.py.bak_2026-08-31T13:06:11Z
+│   ├── checklist.py.bak_2026-08-31T13:18:45Z
+│   ├── checklist.py.bak_2026-08-31T13:22:05Z
+│   ├── checklist.py.bak_2026-08-31T13:29:33Z
+│   ├── checklist.py.bak_2026-08-31T13:54:35Z
+│   ├── checklist.py.bak_20260831T010909Z
+│   ├── checklist.py.bak_20260831T093422Z
+│   ├── command_center.py
+│   ├── command_center.py.bak_2026-08-30T23:45:18Z
+│   ├── command_center.py.bak_2026-08-31T00:15:58Z
+│   ├── command_center.py.bak_2026-08-31T00:34:28Z
+│   ├── command_center.py.bak_2026-08-31T12:04:38Z
+│   ├── command_center.py.bak_2026-08-31T12:05:48Z
+│   ├── command_center.py.bak_2026-08-31T12:07:03Z
+│   ├── command_center.py.bak_2026-08-31T12:32:50Z
+│   ├── command_center.py.bak_2026-08-31T13:29:33Z
+│   ├── command_center.py.bak_2026-08-31T13:54:35Z
+│   ├── command_center.py.bak_20260830T194431Z
+│   ├── command_center.py.bak_20260830T195453Z
+│   ├── command_center.py.bak_20260830T200424Z
+│   ├── command_center.py.bak_20260830T202444Z
+│   ├── command_center.py.bak_20260830T202748Z
+│   ├── command_center.py.bak_20260830T210152Z
+│   ├── command_center.py.bak_20260830T210924Z
+│   ├── command_center.py.bak_20260830T211052Z
+│   ├── command_center.py.bak_20260830T211207Z
+│   ├── command_center.py.bak_20260830T214252Z
+│   ├── command_center.py.bak_20260831T010909Z
+│   ├── command_center.py.bak_20260831T014250Z
+│   ├── command_center.py.bak_20260831T014447Z
+│   ├── command_center.py.bak_20260831T093422Z
+│   ├── discipline.py
+│   ├── discipline.py.bak_2026-08-31T12:32:50Z
+│   ├── discipline.py.bak_2026-08-31T13:29:33Z
+│   ├── discipline.py.bak_2026-08-31T13:54:35Z
+│   ├── discipline.py.bak_20260831T010909Z
+│   ├── discipline.py.bak_20260831T093422Z
+│   ├── ephemeral_archiver.py
+│   ├── ephemeral_archiver.py.bak_2026-08-31T13:54:35Z
+│   ├── errors.log
+│   ├── errors.log.bak_2026-08-31T12:32:50Z
+│   ├── errors.log.bak_2026-08-31T13:29:33Z
+│   ├── errors.log.bak_2026-08-31T13:54:35Z
+│   ├── errors.log.bak_20260830T153155Z
+│   ├── errors.log.bak_20260830T191617Z
+│   ├── errors.log.bak_20260830T194431Z
+│   ├── errors.log.bak_20260830T194729Z
+│   ├── errors.log.bak_20260830T195453Z
+│   ├── errors.log.st_tree.archive.20260830T192128Z
+│   ├── errors.log.st_tree.archive.20260830T194729Z
+│   ├── errors.log.st_tree.archive.20260830T195453Z
+│   ├── governance_proposals_2026-08-31T00:46:44Z.json
+│   ├── governance_proposals_20260831T004050Z.json
+│   ├── governance_rule_generator.py
+│   ├── governance_rule_generator.py.bak_2026-08-31T12:32:50Z
+│   ├── governance_rule_generator.py.bak_2026-08-31T13:29:33Z
+│   ├── governance_rule_generator.py.bak_2026-08-31T13:54:35Z
+│   ├── governance_rule_generator.py.bak_20260831T093422Z
+│   ├── hybrid_retrieval.py
+│   ├── hybrid_retrieval.py.bak_2026-08-31T12:32:50Z
+│   ├── hybrid_retrieval.py.bak_2026-08-31T13:29:33Z
+│   ├── hybrid_retrieval.py.bak_2026-08-31T13:54:35Z
+│   ├── hybrid_retrieval.py.bak_20260831T093422Z
+│   ├── integrity_baseline.json
+│   ├── integrity_baseline.json.bak_2026-08-31T13:18:45Z
+│   ├── integrity_baseline.json.bak_2026-08-31T13:22:05Z
+│   ├── integrity_baseline.json.bak_2026-08-31T13:46:32Z
+│   ├── integrity_baseline.json.bak_2026-08-31T13:56:54Z
+│   ├── integrity_monitor.py
+│   ├── integrity_monitor.py.bak_2026-08-31T13:29:33Z
+│   ├── integrity_monitor.py.bak_2026-08-31T13:54:35Z
+│   ├── integrity_report_2026-08-30T23:56:55Z.json
+│   ├── integrity_report_2026-08-31T00:00:00Z.json
+│   ├── integrity_report_2026-08-31T00:07:39Z.json
+│   ├── integrity_report_2026-08-31T00:09:03Z.json
+│   ├── integrity_report_2026-08-31T00:11:20Z.json
+│   ├── integrity_report_2026-08-31T00:11:45Z.json
+│   ├── integrity_report_2026-08-31T00:21:18Z.json
+│   ├── integrity_report_2026-08-31T00:46:57Z.json
+│   ├── latest_context.txt
+│   ├── logical_clock.py
+│   ├── logical_clock.py.bak_2026-08-31T13:54:35Z
+│   ├── memory_snapshot_2026-08-30T20:38:44Z.json
+│   ├── memory_snapshot_2026-08-30T23:56:31Z.json
+│   ├── memory_snapshot_2026-08-31T00:08:00Z.json
+│   ├── memory_snapshot_2026-08-31T14:58:18Z.json
+│   ├── memory_snapshot_20260830T202820Z.json
+│   ├── rag_system.py
+│   ├── rag_system.py.bak_2026-08-30T23:45:18Z
+│   ├── rag_system.py.bak_2026-08-31T00:04:55Z
+│   ├── rag_system.py.bak_2026-08-31T12:32:50Z
+│   ├── rag_system.py.bak_2026-08-31T13:29:33Z
+│   ├── rag_system.py.bak_2026-08-31T13:54:35Z
+│   ├── rag_system.py.bak_20260831T093422Z
+│   ├── requirements.lock.txt
+│   ├── time_drift.py
+│   ├── time_drift.py.bak_2026-08-31T12:32:50Z
+│   ├── time_drift.py.bak_2026-08-31T13:29:33Z
+│   ├── time_drift.py.bak_2026-08-31T13:54:35Z
+│   ├── time_drift.py.bak_20260831T014250Z
+│   ├── time_drift.py.bak_20260831T014447Z
+│   ├── time_drift.py.bak_20260831T093422Z
+│   ├── time_utils.py
+│   ├── time_utils.py.bak_2026-08-31T12:32:50Z
+│   ├── time_utils.py.bak_2026-08-31T13:29:33Z
+│   ├── time_utils.py.bak_2026-08-31T13:54:35Z
+│   ├── time_utils.py.bak_20260831T093422Z
+│   ├── quarantine
+│   │   ├── 20260830T153155Z_'
+│   │   ├── 20260830T153155Z_Any
+│   │   ├── 20260830T153155Z_Mapping
+│   │   ├── 20260830T153155Z_None
+│   │   ├── 20260830T153155Z_TrainingOrchestrator
+│   │   ├── 20260830T153155Z_bool
+│   │   ├── 20260830T153155Z_cd
+│   │   ├── 20260830T153155Z_cls
+│   │   ├── 20260830T153155Z_dict[str
+│   │   ├── 20260830T153155Z_float
+│   │   ├── 20260830T153155Z_int
+│   │   ├── 20260830T153155Z_list[dict[str
+│   │   ├── 20260830T153155Z_orchestrator.minimum_samples
+│   │   ├── 20260830T153155Z_python
+│   │   ├── 20260830T153155Z_reporting_state.pkl
+│   │   ├── 20260830T153155Z_run_claude.bat
+│   │   ├── 20260830T153155Z_set
+│   │   ├── 20260830T153155Z_start_claude.bat
+│   │   ├── 20260830T153155Z_str
+│   │   └── 20260830T153155Z_streamlit
+│   ├── backups
+│   │   ├── activity_log_20260830T135857Z.json
+│   │   └── activity_log_20260830T140925Z.json
+│   ├── backups_fix_datetime_2026-08-31T07:30:47Z
+│   │   ├── ai_diagnostics.py
+│   │   ├── alerts_monitor.py
+│   │   ├── audit_chain.py
+│   │   ├── checklist.py
+│   │   ├── command_center.py
+│   │   ├── discipline.py
+│   │   ├── governance_rule_generator.py
+│   │   ├── hybrid_retrieval.py
+│   │   ├── rag_system.py
+│   │   └── time_drift.py
+│   └── backups_fix_interface_2026-08-31T08:33:59Z
+│       ├── ai_diagnostics.py
+│       ├── alerts_monitor.py
+│       ├── audit_chain.py
+│       ├── checklist.py
+│       ├── command_center.py
+│       ├── discipline.py
+│       ├── governance_rule_generator.py
+│       ├── hybrid_retrieval.py
+│       ├── rag_system.py
+│       ├── time_drift.py
+│       └── time_utils.py
 ├── src
-│   ├── assets
-│   │   └── models
-│   │       ├── enterpriseguard_model.pkl
-│   │       └── enterpriseguard_training_metadata.json
-│   ├── core
-│   │   └── config.py
+│   ├── check_adie_exports.py
+│   ├── inject_mock_events.py
+│   ├── policy.py
+│   ├── test_adie_integration.py
 │   ├── enterpriseguard
-│   │   ├── api
-│   │   │   └── dashboard_api.py
-│   │   ├── core
-│   │   │   └── config.py
+│   │   ├── ui
+│   │   │   └── dashboard.py
 │   │   ├── monitoring
 │   │   │   └── audit.py
 │   │   ├── response
@@ -35,74 +230,63 @@ Architectural Context Report — Generated at: 2026-08-30T19:54:54Z
 │   │   │   ├── executor.py
 │   │   │   ├── integration.py
 │   │   │   └── verification.py
-│   │   └── ui
-│   │       └── dashboard.py
-│   ├── logs
-│   │   └── audit.jsonl
-│   ├── check_adie_exports.py
-│   ├── inject_mock_events.py
-│   ├── policy.py
-│   └── test_adie_integration.py
-├── tools
-│   ├── backups
-│   │   ├── activity_log_20260830T135857Z.json
-│   │   └── activity_log_20260830T140925Z.json
-│   ├── quarantine
-│   │   ├── 20260830T153155Z_'
-│   │   ├── 20260830T153155Z_Any
-│   │   ├── 20260830T153155Z_bool
-│   │   ├── 20260830T153155Z_cd
-│   │   ├── 20260830T153155Z_cls
-│   │   ├── 20260830T153155Z_dict[str
-│   │   ├── 20260830T153155Z_float
-│   │   ├── 20260830T153155Z_int
-│   │   ├── 20260830T153155Z_list[dict[str
-│   │   ├── 20260830T153155Z_Mapping
-│   │   ├── 20260830T153155Z_None
-│   │   ├── 20260830T153155Z_orchestrator.minimum_samples
-│   │   ├── 20260830T153155Z_python
-│   │   ├── 20260830T153155Z_reporting_state.pkl
-│   │   ├── 20260830T153155Z_run_claude.bat
-│   │   ├── 20260830T153155Z_set
-│   │   ├── 20260830T153155Z_start_claude.bat
-│   │   ├── 20260830T153155Z_str
-│   │   ├── 20260830T153155Z_streamlit
-│   │   └── 20260830T153155Z_TrainingOrchestrator
-│   ├── activity_log.json
-│   ├── activity_log.json.bak_20260830T172209Z
-│   ├── activity_log.json.bak_20260830T173514Z
-│   ├── activity_log.json.bak_20260830T185303Z
-│   ├── ai_diagnostics.py
-│   ├── alerts_monitor.py
-│   ├── checklist.py
-│   ├── command_center.py
-│   ├── command_center.py.bak_20260830T194431Z
-│   ├── command_center.py.bak_20260830T195453Z
-│   ├── DECISIONS_LOG.md
-│   ├── DECISIONS_LOG.md.bak_20260830T160135Z
-│   ├── discipline.py
-│   ├── errors.log
-│   ├── errors.log.bak_20260830T153155Z
-│   ├── errors.log.bak_20260830T191617Z
-│   ├── errors.log.bak_20260830T194431Z
-│   ├── errors.log.bak_20260830T194729Z
-│   ├── errors.log.bak_20260830T195453Z
-│   ├── errors.log.st_tree.archive.20260830T192128Z
-│   ├── errors.log.st_tree.archive.20260830T194729Z
-│   ├── errors.log.st_tree.archive.20260830T195453Z
-│   ├── latest_context.txt
-│   └── rag_system.py
-├── CONTRACTS.md
-├── policy.py
-├── project_files.txt
-├── PROJECT_MEMORY.md
-└── requirements.txt
+│   │   ├── api
+│   │   │   └── dashboard_api.py
+│   │   └── core
+│   │       └── config.py
+│   ├── assets
+│   │   └── models
+│   │       ├── enterpriseguard_model.pkl
+│   │       └── enterpriseguard_training_metadata.json
+│   ├── core
+│   │   └── config.py
+│   └── logs
+│       └── audit.jsonl
+├── docs
+├── enterpriseguard
+├── demo
+├── assets
+│   └── models
+│       ├── enterpriseguard_model.json
+│       ├── enterpriseguard_model.pkl
+│       ├── enterpriseguard_training_metadata.json
+│       └── registry
+│           ├── model_registry.json
+│           └── versions
+└── logs
+    └── audit.jsonl
 
 --- RAG Output ---
-{"query": "test", "retrieved_documents": [], "generated_answer": "Retrieval-only mode active. See retrieved documents.", "model_used": "no_models", "timestamp": "2026-08-30T19:54:53Z"}
+
 
 --- Latest Errors ---
 [2026-08-30T12:12:20Z] ALERT: Log spike detected by alerts_monitor. Error count in last 24h = 2.
+[2026-08-31T13:08:19Z] Checklist verification failed with 1 critical failures.
+[2026-08-31T13:18:46Z] Unexpected checklist execution error: name 'hashlib' is not defined
+[2026-08-31T13:29:37Z] Checklist verification failed with 1 critical failures.
+[2026-08-31T13:36:40Z] Checklist verification failed with 1 critical failures.
+[2026-08-31T13:56:17Z] Checklist verification failed with 1 critical failures.
+[2026-08-31T14:58:08Z] Checklist verification failed with 1 critical failures.
+[2026-08-31T14:58:10Z] Checklist verification failed with 1 critical failures.
 
 --- Recent Activity ---
-- No activity recorded.
+- 2026-08-31T09:08:11Z :: app_started :: Application started
+- 2026-08-31T09:52:17Z :: checklist :: Checklist verification run: WARNING (success=10, warning=2, failure=0)
+- 2026-08-31T09:52:18Z :: alert_monitor :: Alert monitor run: HEALTHY
+- 2026-08-31T12:04:39Z :: checklist :: Checklist verification run: WARNING (success=10, warning=2, failure=0)
+- 2026-08-31T12:07:06Z :: checklist :: Checklist verification run: WARNING (success=10, warning=2, failure=0)
+- 2026-08-31T12:08:27Z :: checklist :: Checklist verification run: WARNING (success=10, warning=2, failure=0)
+- 2026-08-31T12:31:11Z :: app_started :: Application started
+- 2026-08-31T12:35:04Z :: checklist :: Checklist verification run: WARNING (success=10, warning=2, failure=0)
+- 2026-08-31T13:08:19Z :: checklist :: Checklist verification run: FAILURE (success=10, warning=2, failure=1)
+- 2026-08-31T13:09:13Z :: checklist :: Checklist verification run: WARNING (success=10, warning=2, failure=0)
+- 2026-08-31T13:18:46Z :: checklist :: Checklist verification run: FAILURE (unexpected script error)
+- 2026-08-31T13:22:06Z :: checklist :: Checklist verification run: WARNING (success=11, warning=2, failure=0)
+- 2026-08-31T13:29:37Z :: checklist :: Checklist verification run: FAILURE (success=10, warning=2, failure=1)
+- 2026-08-31T13:36:40Z :: checklist :: Checklist verification run: FAILURE (success=10, warning=2, failure=1)
+- 2026-08-31T13:46:33Z :: checklist :: Checklist verification run: WARNING (success=11, warning=2, failure=0)
+- 2026-08-31T13:56:17Z :: checklist :: Checklist verification run: FAILURE (success=11, warning=2, failure=1)
+- 2026-08-31T13:56:55Z :: checklist :: Checklist verification run: WARNING (success=12, warning=2, failure=0)
+- 2026-08-31T14:54:59Z :: app_started :: Application started
+- 2026-08-31T14:58:08Z :: checklist :: Checklist verification run: FAILURE (success=11, warning=2, failure=1)
+- 2026-08-31T14:58:10Z :: checklist :: Checklist verification run: FAILURE (success=11, warning=2, failure=1)

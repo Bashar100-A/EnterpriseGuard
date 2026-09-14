@@ -1,15 +1,11 @@
-C:\Users\acer\Desktop\EnterpriseGuard\PROJECT_MEMORY.md
-
-
----
-
 # EnterpriseGuard → ADIE
 # Project Memory
 
-Version: 1.0
-Project Type: Security Control Plane
+Version: 1.2
+Project Type: Security Control Plane / Sovereign Reference Core
 Architecture: Adaptive Defense Intelligence Engine (ADIE)
 
+---
 
 # 1. Project Identity
 
@@ -21,320 +17,153 @@ EnterpriseGuard → ADIE
 
 Adaptive Defense Intelligence Engine
 
-
 ## Vision
 
-ADIE is not a traditional SIEM, SOAR, or detection engine.
+ADIE is not a SIEM, SOAR, or XDR.
 
-It is a Security Control Plane designed to understand enterprise security state, predict possible future changes, evaluate policies, produce explainable decisions, and coordinate defensive planning.
+It is a Security Control Plane that:
 
-ADIE does NOT directly execute security actions.
+- Decides, but does not execute.
+- Doubts itself continuously.
+- Feeds on attacks.
+- Uses a hash-based logical clock.
+- Archives, but never deletes.
 
-
-Security boundary:
-
-- executes_security_actions = False
-- destructive_actions_allowed = False
-
-
-Execution remains outside ADIE under explicitly authorized components.
-
+It is now a **Sovereign Reference Core** — a closed proof cycle of five components that prove the system was not created from nothing, has not been cloned, and cannot be silently modified.
 
 ---
 
-# 2. Current Project Phase
-
+# 2. Current Phase
 
 ## Current Phase
 
-Phase 1 — ADIE Control Plane Core
-
+Phase 2 — Sovereign Reference Core Implementation (COMPLETE)
 
 ## Phase Objective
 
-Complete and stabilize the ADIE core architecture:
-
-State
-↓
-Prediction
-↓
-Policy
-↓
-Decision
-↓
-Checkpoint / Playbook
-↓
-Rollback Planning
-↓
-Orchestrator
-↓
-Integration
-
+Implement the five proof components. This phase is now fully complete.
 
 ---
 
-# 3. Architectural Principles
+# 3. Completed Architecture (Current Actual State)
 
+## Five Proof Components
 
-## Core Rules
+1. tools/hardware_identity.py — 6/6 tests passed
+2. tools/genesis_seed.py — 7/7 tests passed
+3. tools/relational_memory.py — 5/5 tests passed
+4. tools/distributed_proof.py — 9/9 tests passed
+5. tools/innocence_chain.py — 13/13 tests passed
 
-1. ADIE is a planning and intelligence layer.
+Total unit tests passed: 40/40
 
-2. No destructive actions inside ADIE.
+## Governance & Safety Tools
 
-3. No hidden execution.
+- tools/checklist.py
+- tools/integrity_monitor.py
+- tools/audit_chain.py
+- tools/time_utils.py
+- tools/time_drift.py
+- tools/logical_clock.py
+- tools/ephemeral_archiver.py
+- tools/attack_analyzer.py
+- tools/command_center.py
+- tools/discipline.py
 
-4. Components communicate through contracts.
+## Deployment & Release
 
-5. Every module must contain validation and self-test where applicable.
+- tools/installer.py
+- tools/uninstall.py
+- tools/sign_release.py
+- deploy/enterpriseguard.conf
+- deploy/enterpriseguard.service
+- deploy/enterpriseguard-timer.service
+- VERSION
+- CHANGELOG.md
 
-6. Stability is more important than speed.
+## Documentation
 
+- docs/ARCHITECTURAL_VISION.md
+- docs/TECHNICAL_EVIDENCE_REPORT.md (version 1.2)
+- docs/DC-038_COMPLIANCE_MATRIX.md
+- docs/PATENT_IDEAS.md
+- docs/PATENT_IDEAS_AR.md
+- business/COMMERCIAL_ROADMAP.md (draft)
 
----
+## Continuity Folder
 
-# 4. Completed Architecture
-
-
-## ADIE Package
-
-
-Location:
-
-src/enterpriseguard/adie/
-
-Current modules:
-
-adie/
-
-init.py state.py prediction.py policy.py decision.py checkpoint.py playbook.py rollback.py orchestrator.py integration.py
-
-Status:
-
-All 9 components are available.
-
-
-Latest validation:
-
-components_available = true
-
-components_available_count = 9
-
----
-
-# 5. ADIE Package Boundary
-
-
-File:
-
-adie/init.py
-
-Responsibilities:
-
-- Public API boundary
-- Lazy imports
-- Component registry
-- Package status
-- Structural self-test
-
-
-Current version:
-
-1.3.0
-
-Public exports:
-
-78
+- continuity/ (8 files complete)
 
 ---
 
-# 6. Current Test Status
+# 4. Governance Decisions Log Summary
 
+Current highest DC identifier: DC-052
 
-Latest command:
+Key recent decisions:
 
-python -m enterpriseguard.adie
+- DC-044: Hardware Identity Component
+- DC-045: Genesis Seed Component
+- DC-046: Relational Memory Component
+- DC-047: Central Test Results Log
+- DC-048: Permanent Rules Document
+- DC-049: Distributed Proof Component
+- DC-050: (reserved or skipped)
+- DC-051: Innocence Chain Component
+- DC-052: Internal Security Testing Evidence
 
-Result:
-
-FAILED
-
-
-Reason:
-
-Two validation failures:
-
-export_target_integrity = false
-
-public_exports = false
-
-All other tests passed.
-
-
-Successful tests:
-
-- package_metadata
-- component_registry
-- component_count
-- component_availability
-- state_available
-- prediction_available
-- policy_available
-- decision_available
-- checkpoint_available
-- playbook_available
-- rollback_available
-- orchestrator_available
-- integration_available
-- prediction_contract
-- security_contract
-- status_contract
-
+All decisions are recorded in tools/DECISIONS_LOG.md and activity in tools/activity_log.json.
 
 ---
 
-# 7. Current Known Issue
+# 5. Current Verification Status
 
-
-## Problem
-
-ADIE public export validation failure.
-
-
-Affected area:
-
-adie/init.py
-
-Likely cause:
-
-Mismatch between:
-
-_PUBLIC_EXPORTS
-
-and actual exported symbols inside component modules.
-
-
-Next investigation:
-
-Validate every registered symbol:
-
-Public Name
-↓
-Component Module
-↓
-Canonical Attribute
-
-
-Example:
-
-"DecisionEngineConfidence": ( "decision", "DecisionConfidence" )
-
-Must confirm target exists.
-
+- checklist.py: PASS (SUCCESS 16, FAILURE 0)
+- integrity_monitor.py --check: PASS
+- Unit tests: 40/40 passed
+- Internal security tests: 5/5 passed (evidence in tests/evidence.log)
+- Digital signatures: six critical files signed with .asc
+- Baselines: updated and sentinels synced
+- Protected directories: untouched
 
 ---
 
-# 8. Current Warning
-
-
-Python warning:
-
-SyntaxWarning: "\ " is an invalid escape sequence
-
-Location:
-
-adie/init.py
-
-Cause:
-
-Architecture diagram inside docstring contains backslash.
-
-
-Fix later:
-
-Escape backslash or convert docstring section.
-
-
-Priority:
-
-Low.
-
-
----
-
-# 9. Engineering Workflow
-
-
-The project is developed using phases.
-
-
-Each phase:
-
-1. Define objective.
-2. Modify files.
-3. Run tests.
-4. Validate architecture.
-5. Write continuation point.
-6. Start new conversation if needed.
-
-
----
-
-# 10. Current Conversation Goal
-
-
-Fix ADIE package boundary validation.
-
-
-Target:
-
-Make:
-
-python -m enterpriseguard.adie
-
-return:
-
-passed = true
-
-without weakening validation.
-
-
----
-
-# 11. Next Actions
-
-
-Order:
-
-
-1. Inspect failing export target.
-
-2. Identify missing or renamed symbols.
-
-3. Correct public export map.
-
-4. Re-run self-test.
-
-5. Update this memory file.
-
-
----
-
-# 12. Continuation Point
-
+# 6. Continuation Point
 
 Current checkpoint:
 
-ADIE Core exists and all components load successfully.
+- Five proof components complete and tested.
+- Internal security testing evidence completed (ST-001 to ST-005).
+- Technical Evidence Report saved at docs/TECHNICAL_EVIDENCE_REPORT.md.
+- Continuity folder complete.
 
-Remaining task:
+Next pending item: Build live demonstration and prepare pilot with trusted partner.
 
-Repair __init__.py public export contract validation.
+---
 
+# 7. Next Actions
+
+1. Build a live demonstration script or environment.
+2. Prepare a short investor pitch based on Technical Evidence Report.
+3. Possibly create a Docker or VM demo environment.
+4. Prepare NDA and acquisition offer documents for partner discussion.
+5. Update continuity/CURRENT_STATE.md after each major step.
+
+---
+
+# 8. Protection Invariants
+
+- adie/ and intelligence/ are never read or modified.
+- All writes are atomic.
+- PYTHONDONTWRITEBYTECODE=1 and sys.dont_write_bytecode = True are mandatory.
+- Every new file is immediately added to baselines.
+- Every governance action is logged.
+- No automatic activation without owner approval.
+
+---
+
+# 9. Continuation Point for Next Session
 
 Next session starts from:
 
-"Fix ADIE public export validation failure."
-
-
----
+"Build live demonstration and prepare pilot with trusted partner after completing all five proof components and internal security tests."
