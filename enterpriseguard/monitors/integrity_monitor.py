@@ -16,7 +16,7 @@ import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 sys.dont_write_bytecode = True
 
@@ -47,8 +47,11 @@ def compute_file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def collect_monitored_files(root_path: Path) -> List[Path]:
+def collect_monitored_files(root_path: Union[Path, List[Path]]) -> List[Path]:
     """Return the file set that is in scope for integrity tracking."""
+    if isinstance(root_path, (list, tuple)):
+        return list(root_path)
+
     tools_dir = root_path / "tools"
     if not tools_dir.exists():
         return []
@@ -61,7 +64,7 @@ def collect_monitored_files(root_path: Path) -> List[Path]:
             continue
         if ".bak_" in name:
             continue
-        if name.endswith(".tmp") or "tmp" in name.lower() and name.startswith("."):
+        if name.endswith(".tmp") or ("tmp" in name.lower() and name.startswith(".")):
             continue
         if name in {"activity_log.json", "errors.log", "DECISIONS_LOG.md", "dimensional_history.jsonl"}:
             continue
@@ -70,9 +73,26 @@ def collect_monitored_files(root_path: Path) -> List[Path]:
     return monitored
 
 
-def generate_baseline(root_path: Path, baseline_path: Path) -> dict:
+def generate_baseline(
+    root_path: Union[Path, List[Path]],
+    baseline_path: Optional[Path] = None,
+    output_path: Optional[Path] = None,
+) -> dict:
     """Generate a SHA-256 baseline for the monitored file set."""
+    target_path = output_path or baseline_path
+    if target_path is None:
+        if isinstance(root_path, Path):
+            target_path = root_path / "tools" / "integrity_baseline.json"
+        else:
+            target_path = Path("tools/integrity_baseline.json")
+
     monitored_files = collect_monitored_files(root_path)
+    
+    if isinstance(root_path, (list, tuple)):
+        base_path = root_path[0].parent if root_path else Path(".")
+    else:
+        base_path = root_path
+
     timestamp = utc_now_iso()
     baseline = {
         "schema_version": "1.0",
@@ -81,7 +101,10 @@ def generate_baseline(root_path: Path, baseline_path: Path) -> dict:
         "files": [],
     }
     for file_path in monitored_files:
-        rel_path = file_path.relative_to(root_path).as_posix()
+        try:
+            rel_path = file_path.relative_to(base_path).as_posix()
+        except ValueError:
+            rel_path = file_path.name
         baseline["files"].append(
             {
                 "path": rel_path,
@@ -89,13 +112,15 @@ def generate_baseline(root_path: Path, baseline_path: Path) -> dict:
                 "sha256": compute_file_sha256(file_path),
             }
         )
-    baseline_path.parent.mkdir(parents=True, exist_ok=True)
-    fd, temp_name = tempfile.mkstemp(prefix=f".{baseline_path.name}.", suffix=".tmp", dir=str(baseline_path.parent))
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temp_name = tempfile.mkstemp(
+        prefix=f".{target_path.name}.", suffix=".tmp", dir=str(target_path.parent)
+    )
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             json.dump(baseline, handle, indent=2, sort_keys=True)
             handle.write("\n")
-        os.replace(temp_name, baseline_path)
+        os.replace(temp_name, target_path)
     except Exception:
         try:
             os.unlink(temp_name)
@@ -121,9 +146,20 @@ def load_baseline(baseline_path: Path) -> Optional[dict]:
     return data
 
 
-def check_integrity(root_path: Path, baseline_path: Path) -> dict:
+def check_integrity(
+    root_path: Union[Path, List[Path]],
+    baseline_path: Optional[Path] = None,
+    output_path: Optional[Path] = None,
+) -> dict:
     """Compare the current monitored files against the stored baseline."""
-    baseline = load_baseline(baseline_path)
+    target_path = output_path or baseline_path
+    if target_path is None:
+        if isinstance(root_path, Path):
+            target_path = root_path / "tools" / "integrity_baseline.json"
+        else:
+            target_path = Path("tools/integrity_baseline.json")
+
+    baseline = load_baseline(target_path)
     if baseline is None:
         return {"status": "MISSING", "errors": ["baseline missing"], "warnings": []}
 
@@ -135,9 +171,17 @@ def check_integrity(root_path: Path, baseline_path: Path) -> dict:
         if path:
             baseline_map[path] = entry
 
+    if isinstance(root_path, (list, tuple)):
+        base_path = root_path[0].parent if root_path else Path(".")
+    else:
+        base_path = root_path
+
     current_files = {}
     for file_path in collect_monitored_files(root_path):
-        rel_path = file_path.relative_to(root_path).as_posix()
+        try:
+            rel_path = file_path.relative_to(base_path).as_posix()
+        except ValueError:
+            rel_path = file_path.name
         current_files[rel_path] = {
             "size": file_path.stat().st_size,
             "sha256": compute_file_sha256(file_path),
@@ -180,7 +224,7 @@ def main() -> int:
     repo_root = Path(__file__).resolve().parent.parent
     baseline_path = repo_root / "tools" / "integrity_baseline.json"
 
-    if args.generate_baseline:
+    if args.generate-baseline:
         result = generate_baseline(repo_root, baseline_path)
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
