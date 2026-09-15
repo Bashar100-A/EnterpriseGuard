@@ -1,0 +1,6 @@
+[run]
+omit =
+    scripts/*
+    deployment/*
+    backups/*
+    tests/*
