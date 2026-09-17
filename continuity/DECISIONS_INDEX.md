@@ -123,3 +123,5 @@ dates. Full details are in the main log.
   retain `src/enterpriseguard` as canonical authority and do not restore the
   four explicitly retired root duplicate implementations.
 
+
+| DC-135 | A1 documentation length target revised to tiered standard | 2026-09-17 |

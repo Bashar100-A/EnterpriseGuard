@@ -1,7 +1,7 @@
 # EnterpriseGuard — Executive Execution Plan (الخطة التنفيذية)
 
-**Version:** 2.2
-**Changelog:** v2.2 (2026-09-17) — added Section 0.1 (P0.9-F governed historical exception)
+**Version:** 2.3
+**Changelog:** v2.3 (2026-09-17) — revised A1 doc length target (DC-135); v2.2 added Section 0.1 (P0.9-F governed historical exception)
 **Status:** AUTHORITATIVE — Binding on all contributors and AI agents
 **Governed by:** continuity/RULES.md
 **Applies to:** All AI agents, developers, contractors, and automated tools
@@ -114,7 +114,7 @@ If a task does not serve it → the task is forbidden.
 
 | ID | Task                            | Deliverable                          | Acceptance Criterion            |
 | -- | ------------------------------- | ------------------------------------ | ------------------------------- |
-| A1 | Document 20 existing components | `docs/COMPONENTS/<name>.md` for each | Each file ≤ 30 lines            |
+| A1 | Document 20 existing components | `docs/COMPONENTS/<name>.md` for each | Tiered: 30-40 / 40-60 / 60-100 lines by code size (DC-135)            |
 | A2 | Write Quick Start               | `docs/QUICKSTART.md`                 | Works from scratch in ≤10 steps |
 | A3 | Write 5 Recipes                 | `docs/RECIPES/01-05.md`              | Each ≤ 20 lines of code         |
 | A4 | Build FAQ                       | `docs/FAQ.md`                        | ≥50 questions answered          |
