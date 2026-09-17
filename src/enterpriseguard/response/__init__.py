@@ -34,9 +34,15 @@ Design principles:
 from __future__ import annotations
 
 
+from pathlib import Path
 from typing import Any, Dict
 
 
+__root__ = Path(__file__).resolve().parent
+__repo_root = __root__.parent.parent.parent
+__canonical_root__ = __root__.resolve()
+__fallback_root__ = (__repo_root / "enterpriseguard" / "response").resolve()
+__path__ = [str(__canonical_root__), str(__fallback_root__)]
 
 
 # ============================================================================
