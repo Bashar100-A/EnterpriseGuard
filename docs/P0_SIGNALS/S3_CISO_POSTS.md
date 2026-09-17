@@ -27,3 +27,14 @@
 - **Key quote:** "What does 'audit-defensible evidence of AI judgment competency' actually look like in practice?"
 - **Relevance to ADIE:** Directly validates the core problem — enterprises need to produce audit-defensible evidence of AI decisions, not just point-in-time reports. The phrase "AI judgment competency" maps exactly to ADIE's decision evidence primitive.
 - **Verified:** ✅ confirmed (URL opened and content matches)
+
+## 3. Reddit r/SaaS — "The single biggest mistake teams make when adding cryptographic audit trails to AI systems"
+
+- **Author:** u/SaaS_Founder (technical founder / developer)
+- **Platform:** Reddit (r/SaaS)
+- **URL:** https://www.reddit.com/r/SaaS/comments/1s0bizi/the_single_biggest_mistake_teams_make_when_adding/
+- **Date:** 2026-03-22
+- **Key quote:** "The second mistake is trusting the AI vendor's own audit claims... The audit layer has to be independent of the model — sitting below it, not inside it."
+- **Additional quote:** "Cryptographic audit trails have to be generated at the moment of the event — before the model processes anything. Immutable. Timestamped. Chained."
+- **Relevance to ADIE:** Architectural validation of ADIE's core design. The post explicitly calls for: (1) audit-as-architecture, not logging; (2) cryptographic trails generated before model processing; (3) independence of the audit layer from the model. This is ADIE's Independent Control Plane positioning expressed by an independent third party.
+- **Verified:** ✅ confirmed (URL opened and content matches)
