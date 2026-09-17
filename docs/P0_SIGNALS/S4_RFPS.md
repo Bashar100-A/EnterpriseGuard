@@ -29,15 +29,17 @@
 - **Type:** Regulatory statement (NOT an RFP — included as supplementary signal)
 - **Scope:** Cross-sectoral supervisory expectations for frontier AI models under DORA. Emphasizes sound governance, risk management, and oversight of critical ICT third-party providers.
 - **Relevance to ADIE:** Validates that all three European financial regulators jointly recognize frontier AI models as an ICT risk requiring governance and third-party oversight under DORA. This creates regulatory demand for auditable AI decision evidence — the exact problem ADIE solves.
-- **Verified:** ⚠️ PARTIAL — URL verified, title verified, date verified. Direct quote not yet extracted from page.
-- **Follow-up:** Extract one direct quote from the ESMA page and update this entry to ✅ confirmed.
+- **Key quote:** "The statement underlines that financial entities should have robust governance and risk management frameworks in place to support the effective management and mitigation of cyber risks associated with frontier AI models. It also updates on ongoing and planned DORA oversight activities for critical ICT third-party providers (CTPPs) to address this risk."
+- **Verified:** ✅ confirmed (URL opened; quote matches page content)
 
 ---
-
 ## Summary
 
 - **S4-1:** EU AI Office €9M tender for AI safety — ✅ COMPLETE
-- **S4-2:** ESMA/EBA/EIOPA joint statement — ⚠️ PARTIAL (URL verified, quote pending)
+- **S4-2:** ESMA/EBA/EIOPA joint statement — ✅ COMPLETE (quote extracted)
 
-**Overall S4 status:** 1/2 RFPs verified + 1 regulatory signal (partial).
-Sufficient evidence of regulatory demand for auditable AI decisions in EU financial sector.
+**Overall S4 status:** 2/2 verified. Regulatory demand for auditable AI
+decisions in the EU financial sector is confirmed by:
+  - A €9M EU tender for AI safety technical assistance
+  - A joint statement from all three EU financial regulators (EBA + EIOPA + ESMA)
+    explicitly naming frontier AI as an ICT risk under DORA
