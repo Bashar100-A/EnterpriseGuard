@@ -17,3 +17,13 @@
 - **Verified:** ✅ confirmed (URL opened and content matches)
 
 ---
+
+## 2. Reddit r/Compliance — "EU AI Act Article 4 obligations hit in last..."
+
+- **Author:** u/ComplianceConnoisseur
+- **Platform:** Reddit (r/Compliance)
+- **URL:** https://www.reddit.com/r/Compliance/comments/1t4jcuo/eu_ai_act_article_4_obligations_hit_in_last/
+- **Date:** 2026-05-05
+- **Key quote:** "What does 'audit-defensible evidence of AI judgment competency' actually look like in practice?"
+- **Relevance to ADIE:** Directly validates the core problem — enterprises need to produce audit-defensible evidence of AI decisions, not just point-in-time reports. The phrase "AI judgment competency" maps exactly to ADIE's decision evidence primitive.
+- **Verified:** ✅ confirmed (URL opened and content matches)
