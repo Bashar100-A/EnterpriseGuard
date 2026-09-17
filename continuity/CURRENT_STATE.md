@@ -986,6 +986,32 @@ re-audit (Qwen independent verification). S3 may now proceed.
 * continue independent security validation;
 * preserve the separation between proof artifacts and the ADIE runtime
   decision-control plane.
+---
+## Phase 0 — Market Signal Progress (2026-09-17)
+
+### S1 — Big-4 reports on AI auditability
+**Status:** ✅ COMPLETE (5/5 verified)
+File: docs/P0_SIGNALS/S1_BIG4_REPORTS.md
+
+### S2 — AI Governance jobs in EU financial institutions
+**Status:** 🟡 PARTIAL (3/20 verified — paused)
+File: docs/P0_SIGNALS/S2_AI_GOVERNANCE_JOBS.csv
+Note: LinkedIn blocked in Syria; used ai-governance-jobs.com.
+Paused at 3 verified jobs; target may be reduced to 10.
+
+### S3 — Public statements on AI audit
+**Status:** ✅ COMPLETE (3/3 verified)
+File: docs/P0_SIGNALS/S3_CISO_POSTS.md
+Angles covered:
+  1. r/GRC — regulatory evidence (point-in-time vs continuous)
+  2. r/Compliance — audit-defensible evidence (EU AI Act Art. 4)
+  3. r/SaaS — architectural independence (audit layer vs model)
+
+### S4 — Government/bank RFPs
+**Status:** ⬜ NOT STARTED
+
+### S5 — Named contacts (50-500 employees, EU BFSI)
+**Status:** ⬜ NOT STARTED
 
 ---
 
