@@ -997,6 +997,15 @@ re-audit (Qwen independent verification). S3 may now proceed.
 * preserve the separation between proof artifacts and the ADIE runtime
   decision-control plane.
 ---
+### Phase A — Documentation Progress (2026-09-17)
+
+| Task | Description | Status |
+|------|-------------|--------|
+| A1 | Document 20 components | ✅ (22 files, DC-135 tiered standard) |
+| A2 | Quick Start (<=10 steps) | ✅ (10 steps, verified) |
+| A3 | Write 5 recipes | ✅ (5 recipes, commit 92aef19) |
+| A4 | Build FAQ (>=50 questions) | ⬜ next |
+
 ## Phase 0 — Market Signal Progress (2026-09-17)
 
 ### Phase 0 — Closure Status
