@@ -138,3 +138,28 @@ fails, and raw output is posted for verification.
 * Add new lessons at the top with the next date.
 * Link each lesson to the rule that prevents it.
 
+
+---
+
+## Lesson 12: Plans in chat have no authority
+
+**Date:** 2026-09-17
+**Context:** DC-133 reconciliation
+
+A plan (P0–P12) was discussed in chat for hours and treated as if it
+were the authoritative roadmap. Meanwhile `docs/EXECUTION_PLAN.md` v2.1
+— committed, dated, authoritative — remained untouched.
+
+**Consequence:** 4 commits built features outside the committed plan.
+The commits themselves were sound, but the process was flawed.
+
+**Rule established:**
+> Only files under `docs/` that are committed and dated have authority.
+> Any plan mentioned in chat is PROPOSED until formally adopted into
+> the repository via an owner decision (DC).
+
+**Applied:** DC-133 formalized this rule. Future chat plans will be
+filed as `docs/*_MASTER_PLAN.md` with status PROPOSED.
+
+**Lesson:** Structure beats enthusiasm. A committed plan wins over a
+brilliant conversation every time.

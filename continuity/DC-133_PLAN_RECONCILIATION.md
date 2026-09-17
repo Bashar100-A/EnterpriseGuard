@@ -68,6 +68,45 @@ refused. Recent commits (3f38b49..c22619c) followed P0–P12.
 - Consultant review 2026-09-17 (Phase 0 recommendation)
 
 ---
+---
+
+## Amendment (2026-09-17)
+
+### 8. P0.3 is amended to use the 5-Signal Framework (S1–S5)
+
+Original P0.3 asked: "Who do you know?" This assumed a warm network,
+which is not a precondition for market validation. Public regulatory
+pressure (EU AI Act Art. 12, DORA) is a verifiable signal that does
+not require personal connections.
+
+**Revised P0.3 — Five Verifiable Signals:**
+
+| ID  | Signal                                              | Measure                              | Days |
+|-----|-----------------------------------------------------|--------------------------------------|------|
+| S1  | 5 Big-4 reports (2025) on AI auditability           | Search + download PDF                | 1    |
+| S2  | 20 "AI Governance Lead" job postings (EU banks)    | Save to CSV                          | 2    |
+| S3  | 3 LinkedIn posts (last 30 days) from CISOs on AI audit | Collect URLs                     | 1    |
+| S4  | 2 public RFPs on auditable decision trails          | Tenders.gov / TED                    | 3    |
+| S5  | 10 named "AI Governance Lead" contacts (50–500 emp) | LinkedIn Sales Navigator trial       | 3    |
+
+**Gate 0 success criteria (revised):**
+- S1–S4 complete → problem validated → proceed to Phase A
+- S1–S3 only → weak signal → proceed with caution
+- S1–S2 fail → **stop** — problem may be imaginary
+
+**Time allocation:** this requires ~3 hours/day for 5 working days.
+No warm network. No waiting for responses. Only structured research.
+
+### 9. Phase 0 duration revised: 2 weeks → 1 week (if S1–S5 executed)
+
+### 10. Target market (pending S2/S5 confirmation):
+EU BFSI or fintech, 50–500 employees, driven by DORA + EU AI Act.
+Rationale: only segment with compliance urgency AND feasible pilot
+cycle within 60 days.
+
+**Amended by:** Biss (Owner)
+**Amendment date:** 2026-09-17
+---
 
 **Approved by:** Biss (Owner)
 **Effective:** 2026-09-17
