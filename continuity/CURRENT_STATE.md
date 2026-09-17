@@ -976,7 +976,8 @@ After the applicable governance and Gate 0 work:
 
 S1 and S2 remain recorded as completed parallel market-evidence work.
 
-S3 remains stopped until Gate 0 is cleared.
+Gate 0 was formally cleared on 2026-09-17 by P0.10-R5 read-only
+re-audit (Qwen independent verification). S3 may now proceed.
 
 ## Longer-Term
 
