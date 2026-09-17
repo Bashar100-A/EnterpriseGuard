@@ -3,8 +3,30 @@
 This file records mistakes, their root causes, and the preventive rules
 that were introduced to avoid repeating them.
 
-**Governed by:** continuity/RULES.md  
-**Updated:** 2026-09-02
+**Governed by:** continuity/RULES.md
+**Updated:** 2026-09-17
+
+---
+
+## 11. Uncommitted Working-Tree Corruption During Packaging
+
+**Mistake:** Batch refactor (uncommitted) modified approximately 220 files,
+including `tools/innocence_chain.py` (686→50 lines). `git HEAD` was clean,
+but the working tree contained unauthorized changes.
+
+**Lesson:**
+
+* Every gate MUST start with `git status --short`.
+* Verify with `git show HEAD:<path>` before assuming `HEAD` or a tracked file is broken.
+* Quarantine corrupted state in `/tmp/` for forensics before restoration when evidence must be preserved.
+* `git restore .` may recover uncommitted corruption when used only after establishing that the damage was not committed and owner authority is present.
+* Commit in small atomic batches.
+* A clean `HEAD` does not mean the working tree is clean.
+
+**Prevention:** Add `git status --short` and a committed-vs-uncommitted state check
+to the standard gate checklist.
+
+**Related Rule:** `continuity/RULES.md` — Rule 20, Working-Tree Integrity Gate.
 
 ---
 
@@ -112,6 +134,7 @@ fails, and raw output is posted for verification.
 
 ## Rules for This File
 
-- Never delete a lesson.
-- Add new lessons at the top with the next date.
-- Link each lesson to the rule that prevents it.
+* Never delete a lesson.
+* Add new lessons at the top with the next date.
+* Link each lesson to the rule that prevents it.
+
