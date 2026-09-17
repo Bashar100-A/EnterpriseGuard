@@ -1,56 +1,38 @@
-# Component: hardware_identity.py
+# hardware_identity.py
 
-**Path:** `tools/hardware_identity.py`
-**Purpose:** Binds system identity to physical hardware fingerprints.
-**Status:** Working (6/6 tests passed)
+**Purpose:** Generate a stable, hardware-derived identity key for the host
+machine running EnterpriseGuard. Used as a trust anchor for the Sovereign
+Reference Core.
 
----
-
-## What It Does
-
-Generates a deterministic `identity_key` (SHA-256) from hardware fingerprints.
-The key changes if any hardware component changes - preventing system cloning.
+**Location:** `tools/hardware_identity.py`
+**Output:** `tools/hardware_identity.json` (chmod 0600)
+**Related:** `tools/audit_chain.py`, `tools/time_utils.py`
 
 ## Inputs
-
-- Hardware attributes (UUID, CPU, machine ID, machine-id file)
+- `/etc/machine-id` or `/var/lib/dbus/machine-id` (read-only)
+- `uuid.getnode()` (MAC-derived, may vary in VMs)
+- `platform.processor()`, `platform.machine()`, `os.cpu_count()`
 
 ## Outputs
+JSON file with:
+- `identity_key` -- SHA-256 of joined hardware fingerprints
+- `generated_at` -- UTC ISO 8601
+- `regenerated` -- boolean flag
+- `schema_version` -- currently `"1.0"`
 
-- `tools/hardware_identity.json` (chmod 0600)
-  - Contains: `identity_key`, `generated_at`, `sources`
+## CLI
+- `--generate` -- create identity (fails if exists unless `--force`)
+- `--regenerate --confirm REGEN` -- replace existing identity (requires explicit confirmation string)
+- No args -- print usage
 
-## Key Functions
+## Invariants
+- **Never** reads or writes protected directories (`adie/`, `intelligence/`, or their `src/` equivalents).
+- File is written **atomically** via `tempfile.mkstemp` + `os.replace`, with `0600` permissions.
+- Regeneration requires an explicit `--confirm REGEN` string -- no silent overwrite.
+- Every generation event is appended to `tools/activity_log.json` (audit trail).
+- Fails **closed**: if `hardware_identity.json` exists, `--generate` exits with code 1.
 
-| Function | Purpose |
-|----------|---------|
-| `utc_now_iso()` | Return UTC ISO 8601 timestamp |
-| `get_machine_id()` | Read /etc/machine-id |
-| `generate_identity_key()` | Compute SHA-256 from hardware attributes |
-| `write_identity_file()` | Save to JSON with 0600 permissions |
-| `log_identity_event()` | Log to DECISIONS_LOG.md |
-| `main()` | CLI: `--generate`, `--regenerate --confirm` |
-
-## Security
-
-- File permissions: 0600 (owner-only)
-- Key derivation: SHA-256 over multiple hardware sources
-- Regeneration requires explicit `--confirm` flag
-- Regeneration is logged in `DECISIONS_LOG.md`
-
-## Tests
-
-- `tests/test_hardware_identity.py` (6 tests)
-- All passing as of 2026-09-10
-
-## Dependencies
-
-- `hashlib`, `json`, `platform`, `uuid`, `pathlib`
-
-## Used By
-
-- `genesis_seed.py` (identity binding)
-- `innocence_chain.py` (chain identity)
-- `distributed_proof.py` (proof source)
-
-**End of Component Doc**
+## Why it matters
+The identity key is bound to the physical host and cannot be forged by a
+remote attacker. It underpins chain-of-trust operations in the Sovereign
+Reference Core.
