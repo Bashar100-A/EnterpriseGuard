@@ -1,606 +1,1030 @@
 # EnterpriseGuard ADIE — Current State
 
-## Kernel Lockdown Test Result — 2026-09-09T00:10:48Z
+## Current Checkpoint — ADIE-P0.10-R3
 
-- **Decision:** DC-129
-- **Test:** `kernel_lockdown=confidentiality`
-- **Result:** Lockdown blocks raw disk access but **does not prevent `chattr -i` by root**.
-- **Conclusion:** Full root-proof protection requires SELinux or eBPF LSM with CAP_LINUX_IMMUTABLE restriction.
-- **Current status:** `chattr +i` remains primary kernel-level WORM; root bypass is documented limitation.
+**Last updated:** 2026-09-17
+**Current phase:** Gate 0 Governance Reconciliation
+**Governance decision:** P0.9-F Owner Resolution — **RETAIN / DO_NOT_RESTORE**
+**Canonical authority:** `src/enterpriseguard`
 
+### Current Objective
 
-## Kernel Protection Strategy — 2026-09-08T18:50:20Z
+Reconcile the repository governance records with the already-executed
+P0.9-F package-convergence outcome, preserve the historical W005 and
+forensic evidence, then perform the final strictly scoped **P0.10-R4**
+Gate 0 re-audit.
 
-- **Decision:** DC-128
-- **Primary mechanism:** `chattr +i` on SIBB storage paths.
-- **Limitation:** root with CAP_LINUX_IMMUTABLE can remove immutability.
-- **Full root-proof protection:** requires SELinux or eBPF in a dedicated environment.
-- **Next step:** test kernel_lockdown in a VM, then consider production rollout.
+The current Gate 0 state remains **BLOCKED** until the governance records
+are reconciled and the R4 re-audit passes.
 
-
-## Protection Strategy Update — 2026-09-08T18:04:34Z
-
-- **Decision:** DC-127
-- **Kernel-level WORM:** Using `chattr +i` combined with SELinux/AppArmor to restrict `CAP_LINUX_IMMUTABLE`.
-- **eBPF prototype status:** Deferred due to compatibility issues; all eBPF files kept under `tools/ebpf/` for future reference.
-- **Immediate action:** Apply `chattr -R +i` to SIBB storage paths and configure mandatory access control.
-
-
-
-
-## Latest Update — 2026-09-08T15:44:00Z
-
-- **Component:** SIBB-Innocence Integration (`tools/sibb_innocence_integration.py`)
-- **Version:** 1.3
-- **Status:** ✅ Complete and tested
-- **Tests:** 15/15 passed (unit and security tests)
-- **Security:** Chain continuity enforcement, signature verification, encryption support, WORM integration, audit logging.
-- **Decision:** DC-126
+S3 and later phases remain stopped until Gate 0 is formally cleared.
 
 ---
 
+# 1. Working-Tree Corruption Incident
 
-## Static Analysis Note — 2026-09-08T14:27:25Z
+During packaging work, an unexpected working-tree corruption event was detected.
 
-- **Tool:** Bandit
-- **Target:** `tools/sibb_cli.py`
-- **Result:** No High or Medium severity issues found.
-- **Details:** One Low issue: `try_except_pass` (benign).
-- **Status:** ✅ Accepted
+Observed state:
 
+* approximately 220 files appeared modified;
+* `tools/innocence_chain.py` had been reduced from approximately 686 lines
+  to approximately 50 lines;
+* five protected ADIE/intelligence files were reported as modified;
+* `git HEAD` remained clean.
 
+The corruption was determined to be **uncommitted working-tree damage** rather
+than committed repository history.
 
-## Latest Update — 2026-09-08T14:19:37Z
+### Recovery
 
-- **Component:** SIBB CLI (`tools/sibb_cli.py`)
-- **Version:** 1.1
-- **Status:** ✅ Complete and tested
-- **Tests:** 17/17 passed (unit and security tests)
-- **Security:** Secure input validation, password handling, encryption support, audit logging, no shell command injection.
-- **Decision:** DC-125
+The corrupted working tree was restored under owner authority:
 
+```text
+git restore .
+```
 
----
+Forensic evidence was preserved before/around recovery under:
 
-## Latest Update — 2026-09-08T13:40:57Z
+```text
+/tmp/forensics_20260916/
+```
 
-- **Component:** SIBB Key Management (`tools/sibb_keys.py`)
-- **Version:** 1.0.3
-- **Status:** ✅ Complete and tested
-- **Tests:** 29/29 passed (unit and security tests)
-- **Security:** AES-GCM encryption, HMAC integrity, Shamir secret sharing, access control, lockout mechanism, secure file permissions.
-- **Decision:** DC-124
+The expected `tools/innocence_chain.py` implementation was restored to
+approximately 686 lines.
 
----
+### Recovery Validation
 
+After recovery:
 
-## Latest Update — 2026-09-08T13:03:30Z
-
-- **Component:** SIBB Distributed Storage (`tools/sibb_distributed.py`)
-- **Version:** 1.2
-- **Status:** ✅ Complete and tested
-- **Tests:** 23/23 passed (unit and security tests)
-- **Security:** Per-node HMAC keys, quorum enforcement, cross-node hash comparison, fault isolation, symmetric encryption support.
-- **Decision:** DC-123
-
----
-
-
-## Latest Update — 2026-09-08T11:54:43Z
-
-- **Component:** SIBB Storage (`tools/sibb_storage.py`)
-- **Version:** 7.2
-- **Status:** ✅ Complete and tested
-- **Tests:** 19/19 passed (unit and security tests)
-- **Security:** Metadata HMAC, encryption (optional), access key enforcement, orphan file handling, thread-safe locking, cross-platform support.
-- **Decision:** DC-122
+* critical `tools/` files were checked;
+* the package installed successfully in editable mode;
+* the configured non-UI test suite passed;
+* authorized packaging changes remained identifiable;
+* protected ADIE/intelligence implementations were not deliberately migrated
+  as part of W005.
 
 ---
 
+# 2. W005 Packaging State
 
-**Last Updated:** 2026-09-06T00:00:00Z
-**Current Phase:** Customer Discovery (No Development) — AAAC as a proof layer above existing monitoring tools
-**Next Phase:** Zero-budget customer discovery and technical validation (LangSmith/Langfuse + competitor analysis)
+## W005 Status
 
+**Status: Pending final closure**
+
+The packaging/recovery gate passed its substantive technical validation,
+but final staging, commit, and post-commit closure remain pending.
+
+Verified:
+
+* `pyproject.toml` exists and was structurally validated.
+* Package name: `enterpriseguard`
+* Package version: `0.2.0`
+* Authoritative version source: `VERSION`
+* Canonical non-protected implementation target: `src/enterpriseguard`
+* Build backend: `setuptools.build_meta`
+* Python requirement: `>=3.12`
+* `pytest.ini` uses `pythonpath = src`
+* Root `enterpriseguard/` compatibility surfaces were retained where
+  applicable.
+* Protected ADIE/intelligence implementations were not intentionally migrated.
+* `enterpriseguard==0.2.0` was successfully installed in editable mode.
+* The configured non-UI test suite passed with **178 tests**.
+* `tests/test_ui.py` was intentionally excluded because the root and src UI
+  implementations remain materially different and the Qt runtime boundary is
+  unresolved.
+* `DC-132` was recorded.
+* Forensic evidence from the working-tree corruption incident was preserved.
+
+Still pending for W005:
+
+1. Ensure Lesson 11 is present in `continuity/LESSONS_LEARNED.md`.
+2. Perform the final working-tree integrity gate.
+3. Review the exact authorized staging set.
+4. Stage only authorized files.
+5. Create the W005 commit.
+6. Run the post-commit verification.
+7. Mark W005 formally closed.
+
+W005 closure is a separate engineering task and must not be conflated with
+Gate 0 certification.
+
+---
+
+# 3. P0.9-F Package Convergence State
+
+## P0.9-F Outcome
+
+P0.9-F was executed in Git by commit:
+
+```text
+8ee5e24
+```
+
+The commit explicitly retired the following four root duplicate
+implementations:
+
+```text
+enterpriseguard/decision/contracts.py
+enterpriseguard/monitors/integrity_monitor.py
+enterpriseguard/response/contracts.py
+enterpriseguard/security/prompt_security_advanced.py
+```
+
+These four implementations are intentionally **absent from the current
+working tree** and must **not** be restored.
+
+### Owner Decision
+
+The owner decision for P0.9-F is:
+
+```text
+RETAIN
+DO_NOT_RESTORE
+canonical_authority = src/enterpriseguard
+```
+
+This means:
+
+* retain the P0.9-F architectural outcome;
+* treat `src/enterpriseguard` as the canonical implementation authority;
+* do not restore the four retired root duplicates;
+* preserve root package compatibility boundaries;
+* preserve remaining root-only fallback modules where applicable.
+
+This is a narrowly scoped package-convergence exception to the general rule
+against deleting existing working code.
+
+It does not authorize unrelated deletion, cleanup, archival, or future
+retirement of working repository code.
+
+Any future retirement of tracked implementation code requires a separately
+documented owner decision.
+
+---
+
+# 4. Canonical Package State
+
+## Canonical Target
+
+The canonical non-protected implementation target is:
+
+```text
+src/enterpriseguard/
+```
+
+Validated non-protected canonical surfaces include:
+
+```text
+enterpriseguard.decision.contracts
+enterpriseguard.response.contracts
+enterpriseguard.monitors.integrity_monitor
+enterpriseguard.security.prompt_security_advanced
+```
+
+Focused validation established:
+
+* Decision contracts: passed
+* Response contracts: passed
+* Integrity monitor: passed
+* Prompt security: passed
+* Consolidated focused validation: **27/27 passed**
+
+## Root Compatibility Policy
+
+The repository-root:
+
+```text
+enterpriseguard/
+```
+
+remains a compatibility/runtime boundary where applicable.
+
+The four audited duplicate implementations listed in P0.9-F are no longer
+part of that compatibility boundary because they were explicitly retired
+by commit `8ee5e24`.
+
+Root package initializers remain available as compatibility boundaries, and
+remaining root-only modules may continue to provide fallback compatibility
+where applicable.
+
+The following rule remains in force for future repository changes:
+
+Any further removal or deprecation of working code requires:
+
+1. consumer inventory;
+2. migration evidence;
+3. focused validation;
+4. explicit owner approval;
+5. a separate governance decision.
+
+---
+
+# 5. Package Resolution Model
+
+The repository uses `src` as the configured canonical package authority while
+retaining root compatibility behavior.
+
+### Packaging Authority
+
+`pyproject.toml` establishes the package directory as:
+
+```text
+src
+```
+
+and setuptools package discovery is configured from:
+
+```text
+src
+```
+
+### Test Authority
+
+`pytest.ini` establishes:
+
+```text
+pythonpath = src
+```
+
+Under the configured packaging and test environment, the validated
+non-protected canonical surfaces resolve from:
+
+```text
+src/enterpriseguard
+```
+
+The repository also retains root compatibility boundaries for legacy or
+fallback resolution where applicable.
+
+The package model is therefore:
+
+```text
+Canonical implementation
+        ↓
+src/enterpriseguard
+        ↓
+packaging / pytest authority
+        ↓
+root enterpriseguard compatibility boundary
+        ↓
+remaining root-only fallback modules where applicable
+```
+
+The four overlapping root implementations retired by P0.9-F are not part of
+that fallback boundary.
+
+---
+
+# 6. Packaging Metadata
+
+`pyproject.toml` is now present.
+
+Current design:
+
+```text
+Package name:
+enterpriseguard
+
+Version:
+dynamic from VERSION
+
+Version source:
+VERSION
+
+Build backend:
+setuptools.build_meta
+
+Python:
+>=3.12
+
+Package root:
+src
+```
+
+Runtime dependencies currently declared for the package:
+
+```text
+cryptography==50.0.1
+requests==2.34.2
+regex==2026.9.10
+```
+
+Testing dependencies additionally required by the current pytest configuration:
+
+```text
+pytest-cov==7.1.0
+coverage==7.16.1
+```
+
+### Package Boundary
+
+The intended wheel/package boundary is explicitly limited to approved
+non-protected EnterpriseGuard surfaces.
+
+Protected packages are explicitly excluded:
+
+```text
+enterpriseguard.adie
+enterpriseguard.adie.*
+enterpriseguard.intelligence
+enterpriseguard.intelligence.*
+```
+
+The repository-root compatibility tree is intentionally outside the primary
+package installation boundary.
+
+### Version Source
+
+`VERSION` is the authoritative package-version source.
+
+Current value:
+
+```text
+0.2.0
+```
+
+The version must not be duplicated as an independent source in other metadata.
+
+---
+
+# 7. Dependency State
+
+`requirements.txt` is the bootstrap/environment dependency manifest.
+
+The current runtime package dependencies are:
+
+```text
+cryptography==50.0.1
+requests==2.34.2
+regex==2026.9.10
+```
+
+The current test configuration also requires:
+
+```text
+pytest-cov==7.1.0
+coverage==7.16.1
+```
+
+The repository's existing `tools/requirements.lock.txt` remains a separate
+environment snapshot and is not treated as authoritative package metadata.
+
+Its versions are not guaranteed to mirror `requirements.txt`.
+
+---
+
+# 8. UI Status
+
+UI convergence is intentionally deferred.
+
+Current implementations:
+
+```text
+enterpriseguard/ui/app.py
+    ↓
+PyQt5
+
+src/enterpriseguard/ui/app.py
+    ↓
+PyQt6
+```
+
+The implementations are materially different.
+
+Differences include:
+
+* different Qt generation;
+* different constructor signatures;
+* different widget composition;
+* different service wiring;
+* different public surface;
+* different internal view architecture.
+
+The focused UI test was written against the root/PyQt5 implementation.
+
+Therefore:
+
+**Do not promote `src/enterpriseguard/ui/app.py` as a drop-in replacement.**
+
+UI convergence requires a dedicated decision covering:
+
+* Qt version;
+* dependency installation;
+* behavioral compatibility;
+* test migration;
+* runtime dependencies on protected ADIE/intelligence components.
+
+---
+
+# 9. BLOCKER-002
+
+`BLOCKER-002` remains open.
+
+It covers controlled ownership/migration decisions for the newly created or
+currently untracked canonical non-protected `src` surfaces, including:
+
+```text
+src/enterpriseguard/decision/
+src/enterpriseguard/monitors/
+src/enterpriseguard/response/
+src/enterpriseguard/security/
+```
+
+These files must not be:
+
+* silently deleted;
+* mixed into unrelated cleanup;
+* committed without an explicit staging review.
+
+BLOCKER-002 is a separate task from W005 closure and from the Gate 0
+governance reconciliation.
+
+---
+
+# 10. Gate 0 Governance State
+
+## P0.10-R3 Result
+
+**Status: BLOCKED**
+
+### P0.9-F Reconciliation
+
+**Status: PASS**
+
+The technical and historical P0.9-F outcome is confirmed by Git commit
+`8ee5e24`.
+
+### Remaining Governance Reconciliation
+
+The following records still require reconciliation:
+
+```text
+continuity/CURRENT_STATE.md
+tools/DECISIONS_LOG.md
+continuity/DECISIONS_INDEX.md
+docs/EXECUTION_PLAN.md
+```
+
+The required reconciliation is:
+
+* record the P0.9-F owner decision;
+* record the four explicitly retired root duplicate implementations;
+* record `src/enterpriseguard` as canonical;
+* record that root package initializers remain as the compatibility boundary;
+* record that P0.9-F is a narrowly scoped owner-approved exception to the
+  general no-deletion rule;
+* remove obsolete statements claiming that the four retired duplicates are
+  still present.
+
+### Current Gate State
+
+Gate 0 is **not yet certified**.
+
+The next gate action is:
+
+```text
+P0.10-R4
+```
+
+which must be a strictly scoped read-only re-audit.
+
+S3 remains stopped until R4 passes.
+
+---
+
+# 11. Governance Documentation State
+
+### Historical Governance
+
+**DC-132** was recorded for:
+
+* P0.8-W005 packaging verification;
+* working-tree corruption discovery;
+* recovery;
+* validation;
+* remaining clarifications.
+
+### P0.9-F Governance Reconciliation
+
+The owner has approved the P0.9-F outcome:
+
+```text
+RETAIN
+DO_NOT_RESTORE
+canonical_authority = src/enterpriseguard
+```
+
+The dedicated P0.9-F governance record is now recorded in:
+
+```text
+tools/DECISIONS_LOG.md
+```
+
+and indexed in:
+
+```text
+continuity/DECISIONS_INDEX.md
+```
+
+The authoritative execution-plan exception must also be documented in:
+
+```text
+docs/EXECUTION_PLAN.md
+```
+
+The continuity files remain owner-maintained foundational documents.
+
+---
+
+# 12. Protected Security Boundaries
+
+The following paths remain absolutely protected:
+
+```text
+adie/
+intelligence/
+src/enterpriseguard/adie/
+src/enterpriseguard/intelligence/
+```
+
+Normal maintenance, packaging, migration, cleanup, or refactoring operations
+must not:
+
+* read;
+* list;
+* enumerate;
+* modify;
+* execute
+
+files inside those directories.
+
+Protected implementation details remain intentionally outside the current
+Gate 0 re-audit unless explicitly authorized.
+
+---
+
+# 13. Current Critical Files
+
+The current governance-critical file set includes:
+
+```text
+tools/TRUSTED_BASELINE.json
+TRUSTED_BASELINE_SENTINEL.json
+tools/integrity_baseline.json
+integrity_baseline_sentinel.json
+tools/hardware_identity.json
+tools/genesis_baseline.json
+VERSION
+pyproject.toml
+pytest.ini
+requirements.txt
+tools/DECISIONS_LOG.md
+continuity/RULES.md
+continuity/CURRENT_STATE.md
+continuity/LESSONS_LEARNED.md
+```
+
+External private signing and identity keys must remain outside the repository
+according to the permanent security rules.
+
+---
+
+# 14. Current Validation Evidence
+
+Current and historical evidence is distributed across:
+
+```text
+tests/TEST_RESULTS.md
+tests/ADVANCED_SECURITY_TESTS.md
+tools/bandit_report.json
+tools/pip_audit_report.json
+docs/WHITEPAPER.md
+/tmp/forensics_20260916/
+```
+
+### Latest W005 Validation
+
+The authoritative reported result for the post-recovery W005 test gate is:
+
+```text
+178 tests passed
+UI test intentionally excluded
+```
+
+Additional focused package-surface validation:
+
+```text
+27/27 focused canonical-surface tests passed
+```
+
+### P0.9-F Evidence
+
+Git history records:
+
+```text
+8ee5e24 refactor(P0.9-F): retire 4 root duplicate implementations
+```
+
+The commit explicitly removed:
+
+```text
+enterpriseguard/decision/contracts.py
+enterpriseguard/monitors/integrity_monitor.py
+enterpriseguard/response/contracts.py
+enterpriseguard/security/prompt_security_advanced.py
+```
+
+---
+
+# 15. External Proof Layer
+
+ADIE also maintains a separate externally demonstrable proof layer consisting
+of:
+
+* 148 adversarial validation tests;
+* deterministic execution using a fixed seed;
+* Ed25519-signed validation reports;
+* public-key verification;
+* MITRE ATT&CK threat-model mapping;
+* GitHub Actions CI validation.
+
+This proof layer is conceptually separate from the EnterpriseGuard/ADIE
+runtime control-plane architecture.
+
+It demonstrates validation and integrity.
+
+It does not replace:
+
+* canonical decision authority;
+* governance;
+* provenance;
+* state;
+* prediction;
+* planning;
+* execution boundaries;
+* runtime safety controls.
+
+---
+
+# 16. Historical Strategic State — 2026-09-06
+
+Earlier planning positioned AAAC as a proof layer above existing monitoring
+tools and included a customer-discovery freeze.
+
+That historical state is preserved for continuity.
+
+The later packaging/recovery work represented by P0.8-W005 superseded the
+engineering freeze for this specific technical gate.
+
+---
 
 ## Strategic Update — 2026-09-06
 
-- AAAC is being positioned as a proof layer that sits above existing monitoring tools, not as a replacement for them.
-- Development is frozen until 2026-09-20.
-- Customer discovery has been launched with zero budget and will rely only on free tools and manual outreach.
-- Responsibilities are assigned: the market expert will conduct interviews, and the technical expert will study LangSmith/Langfuse integration and competitor analysis.
-
-
+* AAAC was positioned as a proof layer above existing monitoring tools.
+* Customer discovery was launched.
+* Market and technical responsibilities were separated.
 
 ## Technical Prototype Update — 2026-09-06
 
-- Langfuse Cloud (free tier) used instead of self-hosted Langfuse V3 due to ClickHouse complexity.
-- Created `tools/aaac_connector.py` which fetches observations from Langfuse v2 API, normalizes them, and saves to `tools/ring_storage.jsonl`.
-- Modified `tools/innocence_chain.py` to include `agent_events_hash` in ring computation, generation, and verification.
-- Reset innocence chain and verified `VERIFIED_OK`.
-- `integrity_status` is now `PASS` after regenerating baselines on 2026-09-06T15:23:00Z.
-- Next steps: update baselines to restore PASS, then test ring generation with new agent events.
-
+* Langfuse Cloud was used instead of self-hosted Langfuse V3.
+* `tools/aaac_connector.py` was created.
+* `agent_events_hash` was incorporated into innocence-chain calculations.
+* Chain verification was restored.
 
 ## HTTP Server Update — 2026-09-06
 
-- `GET /agents` fixed to read unique agent IDs from `tools/ring_storage.jsonl`, fallback to relational memory.
-- `/events` now supports `limit` cap (max 500) and reads last 2000 lines for performance.
-- `/agents` tested: returns `agent-123` from `ring_storage`.
-- Next: regenerate baselines, then pause technical work pending customer discovery.
-
+* `/agents` was updated to read unique agent IDs.
+* `/events` gained a capped limit.
+* `/agents` was tested with `agent-123`.
 
 ## Phase 2 Technical Updates — 2026-09-06
 
-- Duplicate avoidance added to `tools/aaac_connector.py` (skips existing `trace_id`).
-- `rfc3161_token` field added to `tools/innocence_chain.py` (token currently error placeholder; proper TSA request to be fixed later).
-- `/dashboard` endpoint added to `tools/sovereign_http_server.py` (simple HTML view of agents and events).
-- Baselines regenerated; `integrity_monitor --check` returns `PASS`.
-- Chain regenerated and verified `VERIFIED_OK`.
-- Next: test dashboard, then await customer discovery results.
+* Duplicate avoidance added.
+* RFC3161 field introduced.
+* Dashboard endpoint added.
+* Baselines regenerated.
+* Chain regenerated and verified.
 
+## RFC3161 / Dashboard / Open Verifier
 
-## Phase 2 Additions — RFC3161, Dashboard, Open Verifier
+* RFC3161 timestamping was improved.
+* `tsa_provider` was recorded.
+* Temporary dashboard authentication bypass was introduced for local testing.
+* `tools/open_verifier.py` was created.
+* Official verification remained functional.
 
-- RFC3161 timestamp fixed: now sends proper ASN.1 query to dynamic TSA (default http://time.certum.pl). `tsa_provider` recorded in each ring.
-- `/dashboard` temporarily accessible without auth for local testing (to be reverted before production).
-- Created `tools/open_verifier.py` (MIT) that imports verification functions from innocence_chain; tested `VALID: chain is authentic`.
-- `integrity_monitor --check` remains `PASS`.
-- Next: update memory files, then prepare EU AI Act compliance guide and legal use case.
+## Compliance Documentation
 
+Created:
 
+```text
+docs/AAAC_EU_AI_ACT_COMPLIANCE_GUIDE.md
+docs/AAAC_LEGAL_USE_CASE.md
+```
 
-## Compliance Documentation — 2026-09-06
+These remain draft/legal-support materials and are not a substitute for legal
+review.
 
-- Created `docs/AAAC_EU_AI_ACT_COMPLIANCE_GUIDE.md` mapping AAAC to EU AI Act Articles 12 & 14.
-- Created `docs/AAAC_LEGAL_USE_CASE.md` with credit decision scenario.
-- Both documents are drafts; legal review recommended before external use.
-- Next: await customer discovery results (until 2026-09-27) before Go/No-Go decision.
+## Strategic Pivot — DC-86
 
+AAAC was repositioned as a self-imposing compliance and trust layer.
 
+Historical technical priorities included:
 
-## Strategic Pivot — 2026-09-06 (DC-86)
-
-- AAAC is no longer waiting for market pull; we are building a self-imposing compliance and trust layer.
-- Immediate focus:
-  - Revert temporary dashboard auth bypass (restore security before external exposure).
-  - Implement BYO-TSA adapter for eIDAS Qualified Timestamp (QTSP) and BYO-HSM signing.
-  - Create native connectors for LangSmith/Langfuse with configurable endpoints.
-  - Enhance open-source verifier to be fully standalone (no dependency on private code).
-  - Generate automated compliance evidence reports (EU AI Act Art.12/14).
-- Customer discovery continues opportunistically but is no longer a gate for engineering.
-- Next technical milestone: production-grade AAAC Core v0.2 with dynamic trust service plug-in.
-
-
-
-
-## TSA Verification Field — 2026-09-06 (DC-87)
-
-- Added `tsa_verified` field to each innocence ring, indicating basic TSA token integrity.
-- Default TSA remains `http://time.certum.pl`; configurable via `AAAC_TSA_URL`.
-- Next: make open_verifier fully standalone, and implement compliance report endpoint.
-
-
-
-## Open Verifier Note — 2026-09-06 (DC-88)
-
-- Standalone open_verifier attempt unsuccessful; reverted to import-based version.
-- Current `open_verifier.py` imports verification from innocence_chain and works.
-- Next: potentially implement full standalone later with proper genesis signature handling.
-
-
-
-## Compliance Report Endpoint — 2026-09-06 (DC-89)
-
-- Added `/compliance-report` to sovereign_http_server.py.
-- Uses real verify_chain from innocence_chain (verification_result true).
-- Returns JSON with chain details, timestamp, and integrity status.
-- Next: build native LangSmith/Langfuse connectors.
-
-
-
-## Native Connectors — 2026-09-06 (DC-90)
-
-- Created `tools/native_connectors.py` with unified fetch for LangSmith and Langfuse.
-- Source selected via `AAAC_TRACE_SOURCE` env var (auto/langfuse/langsmith).
-- Next: build CLI pipeline (fetch → store → generate ring → verify).
-
-
-
-## AAAC CLI — 2026-09-06 (DC-91)
-
-- Created `tools/aaac_cli.py` as single-command pipeline: fetch → store → generate ring → verify.
-- Uses `native_connectors.unified_fetch` with source auto-detection.
-- Fixed verify_chain handling to accept boolean.
-- Next: add duplicate avoidance in CLI, and create README for usage.
-
-
-
-## Duplicate Avoidance in CLI — 2026-09-06 (DC-92)
-
-- Added duplicate trace_id skipping to aaac_cli.py.
-- On second run, all existing traces were skipped, no new events stored.
-- Next: create README with usage instructions, then optional enhancements.
-
-
-
-## README Created — 2026-09-06 (DC-93)
-
-- Added README_AAAC.md documenting quick start, components, and compliance references.
-- Next: optional improvements (full TSA signature verification, HSM support, expanded dashboard).
-
-
-
-## TSA Verification Improved — 2026-09-06 (DC-94)
-
-- verify_rfc3161_token now accepts data_hex and optional CA file.
-- Called with agent_events_hash in generate_ring.
-- Still needs AAAC_TSA_CAFILE for full signature verification.
-- Next: optionally download Certum CA and set env var, then test signature.
-
-
-
-## Strict TSA Verification — 2026-09-06 (DC-95)
-
-- Downloaded Certum CA chain and converted to PEM.
-- Set `AAAC_TSA_CAFILE` to `tools/certum_chain.pem`.
-- Modified `verify_rfc3161_token` to require CA verification when CA file is present.
-- Tested: `tsa_verified` is `true` with actual signature verification.
-- Next: consider HSM integration or enhanced dashboard.
-
-
-
-## Dashboard Enhanced — 2026-09-06 (DC-96)
-
-- Rewrote sovereign_http_server.py cleanly; dashboard now shows ring count, integrity, verification, TSA info, agents, events.
-- Next: begin BYO-HSM support (step B).
-
-
-
-## Signing Backend & Mock Mode — 2026-09-06 (DC-97)
-
-- Added `tools/signing_backend.py` (local RSA and mock).
-- Added mock branches in innocence_chain signing functions controlled by `AAAC_SIGNING_BACKEND`.
-- Local mode remains default and unchanged.
-- Next: prepare AWS KMS/Azure Key Vault adapter code (no credentials required for code).
-
-
-
-## Signing Backend & Cloud Adapters — 2026-09-06 (DC-98, DC-99)
-
-- Introduced `tools/signing_backend.py` with local RSA and mock signing.
-- Added mock branches in innocence_chain signing functions (controlled by `AAAC_SIGNING_BACKEND`).
-- Added dormant AWS KMS and Azure Key Vault adapter functions (require credentials and libraries to activate).
-- Existing chain remains `VERIFIED_OK`.
-- Next: optionally implement TPM support or start real HSM integration when environment available.
-
-
-
-## HSM/TPM Signing Backends — 2026-09-06 (DC-100)
-
-- Added aws_kms and tpm support to signing_backend.py and innocence_chain.py.
-- Controlled via AAAC_SIGNING_BACKEND environment variable.
-- Not tested due to lack of cloud/hardware; code dormant.
-- Local mode unchanged and default.
-- Next: optional real integration test when AWS/TPM available.
-
-
-
-## TSA Failover & Signing Tests — 2026-09-07 (DC-101, DC-102)
-
-- Added TSA failover pool with multiple providers (Certum, FreeTSA, DFN).
-- Created signing backend unit tests; all passed.
-- Chain remains VERIFIED_OK.
-- Next: consider Docker Compose, market validation, or Bandit cleanup.
-
-
-
-## Technical Enhancements — 2026-09-07 (DC-103..DC-107)
-
-- TSA failover pool with multiple providers.
-- Signing backend unit tests (mock/local).
-- Bandit cleanup: added timeouts, removed asserts, added nosec.
-- Dockerfile and docker-compose service for AAAC.
-- SQLite event store for scalable storage.
-- Chain remains VERIFIED_OK.
-- Next: start market validation (landing page, interviews).
-
-
-
-## Dynamic Compliance Engine — 2026-09-07 (DC-108)
-
-- Added compliance_policy.json and compliance_engine.py.
-- aaac_cli.py now applies policy to events before storage.
-- Non-compliant events are flagged with reason (e.g., command_not_allowed).
-- Next: build sovereign verifier UI (static page).
-
-
-
-## Sovereign Verifier UI — 2026-09-07 (DC-109)
-
-- Added static HTML verifier at docs/sovereign_verifier.html.
-- Uses browser WebCrypto for hash and signature verification.
-- No server, no installation needed.
-- Next: optionally add blockchain anchoring proof-of-concept.
-
-
-
-## Key Reset and Reinitialization — 2026-09-07 (DC-110)
-
-- Regenerated RSA keys after mismatch.
-- Reinitialized innocence chain.
-- `open_verifier.py` returns `VALID`.
-- `/verify-chain` returns `valid: true`.
-- Sovereign verifier UI still needs JavaScript fix (lower priority).
-
-
-
-## Blockchain Anchoring — 2026-09-07 (DC-111)
-
-- Added `Anchor.sol` and `blockchain_anchor.py`.
-- Deployed contract on Ganache and anchored latest ring.
-- Next: migrate to Ethereum Sepolia testnet, then mainnet.
-
-
-
-## Advanced Compliance Engine — 2026-09-07 (DC-112)
-
-- Replaced policy with rules-based engine.
-- Supports priorities, AND/OR, numeric thresholds, regex, default deny.
-- Tests: allowed command passes, forbidden command denied, high-risk transfer denied.
-- Next: continue with other improvements or market validation.
-
-
-
-## Sepolia Blockchain Anchoring — 2026-09-07 (DC-113)
-
-- Deployed Anchor contract on Sepolia testnet.
-- Contract address: 0xe660C9b99406CB24B1ABB2C2E18D531bAf690781
-- Last ring anchored in tx: 80a34442cd5ec63d9aa86b7632fdd4dd44f82cc3982045286fc756c91442b3ea
-- Next: consider mainnet or focus on market validation.
-
-
-
-## HTML Verifier Deferred — 2026-09-07 (DC-114)
-
-- HTML sovereign verifier still fails ring 0 signature verification.
-- Official verifiers (`open_verifier.py`, `/verify-chain`) work.
-- Decision: defer HTML verifier, focus on report and market.
-
-
-
-## Open Verifier Reverted — 2026-09-07 (DC-116)
-
-- Standalone open_verifier attempt failed; restored import-based verifier.
-- `open_verifier.py` works (`VALID: chain is authentic`).
-- Standalone extraction remains a future task.
-
-
-
-## ECDSA Support — 2026-09-07 (DC-117)
-
-- Added ECDSA backend (prime256v1) to signing_backend.
-- innocence_chain now delegates signing to signing_backend.
-- New chain generated and verified with ECDSA.
-- Next: performance benchmark comparing RSA vs ECDSA.
-
-
-
-## Performance Benchmark — 2026-09-07 (DC-118)
-
-- RSA signing: 320.61 ms/sig
-- ECDSA signing: 0.67 ms/sig
-- Improvement: 99.8% (exceeds investor target of 40%)
-- Next: test open_verifier with ECDSA chain, then proceed to other investor conditions.
-
-
-
-## Key Backup System — 2026-09-07 (DC-120)
-
-- Created `tools/backup_keys.py` using age for secure key encryption.
-- Supports backup, restore, and list operations.
-- Keys are encrypted with age recipient from `~/.enterpriseguard/backup_key.txt`.
-- Backups stored in `backups/keys_encrypted/` with timestamped filenames.
-- Next: generate backup key and perform first backup.
+* dashboard authentication restoration;
+* BYO-TSA;
+* BYO-HSM;
+* LangSmith/Langfuse connectors;
+* standalone verification;
+* compliance evidence reporting.
 
 ---
 
+# 17. Historical Technical Decisions
 
+## DC-87 — TSA Verification Field
 
-## SIBB (Sovereign Immutable Black Box) — 2026-09-08 (DC-121)
+Added `tsa_verified` to innocence-chain rings.
 
-- Created immutable storage layer for innocence chain with WORM (Write Once, Read Many) semantics.
-- Supports geographic distribution with 3+ nodes and quorum-based writes (2/3).
-- Encryption with AES-256-GCM and key sharding using Shamir's Secret Sharing (3/5).
-- Files cannot be modified or deleted even by system administrators, ensuring true audit trail integrity.
-- CLI interface for management and integration with existing AAAC components.
-- Next: integrate SIBB with innocence_chain.py to automatically store rings, and add cloud storage adapters (AWS S3 Object Lock, Azure Immutable Blob).
+## DC-88 — Open Verifier
 
-## Last Completed Decisions (Latest)
+Standalone verifier attempt was unsuccessful; import-based verification was
+retained.
 
-- DC-044: Hardware Identity Component — Complete
-- DC-045: Genesis Seed Component — Complete
-- DC-046: Relational Memory Component — Complete
-- DC-047: Central Test Results Log — Complete
-- DC-048: Permanent Rules Document — Complete
-- DC-049: Distributed Proof Component — Complete
-- DC-050: Innocence Chain Component — Complete
-- DC-051: Advanced Security Tests Validation — Complete
-- DC-052: Real-Time File Monitoring Component — Complete
-- DC-053: Mutation Fuzzing Validation — Complete
-- DC-054: Chain Spoofing Vulnerability Identified — Complete
-- DC-055: Digital Signature Implementation for Innocence Chain — Complete
-- DC-056: Supply Chain Security Validation — Complete
-- DC-057: Bandit Medium Issues Remediation — Complete
-- DC-058: DDoS / Resource Exhaustion Test — Complete
-- DC-059: Time Spoofing Resistance Validation — Complete
-- DC-060: Resource Starvation Resistance Test — Complete
-- DC-061: Hard Fork Vulnerability Identified — Complete
-- DC-062: Cryptographic Collision Simulation Test — Complete
-- DC-063: Technical Whitepaper Adoption — Complete
-- DC-064: Dimensional Intersection Engine - Phase 1 — Complete
-- DC-065: Dimensional Intersection Engine - Phase 2 — Complete
-- DC-066: Dimensional Intersection Engine - Phase 3 Calibration — Complete
-- DC-067: Sovereign System Stabilization — Complete
-- DC-068: Genesis Signature Implementation — Complete
-- DC-069: Sovereign Installer Creation — Complete
-- DC-070: M4 Anomaly Detector Deferred — Complete
-- DC-071: Centralized Dynamic Paths Migration — Complete
-- DC-072: Dimensional History Recorder — Complete
-- DC-073: Dimensional History Collection Complete — 100 real samples recorded
+## DC-89 — Compliance Report Endpoint
 
----
+Added `/compliance-report` using chain verification.
 
-## Current Checkpoint
+## DC-90 — Native Connectors
 
-All five Sovereign Reference Core components are complete and tested:
+Unified LangSmith/Langfuse fetch support was introduced.
 
-1. `hardware_identity.py` — 6/6 tests passed
-2. `genesis_seed.py` — 7/7 tests passed
-3. `relational_memory.py` — 5/5 tests passed
-4. `distributed_proof.py` — 9/9 tests passed
-5. `innocence_chain.py` — 13/13 tests passed (with RSA-2048 digital signatures)
+## DC-91 — AAAC CLI
 
-Additionally, the following advanced security tests were successfully executed:
+Created fetch → store → generate-ring → verify pipeline.
 
-- DoS on Integrity Monitor → Fail-Secure
-- Concurrency & Load → detected all modifications
-- TOCTOU (with realtime monitor) → detected and logged
-- Chain Spoofing → mitigated after digital signatures
-- Hard Fork / Chain Splitting → vulnerability confirmed (roadmap to fix)
-- Supply Chain (Bandit + pip-audit) → High=0, Medium=0, Low=35, pip-audit clean
-- Mutation Fuzzing → 80/80 handled gracefully
-- DDoS / Resource Exhaustion → 200 concurrent checks, no failures
-- Time Spoofing → resistant
-- Resource Starvation → TOCTOU detected under low CPU priority
-- Cryptographic Collision Simulation → change detected despite same size
-- Genesis Signature: implemented and verified (VERIFIED_OK)
-- Sovereign Installer: install.sh created and tested in /tmp/test_install
-- Centralized paths: all main tools now use tools/paths_config.py
-- M4 Anomaly Detector: deferred until real data collection
-- M4-S1: Collected 100 real dimensional samples in dimensional_history.jsonl
+## DC-92 — Duplicate Avoidance
 
-A Technical Whitepaper has been adopted (DC-063) and is available at `docs/WHITEPAPER.md`.
+Existing trace IDs were skipped.
 
----
+## DC-93 — AAAC README
 
-## Next Actions
-- Execute M4-S0: Create tools/dimensional_history_recorder.py
-- Collect 100 real dimensional samples in dimensional_history.jsonl
-- Build anomaly detection model on real data (no synthetic data)
-- Complete M3 (eBPF) when a suitable VM is available
-- Start M5 (Dashboards/Attack Testing) after M4 completion
-- M4-S2: Analyze dimensional history data (mean, std, distribution)
-- M4-S3: Build anomaly detection model on real data
-- Launch zero-budget customer discovery using free tools and manual outreach
-- Assign the market expert to lead interviews and the technical expert to study LangSmith/Langfuse integration and competitor analysis
+Created `README_AAAC.md`.
 
-1. **Update `continuity/CURRENT_STATE.md`** (this file) to reflect completed tests and decisions.
-2. **Consider implementing Genesis Signature solution** to address Hard Fork vulnerability (roadmap in Whitepaper).
-3. **Optional: implement Rootkit/LD_PRELOAD test** as a documented limitation (not recommended for commercial demo).
-4. **Prepare commercial presentation** using the Whitepaper and test results.
-5. **Review Bandit LOW issues** (35) for future cleanup.
-6. **Plan Phase 3: Commercial Readiness & Hardening Roadmap**:
-   - Genesis Signature
-   - HSM/TPM integration
-   - Memory integrity attestation
-   - Secure IPC / temp file handling
+## DC-94 — TSA Verification Improvement
 
----
+Extended RFC3161 verification support.
 
-## Pending Test
+## DC-95 — Strict TSA Verification
 
-- M4-S0 dimensional history recorder test
-- M4 anomaly detection test after 100 real samples
+CA-chain verification was introduced.
 
----
+## DC-96 — Dashboard Enhancement
 
-## Critical Files
+Dashboard expanded with chain, integrity, TSA, agents, and events.
 
-- `tools/TRUSTED_BASELINE.json`
-- `TRUSTED_BASELINE_SENTINEL.json`
-- `tools/integrity_baseline.json`
-- `integrity_baseline_sentinel.json`
-- `tools/hardware_identity.json`
-- `tools/genesis_baseline.json`
-- `~/.enterpriseguard/keys/private_key.pem` (outside repo, chmod 600)
-- `~/.enterpriseguard/keys/public_key.pem`
+## DC-97 / DC-98 — Signing Backend
+
+Local RSA and mock signing modes were introduced.
+
+## DC-99 — Cloud Adapters
+
+AWS KMS and Azure Key Vault adapter code was added.
+
+## DC-100 — HSM/TPM
+
+Dormant HSM/TPM support was added but not fully hardware-tested.
+
+## DC-101 / DC-102
+
+TSA failover and signing-backend tests were added.
+
+## DC-103..DC-107
+
+* TSA improvements;
+* signing tests;
+* Bandit cleanup;
+* Docker support;
+* SQLite event store.
+
+## DC-108 — Dynamic Compliance Engine
+
+Rules-based compliance evaluation was introduced.
+
+## DC-109 — Sovereign Verifier UI
+
+Static browser verifier was created.
+
+## DC-110 — Key Reset
+
+Keys and chain were regenerated and revalidated.
+
+## DC-111 — Blockchain Anchoring
+
+Local and Sepolia anchoring prototypes were completed.
+
+## DC-112 — Advanced Compliance Engine
+
+Rules-based compliance logic was expanded.
+
+## DC-113 — Sepolia Deployment
+
+Anchor deployment was recorded on Sepolia.
+
+## DC-114 — HTML Verifier Deferred
+
+HTML verifier issues remained deferred.
+
+## DC-116 — Open Verifier Reverted
+
+Working import-based verifier was restored.
+
+## DC-117 / DC-118 — ECDSA
+
+ECDSA support and benchmarking were completed.
+
+## DC-120 — Key Backup
+
+`tools/backup_keys.py` was implemented using `age`.
 
 ---
 
-## Protected Directories Status
+# 18. Historical Sovereign Reference Core State
 
-- `adie/` — MISSING (acceptable if intentional)
-- `intelligence/` — MISSING (acceptable if intentional)
-- `src/enterpriseguard/adie/` — EXISTS
-- `src/enterpriseguard/intelligence/` — EXISTS
+The five original Sovereign Reference Core components were recorded as complete:
+
+1. `hardware_identity.py`
+2. `genesis_seed.py`
+3. `relational_memory.py`
+4. `distributed_proof.py`
+5. `innocence_chain.py`
+
+Historical security coverage included:
+
+* DoS on Integrity Monitor
+* Concurrency & Load
+* TOCTOU
+* Chain Spoofing
+* Hard Fork / Chain Splitting
+* Supply Chain analysis
+* Mutation Fuzzing
+* DDoS / Resource Exhaustion
+* Time Spoofing
+* Resource Starvation
+* Cryptographic Collision Simulation
+* Genesis Signature
+* Sovereign Installer
+* Centralized path management
+* dimensional history collection
 
 ---
 
-## Summary of Advanced Test Results
+# 19. Historical SIBB Completion
 
-The full results are documented in:
+The following components were recorded as complete:
 
-- `tests/ADVANCED_SECURITY_TESTS.md`
-- `tools/bandit_report.json`
-- `tools/pip_audit_report.json`
-- `docs/WHITEPAPER.md`
+| Component                  | File                                  | Tests | Status   |
+| -------------------------- | ------------------------------------- | ----: | -------- |
+| SIBB Storage               | `tools/sibb_storage.py`               | 19/19 | Complete |
+| SIBB Distributed Storage   | `tools/sibb_distributed.py`           | 23/23 | Complete |
+| SIBB Key Management        | `tools/sibb_keys.py`                  | 29/29 | Complete |
+| SIBB CLI                   | `tools/sibb_cli.py`                   | 17/17 | Complete |
+| SIBB-Innocence Integration | `tools/sibb_innocence_integration.py` | 15/15 | Complete |
+
+Historical governance decisions:
+
+```text
+DC-122
+DC-123
+DC-124
+DC-125
+DC-126
+```
 
 ---
 
-## Static Analysis Note — 2026-09-08T13:08:04Z
+# 20. Historical Kernel Protection State
 
-- **Tool:** Bandit
-- **Target:** `tools/sibb_distributed.py`
-- **Result:** No High or Medium severity issues found.
-- **Details:** One Low issue: `assert_used` in the self-test block (not production code).
-- **Status:** ✅ Accepted
+## DC-127 — 2026-09-08
 
-## Static Analysis Note — 2026-09-08T13:45:45Z
+Adopted `chattr +i` with mandatory-access-control considerations.
 
-- **Tool:** Bandit
-- **Target:** `tools/sibb_keys.py`
-- **Result:** No High or Medium severity issues found.
-- **Details:** Low issues: `try_except_pass` (x2), `hardcoded_password_funcarg` (self-test), `assert_used` (self-test).
-- **Status:** ✅ Accepted
+eBPF prototype was deferred due to compatibility issues.
 
-## Static Analysis Note — 2026-09-08T15:46:37Z
+## DC-128 — 2026-09-08
 
-- **Tool:** Bandit
-- **Target:** `tools/sibb_innocence_integration.py`
-- **Result:** No High or Medium severity issues found.
-- **Details:** Two Low issues: `try_except_pass`, `try_except_continue` (benign).
-- **Status:** ✅ Accepted
+Established `chattr +i` as the primary kernel-level WORM mechanism.
 
+Documented that root with the relevant capability can bypass immutability.
 
-## Final Summary — All SIBB Components Complete
+## DC-129 — 2026-09-09
 
-**Date:** 2026-09-08T16:13:53Z
+Tested:
 
-All SIBB components have been implemented, tested, and documented.
+```text
+kernel_lockdown=confidentiality
+```
 
-### Test Results
-- **Total tests passed:** 146/146 ✅
-- **Bandit analysis:** No High/Medium issues on any SIBB component ✅
+Result:
 
-### Completed Components
-| Component | File | Tests | Status |
-|-----------|------|-------|--------|
-| SIBB Storage | `tools/sibb_storage.py` | 19/19 | ✅ |
-| SIBB Distributed Storage | `tools/sibb_distributed.py` | 23/23 | ✅ |
-| SIBB Key Management | `tools/sibb_keys.py` | 29/29 | ✅ |
-| SIBB CLI | `tools/sibb_cli.py` | 17/17 | ✅ |
-| SIBB-Innocence Integration | `tools/sibb_innocence_integration.py` | 15/15 | ✅ |
+* raw disk access was blocked;
+* root could still remove immutability with `chattr -i`.
 
-### Governance Decisions
-- DC-122: SIBB Storage v7.2
-- DC-123: SIBB Distributed Storage v1.2
-- DC-124: SIBB Key Management v1.0.3
-- DC-125: SIBB CLI v1.1
-- DC-126: SIBB-Innocence Integration v1.3
+Conclusion:
 
-### Next Steps
-- Consider integrating with production HSM/TPM or external trust services.
-- Run deeper penetration testing.
-- Prepare for pilot deployment.
+Full root-proof protection requires stronger enforcement such as SELinux
+or eBPF LSM in an appropriately controlled environment.
+
+---
+
+# 21. Next Actions
+
+## Immediate — P0.10 Gate 0 Reconciliation
+
+1. Record the P0.9-F owner decision in `tools/DECISIONS_LOG.md`.
+2. Add the corresponding entry to `continuity/DECISIONS_INDEX.md`.
+3. Record the narrowly scoped P0.9-F exception in `docs/EXECUTION_PLAN.md`.
+4. Preserve the reconciled `CURRENT_STATE.md`.
+5. Run **P0.10-R4** as a strictly scoped read-only audit.
+6. Do not start S3 until Gate 0 is formally cleared.
+
+## Separate W005 Closure
+
+The original W005 closure sequence remains a separate engineering item:
+
+1. Confirm Lesson 11.
+2. Run the working-tree integrity gate.
+3. Review exact authorized staging set.
+4. Stage only authorized files.
+5. Create the W005 commit.
+6. Verify the committed state.
+7. Mark W005 formally closed.
+
+## Next Engineering Gate
+
+After the applicable governance and Gate 0 work:
+
+1. Resolve `BLOCKER-002`.
+2. Validate package/wheel behavior in an isolated environment.
+3. Validate runtime path precedence.
+4. Decide the future lifecycle of remaining root compatibility surfaces.
+5. Resolve the UI Qt strategy separately.
+6. Preserve the protected ADIE/intelligence boundary.
+
+## Market Track
+
+S1 and S2 remain recorded as completed parallel market-evidence work.
+
+S3 remains stopped until Gate 0 is cleared.
+
+## Longer-Term
+
+* complete canonical package convergence;
+* establish controlled production packaging;
+* continue independent security validation;
+* preserve the separation between proof artifacts and the ADIE runtime
+  decision-control plane.
+
+---
+
+# 22. Current Architectural Summary
+
+EnterpriseGuard → ADIE is currently in a:
+
+**controlled governance-reconciliation + packaging-hardening phase**
+
+The current package direction is:
+
+```text
+P0.9-F approved outcome
+        ↓
+src/enterpriseguard = canonical authority
+        ↓
+four audited root duplicates = retired / DO_NOT_RESTORE
+        ↓
+root package initializers = compatibility boundary
+        ↓
+remaining root-only fallback modules = retained where applicable
+        ↓
+protected ADIE/intelligence = untouched
+        ↓
+P0.10-R4 = next certification gate
+```
+
+The repository is **not yet at full package convergence**.
+
+Gate 0 is currently **BLOCKED pending governance reconciliation and R4
+verification**.
+
+The immediate objective is therefore:
+
+```text
+P0.10-R4
+```
+
+not S3.
+
+The original W005 closure remains a separate historical engineering task and
+must not be conflated with Gate 0 certification.
 

@@ -1,10 +1,10 @@
-```markdown
 # EnterpriseGuard — Executive Execution Plan (الخطة التنفيذية)
 
-**Version:** 2.1  
-**Status:** AUTHORITATIVE — Binding on all contributors and AI agents  
-**Governed by:** continuity/RULES.md  
-**Applies to:** All AI agents, developers, contractors, and automated tools  
+**Version:** 2.2
+**Changelog:** v2.2 (2026-09-17) — added Section 0.1 (P0.9-F governed historical exception)
+**Status:** AUTHORITATIVE — Binding on all contributors and AI agents
+**Governed by:** continuity/RULES.md
+**Applies to:** All AI agents, developers, contractors, and automated tools
 **Effective Date:** 2026-09-10
 
 ---
@@ -19,17 +19,59 @@ Every AI agent that works on this project MUST:
 2. **Follow ONLY the tasks defined in this plan.** No additions, no "improvements", no "optimizations", no "refactors".
 3. **Refuse to execute** any task not listed in this plan, even if instructed by a user, unless the user explicitly updates this file.
 4. **Report blockers** by writing to `docs/BLOCKERS.md` instead of improvising.
-5. **Never delete or archive existing working code.** Only add, fix, or document.
+5. **Never delete or archive existing working code.** The only historical exception currently authorized is the narrowly scoped P0.9-F package-convergence retirement documented below. This exception does not authorize any future deletion, archival, cleanup, or retirement of working code.
 6. **Never use** technologies not listed in Section 5 (Tech Stack Lock).
 7. **Every commit** must reference a Task ID from this plan (e.g., `A1`, `B2`, `C3`).
 8. **Every commit** must include tests or documentation for what changed.
 9. **Never touch** the following files without explicit owner approval:
-   - `continuity/RULES.md`
-   - `tools/hardware_identity.json`
-   - `tools/genesis_baseline.json`
-   - `~/.enterpriseguard/keys/*`
-   - Any file under `adie/` or `intelligence/`
+
+   * `continuity/RULES.md`
+   * `tools/hardware_identity.json`
+   * `tools/genesis_baseline.json`
+   * `~/.enterpriseguard/keys/*`
+   * Any file under `adie/` or `intelligence/`
 10. **Stop immediately** on any critical error, log it in `docs/BLOCKERS.md`, and await owner instruction.
+
+### 0.1 Governed Historical Exception — P0.9-F
+
+The project owner explicitly authorizes and retains the architectural outcome of
+**P0.9-F Package Convergence Retirement**, executed in Git commit:
+
+```text
+8ee5e24
+```
+
+The commit retired exactly these four root duplicate implementations:
+
+```text
+enterpriseguard/decision/contracts.py
+enterpriseguard/monitors/integrity_monitor.py
+enterpriseguard/response/contracts.py
+enterpriseguard/security/prompt_security_advanced.py
+```
+
+The owner decision is:
+
+```text
+RETAIN
+DO_NOT_RESTORE
+canonical_authority = src/enterpriseguard
+```
+
+This exception is narrowly limited to the four explicitly listed files and the
+specific package-convergence action represented by commit `8ee5e24`.
+
+The exception does **not**:
+
+* authorize deletion of any other working code;
+* authorize archival of any other implementation;
+* authorize cleanup-driven deletion;
+* authorize future package retirement without a new owner decision;
+* override protected-path restrictions;
+* expand the scope of any Phase A-D task.
+
+Any future deletion or retirement of working code requires a separate,
+explicitly documented owner decision.
 
 ---
 
@@ -38,27 +80,27 @@ Every AI agent that works on this project MUST:
 > **EnterpriseGuard allows any company running AI to record decisions in 5 minutes
 > and obtain a signed proof that any third party can independently verify.**
 
-Every decision in this plan serves this definition.  
+Every decision in this plan serves this definition.
 If a task does not serve it → the task is forbidden.
 
 ---
 
 ## 2. Current State (Baseline — Day 0)
 
-| Item | Status |
-|------|--------|
-| Python files in `tools/` | ~35 |
-| Passing tests | 148 |
-| Working components | 20+ |
-| Design partners | 0 |
-| Paying customers | 0 |
-| Public documentation | Partial |
-| Quick Start guide | Missing |
-| SDK (`pip install`) | Missing |
-| HTTP API | Partial (`sovereign_http_server.py`) |
-| Dashboard | Partial |
-| Demo video | Missing |
-| Benchmarks | Partial |
+| Item                     | Status                               |
+| ------------------------ | ------------------------------------ |
+| Python files in `tools/` | ~35                                  |
+| Passing tests            | 148                                  |
+| Working components       | 20+                                  |
+| Design partners          | 0                                    |
+| Paying customers         | 0                                    |
+| Public documentation     | Partial                              |
+| Quick Start guide        | Missing                              |
+| SDK (`pip install`)      | Missing                              |
+| HTTP API                 | Partial (`sovereign_http_server.py`) |
+| Dashboard                | Partial                              |
+| Demo video               | Missing                              |
+| Benchmarks               | Partial                              |
 
 **Verdict:** Strong technical core. Weak product surface. Zero market validation.
 
@@ -67,54 +109,58 @@ If a task does not serve it → the task is forbidden.
 ## 3. The Plan — 180 Days, 4 Phases
 
 ### Phase A — Make it Understandable (30 days)
+
 **Goal:** Any developer understands the product in <5 minutes.
 
-| ID | Task | Deliverable | Acceptance Criterion |
-|----|------|-------------|----------------------|
-| A1 | Document 20 existing components | `docs/COMPONENTS/<name>.md` for each | Each file ≤ 30 lines |
-| A2 | Write Quick Start | `docs/QUICKSTART.md` | Works from scratch in ≤10 steps |
-| A3 | Write 5 Recipes | `docs/RECIPES/01-05.md` | Each ≤ 20 lines of code |
-| A4 | Build FAQ | `docs/FAQ.md` | ≥50 questions answered |
+| ID | Task                            | Deliverable                          | Acceptance Criterion            |
+| -- | ------------------------------- | ------------------------------------ | ------------------------------- |
+| A1 | Document 20 existing components | `docs/COMPONENTS/<name>.md` for each | Each file ≤ 30 lines            |
+| A2 | Write Quick Start               | `docs/QUICKSTART.md`                 | Works from scratch in ≤10 steps |
+| A3 | Write 5 Recipes                 | `docs/RECIPES/01-05.md`              | Each ≤ 20 lines of code         |
+| A4 | Build FAQ                       | `docs/FAQ.md`                        | ≥50 questions answered          |
 
 **Phase A Gate:** Any new person can run the product from zero in <10 minutes.
 
 ---
 
 ### Phase B — Make it Usable (60 days)
+
 **Goal:** Product can be delivered to a real customer.
 
-| ID | Task | Deliverable | Acceptance Criterion |
-|----|------|-------------|----------------------|
+| ID | Task       | Deliverable                   | Acceptance Criterion                                        |
+| -- | ---------- | ----------------------------- | ----------------------------------------------------------- |
 | B1 | Python SDK | `pip install enterpriseguard` | Create decision in ≤5 lines + Key Management per Section 13 |
-| B2 | HTTP API | `/v1/decisions`, `/v1/verify` | Works with `curl` + TSA failover per Section 14 |
-| B3 | Dashboard | Single-page UI | Shows last 100 decisions + status |
+| B2 | HTTP API   | `/v1/decisions`, `/v1/verify` | Works with `curl` + TSA failover per Section 14             |
+| B3 | Dashboard  | Single-page UI                | Shows last 100 decisions + status                           |
 
 **Phase B Gate:** SDK + API + Dashboard work end-to-end without manual setup.
 
 ---
 
 ### Phase C — Prove Value (60 days)
+
 **Goal:** Demonstrate the product solves a real problem.
 
-| ID | Task | Deliverable | Acceptance Criterion |
-|----|------|-------------|----------------------|
-| C1 | Demo video | YouTube (unlisted) | 10 minutes, explains problem + solution |
-| C2 | Benchmarks | `docs/BENCHMARKS.md` | 1K / 10K / 100K decisions; concurrency per Section 15 |
-| C3 | Security report | `docs/SECURITY_REVIEW.md` | OWASP ASVS level 1 |
-| C4 | 3 design partners | `partners/*.md` | LOI signed |
+| ID | Task              | Deliverable               | Acceptance Criterion                                  |
+| -- | ----------------- | ------------------------- | ----------------------------------------------------- |
+| C1 | Demo video        | YouTube (unlisted)        | 10 minutes, explains problem + solution               |
+| C2 | Benchmarks        | `docs/BENCHMARKS.md`      | 1K / 10K / 100K decisions; concurrency per Section 15 |
+| C3 | Security report   | `docs/SECURITY_REVIEW.md` | OWASP ASVS level 1                                    |
+| C4 | 3 design partners | `partners/*.md`           | LOI signed                                            |
 
 **Phase C Gate:** Demo + benchmarks + security review + 3 LOIs.
 
 ---
 
 ### Phase D — Deliver (30 days)
+
 **Goal:** First successful pilot + case study.
 
-| ID | Task | Deliverable | Acceptance Criterion |
-|----|------|-------------|----------------------|
-| D1 | Onboard first partner | Setup + training | ≥1,000 decisions recorded |
-| D2 | Case study | `docs/CASE_STUDY_001.md` | Documented result |
-| D3 | Decision point | `docs/DECISION_POINT.md` | Pivot or scale decision |
+| ID | Task                  | Deliverable              | Acceptance Criterion      |
+| -- | --------------------- | ------------------------ | ------------------------- |
+| D1 | Onboard first partner | Setup + training         | ≥1,000 decisions recorded |
+| D2 | Case study            | `docs/CASE_STUDY_001.md` | Documented result         |
+| D3 | Decision point        | `docs/DECISION_POINT.md` | Pivot or scale decision   |
 
 **Phase D Gate:** 1 case study + 1 paid customer.
 
@@ -125,6 +171,7 @@ If a task does not serve it → the task is forbidden.
 Every AI agent must follow this exactly.
 
 ### Day 1 — Full Inventory
+
 ```bash
 cd ~/Desktop/EnterpriseGuard
 source .venv/bin/activate
@@ -136,26 +183,32 @@ wc -l tools/*.py | sort -n -r | head -20
 **Deliverable:** `docs/INVENTORY.md`
 
 ### Day 2 — Document 1 Component
-- Pick `hardware_identity.py`
-- Write `docs/COMPONENTS/hardware_identity.md` (≤30 lines)
+
+* Pick `hardware_identity.py`
+* Write `docs/COMPONENTS/hardware_identity.md` (≤30 lines)
 
 ### Day 3 — Document 1 Component
-- Pick `genesis_seed.py`
-- Write `docs/COMPONENTS/genesis_seed.md`
+
+* Pick `genesis_seed.py`
+* Write `docs/COMPONENTS/genesis_seed.md`
 
 ### Day 4 — Document 1 Component
-- Pick `innocence_chain.py`
-- Write `docs/COMPONENTS/innocence_chain.md`
+
+* Pick `innocence_chain.py`
+* Write `docs/COMPONENTS/innocence_chain.md`
 
 ### Day 5 — Quick Start Draft
-- Write `docs/QUICKSTART.md`
-- Test from scratch on clean shell
+
+* Write `docs/QUICKSTART.md`
+* Test from scratch on clean shell
 
 ### Day 6 — First Recipe
-- Write `docs/RECIPES/01-bank-credit.md`
-- Include working code + screenshot
+
+* Write `docs/RECIPES/01-bank-credit.md`
+* Include working code + screenshot
 
 ### Day 7 — Commit + Tag
+
 ```bash
 git add .
 git commit -m "A: Add initial docs (A1-A3 partial)"
@@ -168,21 +221,21 @@ git tag v0.2.0-alpha
 
 **No additions without owner approval.** No exceptions.
 
-| Layer | Technology | Status |
-|-------|-----------|--------|
-| Core language | Python 3.12 | Locked |
-| Optional acceleration | Cython, C extension | Allowed only for optimization |
-| Rust | Not allowed in Phase A/B/C | May be allowed in Phase D with approval |
-| WASM | Not allowed until Phase B gate | |
-| Databases | SQLite + JSON | Locked |
-| Web framework | FastAPI (or http.server stdlib) | Locked |
-| Frontend | HTML + vanilla JS | Locked |
-| ML | ONNX (Python only) | Allowed in Phase C |
-| CI | GitHub Actions | Locked |
-| Docs | Markdown | Locked |
-| Key storage | Local file (0600) + optional keyring | Locked |
-| TSA strategy | 4-layer failover per Section 14 | Locked |
-| Write engine | JSONL append (Phase A/B), SQLite+WAL (Phase C) | Locked |
+| Layer                 | Technology                                     | Status                                  |
+| --------------------- | ---------------------------------------------- | --------------------------------------- |
+| Core language         | Python 3.12                                    | Locked                                  |
+| Optional acceleration | Cython, C extension                            | Allowed only for optimization           |
+| Rust                  | Not allowed in Phase A/B/C                     | May be allowed in Phase D with approval |
+| WASM                  | Not allowed until Phase B gate                 |                                         |
+| Databases             | SQLite + JSON                                  | Locked                                  |
+| Web framework         | FastAPI (or http.server stdlib)                | Locked                                  |
+| Frontend              | HTML + vanilla JS                              | Locked                                  |
+| ML                    | ONNX (Python only)                             | Allowed in Phase C                      |
+| CI                    | GitHub Actions                                 | Locked                                  |
+| Docs                  | Markdown                                       | Locked                                  |
+| Key storage           | Local file (0600) + optional keyring           | Locked                                  |
+| TSA strategy          | 4-layer failover per Section 14                | Locked                                  |
+| Write engine          | JSONL append (Phase A/B), SQLite+WAL (Phase C) | Locked                                  |
 
 ---
 
@@ -190,23 +243,26 @@ git tag v0.2.0-alpha
 
 Any AI agent must **refuse** to:
 
-- ❌ Add ZKP, zk-SNARK, Noir, Halo2, EZKL
-- ❌ Add blockchain beyond existing anchoring
-- ❌ Add gRPC, Protobuf, tonic
-- ❌ Add gRPC-based microservices
-- ❌ Add Sled, PostgreSQL, Redis
-- ❌ Add Solid.js, React, Vue
-- ❌ Add Kubernetes, Docker Swarm
-- ❌ Rewrite code in Rust
-- ❌ Add Post-Quantum crypto
-- ❌ Add ML models without Phase C approval
-- ❌ Refactor "for cleanliness"
-- ❌ Add features not listed in Section 3
-- ❌ Delete or archive existing code
-- ❌ Change `continuity/RULES.md`
-- ❌ Change key files or baselines
+* ❌ Add ZKP, zk-SNARK, Noir, Halo2, EZKL
+* ❌ Add blockchain beyond existing anchoring
+* ❌ Add gRPC, Protobuf, tonic
+* ❌ Add gRPC-based microservices
+* ❌ Add Sled, PostgreSQL, Redis
+* ❌ Add Solid.js, React, Vue
+* ❌ Add Kubernetes, Docker Swarm
+* ❌ Rewrite code in Rust
+* ❌ Add Post-Quantum crypto
+* ❌ Add ML models without Phase C approval
+* ❌ Refactor "for cleanliness"
+* ❌ Add features not listed in Section 3
+* ❌ Delete or archive existing code, except for the narrowly scoped and
+  owner-approved P0.9-F retirement explicitly documented in Section 0.1
+* ❌ Change `continuity/RULES.md`
+* ❌ Change key files or baselines
 
-**If asked to do any of the above → write to `docs/BLOCKERS.md` and stop.**
+**If asked to do any of the above → write to `docs/BLOCKERS.md` and stop, except
+where the request is explicitly covered by the owner-approved P0.9-F exception
+in Section 0.1.**
 
 ---
 
@@ -214,18 +270,18 @@ Any AI agent must **refuse** to:
 
 **Forget "148 tests". Measure these:**
 
-| Metric | Target |
-|--------|--------|
-| Time to first decision | < 5 minutes |
-| SDK lines to create decision | ≤ 5 |
-| Dashboard load time | < 2 seconds |
-| API response time | < 100 ms |
-| Quick Start steps | ≤ 10 |
-| Recipes | 5 |
-| FAQ questions | 50 |
-| Documented components | 20 |
-| Design partners | 3 |
-| Paying customers | 1 |
+| Metric                       | Target      |
+| ---------------------------- | ----------- |
+| Time to first decision       | < 5 minutes |
+| SDK lines to create decision | ≤ 5         |
+| Dashboard load time          | < 2 seconds |
+| API response time            | < 100 ms    |
+| Quick Start steps            | ≤ 10        |
+| Recipes                      | 5           |
+| FAQ questions                | 50          |
+| Documented components        | 20          |
+| Design partners              | 3           |
+| Paying customers             | 1           |
 
 ---
 
@@ -238,9 +294,10 @@ Every phase has a gate. A gate is:
 3. **Blocking** — Cannot enter next phase without passing.
 
 **If a gate fails:**
-- Write blocker to `docs/BLOCKERS.md`
-- Stop
-- Wait for owner decision (proceed, fix, or pivot)
+
+* Write blocker to `docs/BLOCKERS.md`
+* Stop
+* Wait for owner decision (proceed, fix, or pivot)
 
 ---
 
@@ -252,6 +309,7 @@ Every commit must:
 2. Include test or documentation change
 3. Be signed with GPG (if configured)
 4. Use format:
+
    ```
    <Task-ID>: <Short Description>
 
@@ -260,6 +318,7 @@ Every commit must:
    Tests: <test output or N/A>
    ```
 5. Example:
+
    ```
    A1: Document hardware_identity component
 
@@ -278,28 +337,40 @@ Each AI agent must produce a **weekly report** in `docs/reports/week-YYYY-WW.md`
 # Week Report — YYYY-WW
 
 ## Completed
-- [Task ID]: [Description]
+- [Task ID]&#58; [Description]
 
 ## In Progress
-- [Task ID]: [Description] — [% complete]
+- [Task ID]&#58; [Description] — [% complete]
 
 ## Blocked
-- [Task ID]: [Blocker] — see docs/BLOCKERS.md
+- [Task ID]&#58; [Blocker] — see docs/BLOCKERS.md
 
 ## Next Week
-- [Task ID]: [Plan]
+- [Task ID]&#58; [Plan]
 ```
 
 ---
 
 ## 11. Authority
 
-- **Owner:** Final decision on all changes.
-- **This plan:** Authoritative source for task definitions.
-- **`continuity/RULES.md`:** Authoritative source for operational rules.
-- **If conflict:** `RULES.md` wins, but plan takes precedence for task scope.
+* **Owner:** Final decision on all changes.
+* **This plan:** Authoritative source for task definitions.
+* **`continuity/RULES.md`:** Authoritative source for operational rules.
+* **If conflict:** `RULES.md` wins, but plan takes precedence for task scope.
+
+### Historical Exception Governance
+
+The P0.9-F exception documented in Section 0.1 is a completed,
+owner-approved historical governance decision.
+
+It does not change the future task scope of this plan and does not authorize
+new deletion work.
+
+Any new exception or amendment to this plan must follow the normal owner
+approval and version-control process defined below.
 
 **To modify this plan:**
+
 1. Owner writes new version
 2. Increments version number
 3. Records change in `docs/PLAN_CHANGELOG.md`
@@ -311,6 +382,10 @@ Each AI agent must produce a **weekly report** in `docs/reports/week-YYYY-WW.md`
 
 > **If it is not in this plan — it does not exist.**
 
+The P0.9-F historical exception is explicitly recorded in Section 0.1 and is
+therefore part of the governed plan record without creating a general
+permission for future deletion.
+
 ---
 
 ## 13. Key Management Architecture (Binding for B1)
@@ -318,32 +393,38 @@ Each AI agent must produce a **weekly report** in `docs/reports/week-YYYY-WW.md`
 The SDK MUST support the following key sources in order of priority:
 
 ### Priority 1 — Local File (Default)
-- Path: `~/.enterpriseguard/keys/private_key.pem`
-- Permission: `0600`
-- Already exists in the project (see `tools/signing_backend.py`)
-- Works out of the box. No configuration required.
+
+* Path: `~/.enterpriseguard/keys/private_key.pem`
+* Permission: `0600`
+* Already exists in the project (see `tools/signing_backend.py`)
+* Works out of the box. No configuration required.
 
 ### Priority 2 — OS Keyring
-- Library: `keyring` (Python)
-- Platforms: macOS Keychain, Linux Secret Service, Windows Credential Manager
-- Activated by: `AAAC_KEYRING=1`
-- Optional. Not required for MVP.
+
+* Library: `keyring` (Python)
+* Platforms: macOS Keychain, Linux Secret Service, Windows Credential Manager
+* Activated by: `AAAC_KEYRING=1`
+* Optional. Not required for MVP.
 
 ### Priority 3 — Remote KMS/HSM
-- Existing backends in `tools/signing_backend.py`:
-  - AWS KMS  → `AAAC_SIGNING_BACKEND=aws_kms`
-  - Azure KV → `AAAC_SIGNING_BACKEND=azure_kv`
-  - TPM      → `AAAC_SIGNING_BACKEND=tpm`
-  - Local    → `AAAC_SIGNING_BACKEND=local` (default)
-  - Mock     → `AAAC_SIGNING_BACKEND=mock` (tests only)
-- Dormant code. Activated only by explicit env var.
+
+* Existing backends in `tools/signing_backend.py`:
+
+  * AWS KMS  → `AAAC_SIGNING_BACKEND=aws_kms`
+  * Azure KV → `AAAC_SIGNING_BACKEND=azure_kv`
+  * TPM      → `AAAC_SIGNING_BACKEND=tpm`
+  * Local    → `AAAC_SIGNING_BACKEND=local` (default)
+  * Mock     → `AAAC_SIGNING_BACKEND=mock` (tests only)
+* Dormant code. Activated only by explicit env var.
 
 ### Priority 4 — Shamir-Sharded Keys
-- Existing module: `tools/sibb_keys.py`
-- Use: 3-of-5 reconstruction for high-security deployments
-- Not required for MVP.
+
+* Existing module: `tools/sibb_keys.py`
+* Use: 3-of-5 reconstruction for high-security deployments
+* Not required for MVP.
 
 ### SDK Configuration Contract
+
 ```python
 from enterpriseguard import Client
 
@@ -362,61 +443,71 @@ client = Client(
 ```
 
 ### FORBIDDEN
-- ❌ Generating keys silently in temp directories
-- ❌ Storing keys in project repo
-- ❌ Sending private keys over network
-- ❌ Default to cloud KMS without explicit user action
+
+* ❌ Generating keys silently in temp directories
+* ❌ Storing keys in project repo
+* ❌ Sending private keys over network
+* ❌ Default to cloud KMS without explicit user action
 
 ---
 
 ## 14. TSA Failover Strategy (Binding for B2)
 
 ### The Rule
+
 **No decision is ever blocked by TSA unavailability.**
 The envelope is created immediately. The TSA token is filled in later.
 
 ### Four-Layer Fallback
 
 **Layer 1 — Primary TSA**
-- Default: `http://time.certum.pl`
-- Timeout: 15 seconds
-- Retries: 2
+
+* Default: `http://time.certum.pl`
+* Timeout: 15 seconds
+* Retries: 2
 
 **Layer 2 — Failover Pool**
-- Secondary providers:
-  - FreeTSA: `https://freetsa.org/tsr`
-  - DFN: `https://zeitstempel.dfn.de`
-- Configurable via `AAAC_TSA_URLS`
-- Timeout: 10 seconds each
+
+* Secondary providers:
+
+  * FreeTSA: `https://freetsa.org/tsr`
+  * DFN: `https://zeitstempel.dfn.de`
+* Configurable via `AAAC_TSA_URLS`
+* Timeout: 10 seconds each
 
 **Layer 3 — Async Queue**
-- If all TSAs fail:
-  - Envelope status = `"tsa_pending"`
-  - Envelope is valid and verifiable (chain + signature still work)
-  - Background worker retries every 5 minutes for 24 hours
-  - Once TSA succeeds: status → `"complete"`
-- Storage: `tools/tsa_queue.jsonl`
+
+* If all TSAs fail:
+
+  * Envelope status = `"tsa_pending"`
+  * Envelope is valid and verifiable (chain + signature still work)
+  * Background worker retries every 5 minutes for 24 hours
+  * Once TSA succeeds: status → `"complete"`
+* Storage: `tools/tsa_queue.jsonl`
 
 **Layer 4 — Local Timestamp (Optional, Explicit Only)**
-- Activated ONLY by `AAAC_ALLOW_LOCAL_TSA=1`
-- Uses local system time + signature
-- Token marked as `"local_timestamp"` NOT `"rfc3161"`
-- Compliance report shows warning
-- FORBIDDEN as default behavior
+
+* Activated ONLY by `AAAC_ALLOW_LOCAL_TSA=1`
+* Uses local system time + signature
+* Token marked as `"local_timestamp"` NOT `"rfc3161"`
+* Compliance report shows warning
+* FORBIDDEN as default behavior
 
 ### Envelope Status Values
-| Status | Meaning |
-|--------|---------|
-| `complete` | RFC3161 token attached, verified |
-| `tsa_pending` | Waiting for TSA, retrying |
-| `tsa_failed` | 24h elapsed, admin action required |
-| `local_only` | Local timestamp used (opt-in) |
+
+| Status        | Meaning                            |
+| ------------- | ---------------------------------- |
+| `complete`    | RFC3161 token attached, verified   |
+| `tsa_pending` | Waiting for TSA, retrying          |
+| `tsa_failed`  | 24h elapsed, admin action required |
+| `local_only`  | Local timestamp used (opt-in)      |
 
 ### FORBIDDEN
-- ❌ Blocking decision creation on TSA failure
-- ❌ Silently dropping TSA token
-- ❌ Pretending a local timestamp is RFC3161
-- ❌ Retrying indefinitely without limit
+
+* ❌ Blocking decision creation on TSA failure
+* ❌ Silently dropping TSA token
+* ❌ Pretending a local timestamp is RFC3161
+* ❌ Retrying indefinitely without limit
 
 ---
 
@@ -425,29 +516,34 @@ The envelope is created immediately. The TSA token is filled in later.
 ### Three-Tier Storage Model
 
 **Tier 1 — Hot (Phase A/B): JSONL Append**
-- File: `decisions-YYYY-MM-DD.jsonl`
-- Open with: `O_APPEND | O_CREAT | O_WRONLY`
-- Atomic per-line writes (POSIX guarantees <4KB atomic on same FS)
-- No locks needed. No contention.
-- For writes: **this is the default engine**.
+
+* File: `decisions-YYYY-MM-DD.jsonl`
+* Open with: `O_APPEND | O_CREAT | O_WRONLY`
+* Atomic per-line writes (POSIX guarantees <4KB atomic on same FS)
+* No locks needed. No contention.
+* For writes: **this is the default engine**.
 
 **Tier 2 — Query (Phase C): SQLite + WAL**
-- Required PRAGMA settings:
+
+* Required PRAGMA settings:
+
   ```
   PRAGMA journal_mode = WAL;
   PRAGMA synchronous = NORMAL;
   PRAGMA busy_timeout = 5000;
   PRAGMA wal_autocheckpoint = 1000;
   ```
-- One write connection, multiple read connections
-- WAL allows concurrent reads + 1 writer without blocking
-- Read-only connections opened with `mode=ro`
+* One write connection, multiple read connections
+* WAL allows concurrent reads + 1 writer without blocking
+* Read-only connections opened with `mode=ro`
 
 **Tier 3 — Scale (Phase D+, only if needed): PostgreSQL**
-- Trigger conditions (BOTH must be met):
-  - > 1,000,000 decisions/month
-  - > 10 concurrent writers
-- Not before. Not in Phase A/B/C.
+
+* Trigger conditions (BOTH must be met):
+
+  * > 1,000,000 decisions/month
+  * > 10 concurrent writers
+* Not before. Not in Phase A/B/C.
 
 ### Mandatory Rules
 
@@ -458,12 +554,14 @@ The envelope is created immediately. The TSA token is filled in later.
 5. **For >100 concurrent writes/second: use JSONL, not SQLite.**
 
 ### Benchmark Requirement (C2)
+
 The 100K decision test must:
-- Run with 10 concurrent writers
-- Show zero `database is locked` errors
-- Show p99 write latency < 50ms
+
+* Run with 10 concurrent writers
+* Show zero `database is locked` errors
+* Show p99 write latency < 50ms
 
 ---
 
 **— End of Execution Plan —**
-```
+

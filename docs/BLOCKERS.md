@@ -115,3 +115,34 @@ The GPG signing key created in DC-041 for release file signatures was lost. The 
   - **Observed:** Generated fake GitHub organization URL for local-only commit `7e0e12c`.
   - **Impact:** High risk of false assumption regarding remote push status.
   - **Mitigation:** Strict rule prohibiting generation of unverified external URLs.
+
+---
+
+## BLOCKER-003: خطة التنفيذ غير واضحة
+
+**تاريخ:** 2026-09-17
+**المُبلِّغ:** Owner + AI Agent
+
+### الوصف
+يوجد مستندان للخطة يتعارضان:
+
+1. `docs/EXECUTION_PLAN.md` v2.1 — مرجع رسمي في المستودع،
+   يحتوي المراحل A/B/C/D، ويقول في Section 12:
+   "If it is not in this plan — it does not exist".
+
+2. خطة P0–P12 (ADIE Master Plan) — موجودة في محادثة AI فقط،
+   ليست في المستودع، تحتوي المراحل P0..P12.
+
+### التعارض
+- آخر 4 commits (3f38b49..c22619c) اتّبعت خطة P0–P12.
+- `EXECUTION_PLAN.md` لا يذكر P0–P12 إطلاقًا.
+- Section 0.3 من `EXECUTION_PLAN.md` يقول: يجب رفض أي مهمة ليست فيه.
+
+### الإجراء المطلوب من المالك
+اختر واحدًا:
+- (A) اعتماد EXECUTION_PLAN.md فقط → P0–P12 تُلغى.
+- (B) اعتماد P0–P12 → تحديث EXECUTION_PLAN.md رسميًا.
+- (C) اعتماد الاثنين بترتيب زمني (A/B/C/D أولًا، ثم P0–P12).
+
+### الحالة
+**الحالة:** ✅ CLOSED — تم الحل عبر DC-133 (2026-09-17)
