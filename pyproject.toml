@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "enterpriseguard"
+dynamic = ["version"]
+requires-python = ">=3.12"
+dependencies = [
+    "cryptography==50.0.1",
+    "requests==2.34.2",
+    "regex==2026.9.10",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.dynamic]
+version = {file = ["VERSION"]}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = [
+    "enterpriseguard",
+    "enterpriseguard.api",
+    "enterpriseguard.api.*",
+    "enterpriseguard.core",
+    "enterpriseguard.core.*",
+    "enterpriseguard.decision",
+    "enterpriseguard.decision.*",
+    "enterpriseguard.monitors",
+    "enterpriseguard.monitors.*",
+    "enterpriseguard.response",
+    "enterpriseguard.response.*",
+    "enterpriseguard.security",
+    "enterpriseguard.security.*",
+    "enterpriseguard.ui",
+    "enterpriseguard.ui.*",
+]
+exclude = [
+    "enterpriseguard.adie",
+    "enterpriseguard.adie.*",
+    "enterpriseguard.intelligence",
+    "enterpriseguard.intelligence.*",
+]
+namespaces = true
