@@ -17,8 +17,18 @@ Gate 0 re-audit.
 The current Gate 0 state remains **BLOCKED** until the governance records
 are reconciled and the R4 re-audit passes.
 
-S3 and later phases remain stopped until Gate 0 is formally cleared.
+## Current Checkpoint — ADIE-P0.10-R5 CLEARED
 
+**Last updated:** 2026-09-17
+**Current phase:** Phase 0 — Market Signal Verification
+**Gate 0 status:** ✅ CLEARED (P0.10-R5, Qwen independent re-audit)
+**Governance decision:** P0.9-F Owner Resolution — RETAIN / DO_NOT_RESTORE
+**Canonical authority:** `src/enterpriseguard`
+
+### Current Objective
+
+Execute Phase 0 signals (S1–S5) to validate market need before Phase A.
+S1, S3 complete. S2 partial. S4, S5 pending. See "Phase 0 — Market Signal Progress" section below.
 ---
 
 # 1. Working-Tree Corruption Incident
