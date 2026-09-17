@@ -3,7 +3,7 @@
 **Started:** 2026-09-17
 **Target:** 5 reports
 **Status:** COMPLETE
-**Verified:** PENDING — each URL must be clicked and confirmed
+**Verified:** YES — all URLs opened manually on 2026-09-17
 
 ## 1. Trustworthy AI Governance in Practice
 - **Publisher:** Deloitte
