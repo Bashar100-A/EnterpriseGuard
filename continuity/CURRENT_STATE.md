@@ -1012,7 +1012,10 @@ protected ADIE/intelligence = untouched
 P0.10-R4 = next certification gate
 ```
 
-The repository is **not yet at full package convergence**.
+The audited non-protected package surfaces are converged on
+`src/enterpriseguard` per P0.9-F/P0.9-C. Broader package
+convergence remains pending for out-of-scope areas (UI Qt strategy,
+BLOCKER-002, remaining root-only fallback modules).
 
 Gate 0 is currently **BLOCKED pending governance reconciliation and R4
 verification**.
