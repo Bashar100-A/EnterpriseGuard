@@ -1185,3 +1185,36 @@ Design fixes over first draft:
 - B3: Dashboard (NEXT)
 
 ### Phase B remaining: B3 only
+
+### B3 — Dashboard (DONE)
+- src/enterpriseguard/api/server.py extended (547 lines total)
+- tests/test_dashboard.py (5/5 passing)
+- GET /dashboard (inline HTML + vanilla JS)
+- GET /v1/decisions/recent?limit=N (auth, JSON)
+- Commit: pending push
+
+### ═══════════════════════════════════════
+### PHASE B: 5/5 COMPLETE — 2026-09-18
+### ═══════════════════════════════════════
+- B1.9a: signing module (0c524b1)
+- B1.9b: 7 signing tests (c47f16f)
+- B1.10: DEFERRED (DC-138)
+- B1.11: SDK Client (ec7203a, 15 tests)
+- B2: HTTP API (07583b4, 9 tests)
+- B3: Dashboard (this commit, 5 tests)
+
+Total: 36 tests for Phase B code (7 + 15 + 9 + 5)
+
+### Phase B Gate (per EXECUTION_PLAN)
+- SDK works end-to-end ✓
+- API works with curl ✓
+- Dashboard shows decisions ✓
+- VERSION: 0.5.0
+
+### Next Phase: C (Prove Value — 60/120-150 days)
+- C1: Demo video
+- C2: Benchmarks
+- C3: Security review
+- C4: 3 design partners
+
+Per DC-133: Phase C timeline revised to 120-150 days.
