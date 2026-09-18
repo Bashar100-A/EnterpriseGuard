@@ -969,15 +969,12 @@ or eBPF LSM in an appropriately controlled environment.
 
 # 21. Next Actions
 
-## Immediate — P0.10 Gate 0 Reconciliation
+### Next (updated 2026-09-18)
 
-1. Record the P0.9-F owner decision in `tools/DECISIONS_LOG.md`.
-2. Add the corresponding entry to `continuity/DECISIONS_INDEX.md`.
-3. Record the narrowly scoped P0.9-F exception in `docs/EXECUTION_PLAN.md`.
-4. Preserve the reconciled `CURRENT_STATE.md`.
-5. Run **P0.10-R4** as a strictly scoped read-only audit.
-6. Do not start S3 until Gate 0 is formally cleared.
-
+- DC-138: resolved (defer top-level export)
+- B1.11: resolved (SDK Client — commit ec7203a)
+- B2: HTTP API — next task (design DC-140)
+- B3: Dashboard — after B2
 ## Separate W005 Closure
 
 The original W005 closure sequence remains a separate engineering item:
