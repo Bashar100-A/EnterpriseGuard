@@ -133,3 +133,5 @@ dates. Full details are in the main log.
 | DC-138 | Defer top-level export (B1.10); focus on SDK Client (B1.11) | 2026-09-18 |
 
 | DC-139 | SDK Client design (B1.11) — approved, ready for implementation | 2026-09-18 |
+
+| DC-140 | HTTP API design (B2) — stdlib, JSONL storage, X-ADIE-Key auth | 2026-09-18 |
