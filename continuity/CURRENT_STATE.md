@@ -1132,10 +1132,6 @@ Reason: src/enterpriseguard/__init__.py does not exist (project uses
 namespace packages per P0.9-C). Creating it is an architectural
 decision requiring a separate DC. Deferred to DC-138.
 
-### Next
-- DC-138: Decide whether to introduce src/enterpriseguard/__init__.py
-- Then B1.11: integrate Decision + create_decision + sign into SDK
-- Then B2: HTTP API (EXECUTION_PLAN Section 3)
 
 ### B1.11 — SDK Client (DONE)
 - src/enterpriseguard/sdk/__init__.py (public API)
