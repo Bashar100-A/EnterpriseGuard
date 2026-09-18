@@ -1,3 +1,22 @@
+## Current Checkpoint — ADIE-B1.0
+
+**Last updated:** 2026-09-18
+**Current phase:** Phase B - SDK
+**Current task:** B1 - Python SDK
+**Phase A:** COMPLETE
+**Gate A:** PASS
+**B1 start authorization:** OWNER AUTHORIZED
+**B1 status:** PRE-IMPLEMENTATION CONTRACT FINALIZATION
+**Canonical authority:** `src/enterpriseguard`
+
+### Current Objective
+
+Begin Phase B/B1 under the authoritative `docs/EXECUTION_PLAN.md`.
+Finalize the approved SDK contract and implementation boundary before
+writing production code. No protected paths, deletions, archival, or
+unapproved architectural expansion are authorized.
+
+
 # EnterpriseGuard ADIE — Current State
 
 ## Current Checkpoint — ADIE-P0.10-R3
