@@ -1115,3 +1115,27 @@ not S3.
 The original W005 closure remains a separate historical engineering task and
 must not be conflated with Gate 0 certification.
 
+
+## Phase B — Progress (2026-09-18)
+
+### B1.9a — SDK signing module (DONE)
+- src/enterpriseguard/signing/backend.py (157 lines)
+- src/enterpriseguard/signing/__init__.py (25 lines)
+- RSA-2048 + ECDSA P-256, key_dir parameter
+- VERSION: 0.2.0 → 0.3.0
+- Commit: 0c524b1
+
+### B1.9b — SDK signing tests (DONE)
+- tests/test_sdk_signing.py (146 lines)
+- 7/7 scenarios pass in 7.47s
+- Commit: c47f16f
+
+### B1.10 — Top-level export (DEFERRED)
+Reason: src/enterpriseguard/__init__.py does not exist (project uses
+namespace packages per P0.9-C). Creating it is an architectural
+decision requiring a separate DC. Deferred to DC-138.
+
+### Next
+- DC-138: Decide whether to introduce src/enterpriseguard/__init__.py
+- Then B1.11: integrate Decision + create_decision + sign into SDK
+- Then B2: HTTP API (EXECUTION_PLAN Section 3)
