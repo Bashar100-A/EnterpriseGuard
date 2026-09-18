@@ -43,6 +43,75 @@ DEFAULT_PORT = 8443
 API_VERSION = "0.5.0"
 MAX_BODY_BYTES = 256 * 1024
 
+_HTML_DASHBOARD = """<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>ADIE Dashboard</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;color:#1a1a2e}
+h1{color:#0f3460;border-bottom:3px solid #0f3460;padding-bottom:.5rem}
+.bar{display:flex;gap:.5rem;margin:1rem 0;flex-wrap:wrap}
+input{padding:.6rem;border:1px solid #ccc;border-radius:4px;font-family:monospace;font-size:.9rem;flex:1;min-width:200px}
+button{background:#0f3460;color:#fff;border:0;padding:.6rem 1.2rem;border-radius:4px;cursor:pointer;font-size:.95rem}
+button:hover{background:#16213e}
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:1rem}
+th{background:#0f3460;color:#fff;padding:.5rem;text-align:left}
+td{padding:.4rem .5rem;border-bottom:1px solid #eee}
+tr:hover{background:#f5f5f5}
+.authorized-yes{color:#2e7d32;font-weight:bold}
+.authorized-no{color:#c62828;font-weight:bold}
+.footer{margin-top:1rem;color:#666;font-size:.85rem}
+.error{color:#c62828;font-weight:bold}
+</style></head><body>
+<h1>ADIE Dashboard</h1>
+<div class="bar">
+  <input id="key" type="password" placeholder="X-ADIE-Key (kept in memory only)">
+  <button onclick="load()">Refresh</button>
+</div>
+<div id="status" class="footer">Enter API key and click Refresh.</div>
+<table id="table" style="display:none">
+  <thead><tr>
+    <th>Decision ID</th><th>Target</th><th>Action</th>
+    <th>Authorized</th><th>Created (UTC)</th>
+  </tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+<div id="footer" class="footer"></div>
+<script>
+async function load() {
+  const key = document.getElementById('key').value;
+  const status = document.getElementById('status');
+  const table = document.getElementById('table');
+  const rows = document.getElementById('rows');
+  const footer = document.getElementById('footer');
+  if (!key) { status.textContent = 'API key required.'; status.className='footer error'; return; }
+  status.textContent = 'Loading...'; status.className = 'footer';
+  try {
+    const r = await fetch('/v1/decisions/recent?limit=100', {headers:{'X-ADIE-Key': key}});
+    if (!r.ok) { status.textContent = 'Error: HTTP ' + r.status; status.className='footer error'; return; }
+    const data = await r.json();
+    rows.innerHTML = '';
+    for (const d of data.decisions) {
+      const c = d.contract || {};
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><code>' + (c.decision_id || '?').slice(0,20) + '...</code></td>' +
+        '<td>' + (c.target_resource_id || '') + '</td>' +
+        '<td>' + (c.action || '') + '</td>' +
+        '<td class="' + (c.authorized ? 'authorized-yes' : 'authorized-no') + '">' +
+          (c.authorized ? 'YES' : 'NO') + '</td>' +
+        '<td><code>' + (c.created_at || '') + '</code></td>';
+      rows.appendChild(tr);
+    }
+    table.style.display = 'table';
+    footer.textContent = 'Showing ' + data.count + ' recent decisions.';
+    status.textContent = 'OK';
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message; status.className='footer error';
+  }
+}
+</script>
+</body></html>"""
+
 
 class APIError(Exception):
     """Base exception for API-layer errors."""
@@ -80,6 +149,35 @@ def _append_decision(data_dir: Path, payload: dict[str, Any]) -> None:
         os.fsync(fd)
     finally:
         os.close(fd)
+
+
+def _read_recent_decisions(data_dir: Path, limit: int) -> list[dict[str, Any]]:
+    """Read up to `limit` most recent decisions from JSONL files."""
+    if limit <= 0:
+        return []
+    if not data_dir.exists():
+        return []
+
+    files = sorted(data_dir.glob("decisions-*.jsonl"), reverse=True)
+    records: list[dict[str, Any]] = []
+    for path in files:
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                lines = handle.readlines()
+        except OSError:
+            continue
+        # Reverse within the file: newest first.
+        for line in reversed(lines):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                records.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+            if len(records) >= limit:
+                return records
+    return records
 
 
 # ───────────────────── client singleton ─────────────────────
@@ -173,6 +271,17 @@ class _Handler(BaseHTTPRequestHandler):
             self.wfile.write(body)
         except (BrokenPipeError, ConnectionResetError):
             pass
+    def _send_html(self, status: int, html: str) -> None:
+        body = html.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        try:
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
 
     def _read_json_body(self) -> dict[str, Any]:
         raw_len = self.headers.get("Content-Length", "0")
@@ -219,8 +328,15 @@ class _Handler(BaseHTTPRequestHandler):
                 pass
 
     def _route_get(self) -> None:
-        if self._path() == "/v1/health":
+        path = self._path()
+        if path == "/v1/health":
             self._send_json(200, {"status": "ok", "version": API_VERSION})
+            return
+        if path == "/dashboard":
+            self._send_html(200, _HTML_DASHBOARD)
+            return
+        if path == "/v1/decisions/recent":
+            self._handle_recent()
             return
         self._send_json(404, {"error": "not_found"})
 
@@ -319,6 +435,34 @@ class _Handler(BaseHTTPRequestHandler):
             return
 
         self._send_json(200, {"valid": bool(valid)})
+
+    def _handle_recent(self) -> None:
+        if not self._check_auth():
+            return
+        # Parse limit from query string (default 100, max 1000).
+        parsed = urlparse(self.path)
+        params = dict(
+            pair.split("=", 1)
+            for pair in parsed.query.split("&")
+            if "=" in pair
+        )
+        try:
+            limit = int(params.get("limit", "100"))
+        except ValueError:
+            self._send_json(400, {"error": "limit must be an integer"})
+            return
+        if limit < 1 or limit > 1000:
+            self._send_json(400, {"error": "limit must be between 1 and 1000"})
+            return
+
+        try:
+            records = _read_recent_decisions(_get_data_dir(), limit)
+        except Exception as exc:
+            print(f"read_recent_failed: {exc}", file=sys.stderr)
+            self._send_json(500, {"error": "read_failed"})
+            return
+
+        self._send_json(200, {"decisions": records, "count": len(records)})
 
     def log_message(self, fmt: str, *args: Any) -> None:  # noqa: A003
         pass
