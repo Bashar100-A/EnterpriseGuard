@@ -1165,3 +1165,23 @@ Design fixes over first draft:
     client = Client()
     signed = client.decide(target="host-01", intent="isolate")
     assert client.verify(signed)
+
+### B2 — HTTP API (DONE)
+- src/enterpriseguard/api/__init__.py
+- src/enterpriseguard/api/server.py (401 lines)
+- tests/test_api_server.py (9/9 passing)
+- Endpoints: GET /v1/health, POST /v1/decisions, POST /v1/verify
+- Framework: http.server stdlib (DC-140)
+- Storage: JSONL append with fsync (Section 15 Tier 1)
+- Security: 0600 files, constant-time auth, no detail leak
+- VERSION: 0.4.0 -> 0.5.0
+
+### Phase B Status (updated)
+- B1.9a: signing module (DONE)
+- B1.9b: 7 signing tests (DONE)
+- B1.10: top-level export (DEFERRED, DC-138)
+- B1.11: SDK Client (DONE, 15 tests)
+- B2: HTTP API (DONE, 9 tests)
+- B3: Dashboard (NEXT)
+
+### Phase B remaining: B3 only
