@@ -1139,3 +1139,36 @@ decision requiring a separate DC. Deferred to DC-138.
 - DC-138: Decide whether to introduce src/enterpriseguard/__init__.py
 - Then B1.11: integrate Decision + create_decision + sign into SDK
 - Then B2: HTTP API (EXECUTION_PLAN Section 3)
+
+### B1.11 — SDK Client (DONE)
+- src/enterpriseguard/sdk/__init__.py (public API)
+- src/enterpriseguard/sdk/client.py (266 lines)
+- tests/test_sdk_client.py (224 lines, 15/15 passing)
+- Commit: ec7203a
+
+Public API:
+  from enterpriseguard.sdk import Client, SignedDecision
+  client = Client()
+  signed = client.decide(target="host-01", intent="isolate")
+  assert client.verify(signed)
+
+Design fixes over first draft:
+- signed_at included in signature (H1)
+- deterministic decision_id via _derive_decision_id (C4)
+- 15 test scenarios covering C1/C4/C5/H1-H5/M3
+
+### Phase B Status
+- B1.9a: signing module (DONE, 0c524b1)
+- B1.9b: 7 signing tests (DONE, c47f16f)
+- B1.10: top-level export (DEFERRED, DC-138)
+- B1.11: SDK Client (DONE, ec7203a)
+
+### Remaining in Phase B
+- B2: HTTP API (EXECUTION_PLAN Section 3)
+- B3: Dashboard (EXECUTION_PLAN Section 3)
+
+### The 5-line target (Phase B goal) — ACHIEVED
+    from enterpriseguard.sdk import Client
+    client = Client()
+    signed = client.decide(target="host-01", intent="isolate")
+    assert client.verify(signed)
