@@ -127,3 +127,5 @@ dates. Full details are in the main log.
 | DC-135 | A1 documentation length target revised to tiered standard | 2026-09-17 |
 
 | DC-136 | Phase B initiated — Python SDK; audit before mutation | 2026-09-18 |
+
+| DC-137 | SDK signing module — independent design (v2, supersedes v1) | 2026-09-18 |
