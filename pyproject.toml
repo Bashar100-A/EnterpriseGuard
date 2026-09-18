@@ -34,10 +34,11 @@ include = [
     "enterpriseguard.response.*",
     "enterpriseguard.security",
     "enterpriseguard.security.*",
+    "enterpriseguard.sdk",
+    "enterpriseguard.sdk.*",
     "enterpriseguard.signing",
     "enterpriseguard.signing.*",
-    "enterpriseguard.ui",
-    "enterpriseguard.ui.*",]
+    "enterpriseguard.ui",    "enterpriseguard.ui.*",]
 exclude = [
     "enterpriseguard.adie",
     "enterpriseguard.adie.*",
