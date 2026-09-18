@@ -129,3 +129,5 @@ dates. Full details are in the main log.
 | DC-136 | Phase B initiated — Python SDK; audit before mutation | 2026-09-18 |
 
 | DC-137 | SDK signing module — independent design (v2, supersedes v1) | 2026-09-18 |
+
+| DC-138 | Defer top-level export (B1.10); focus on SDK Client (B1.11) | 2026-09-18 |
