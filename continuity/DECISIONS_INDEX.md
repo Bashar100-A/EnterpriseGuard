@@ -135,3 +135,5 @@ dates. Full details are in the main log.
 | DC-139 | SDK Client design (B1.11) — approved, ready for implementation | 2026-09-18 |
 
 | DC-140 | HTTP API design (B2) — stdlib, JSONL storage, X-ADIE-Key auth | 2026-09-18 |
+
+| DC-141 | Dashboard design (B3) — HTML + vanilla JS, JSONL reader | 2026-09-18 |
