@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir requests langfuse
 EXPOSE 8443
 
 # تشغيل الخادم السيادي
-CMD ["python3", "tools/sovereign_http_server.py", "--host", "0.0.0.0", "--port", "8443"]
+CMD ["python3", "tools/sovereign_http_server.py", "--host", "0.0.0.0", "--port", "8443", "--tls-certfile", "/run/secrets/aaac_tls_cert", "--tls-keyfile", "/run/secrets/aaac_tls_key"]

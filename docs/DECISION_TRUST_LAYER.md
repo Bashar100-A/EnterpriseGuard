@@ -1,6 +1,6 @@
 # Decision Trust Layer -- Strategic Vision
 
-**Status:** DRAFT -- awaiting DC-142 formalization
+**Status:** DRAFT -- DC-142 and DC-143 formally recorded; Trust Minimization and the Decision Certificate / Portable Proof Boundary established
 **Date:** 2026-09-18
 **Author:** Biss (Owner)
 **Related:** EXECUTION_PLAN.md, PRODUCT_HYPOTHESIS.md, DC-133
@@ -61,17 +61,21 @@ That question is the architectural gap ADIE fills.
 
 ### Path A -- Technical Primitive: Decision Proof / Replayability
 
-Every Decision Certificate binds:
+Under DC-143, every Decision Certificate conceptually binds:
 
-    Decision
-      -> Evidence
-      -> Policy Version
-      -> Authority
-      -> State Snapshot
-      -> Model / Rule Identity
-      -> Provenance Hash
-      -> Signature
-      -> Timestamp
+    E1 -- Evidence
+    E2 -- State
+    E3 -- Policy Version
+    E4 -- Authority
+    E5 -- Model / Rule Identity
+    E6 -- Canonical Provenance
+    E7 -- Replay Semantics
+    E8 -- Portable Decision Certificate
+
+This is an architectural binding boundary, not a final wire-format or
+implementation specification. Independent verification inherits the
+DC-142 Trust Minimization invariant and does not require online ADIE
+services, ADIE runtime availability, or vendor-specific private state.
 
 **Decision Replayability:** an independent party can take the
 certificate and the permitted evidence, then reconstruct the context
@@ -313,4 +317,4 @@ category.
 ---
 
 **End of vision document.**
-**Formalization pending: DC-142 (tomorrow).**
+**DC-142 and DC-143 formally recorded; implementation remains subject to Phase E adoption.**

@@ -137,3 +137,10 @@ dates. Full details are in the main log.
 | DC-140 | HTTP API design (B2) — stdlib, JSONL storage, X-ADIE-Key auth | 2026-09-18 |
 
 | DC-141 | Dashboard design (B3) — HTML + vanilla JS, JSONL reader | 2026-09-18 |
+
+| DC-142 | ADIE Step 1 — Decision Trust Layer: Trust Minimization | 2026-09-19 |
+
+| DC-143 | ADIE Step 2 — Decision Certificate / Portable Proof Boundary | 2026-09-19 |
+
+| DC-144 | Plan Changelog Authorization / Execution-Plan Amendment Record | 2026-09-19 |
+| DC-145 | Execution Plan v3.0 Adoption — Decision Trust Infrastructure | 2026-09-20 |

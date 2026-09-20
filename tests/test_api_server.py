@@ -15,6 +15,7 @@ Scenarios per DC-140:
 from __future__ import annotations
 
 import json
+import logging
 import threading
 import time
 import urllib.error
@@ -26,6 +27,93 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from enterpriseguard.api import create_server
+
+
+COMPOSE_FILE = Path(__file__).resolve().parent.parent / "docker-compose.yml"
+
+
+def test_compose_requires_deployment_secrets():
+    compose = COMPOSE_FILE.read_text(encoding="utf-8")
+
+    required_variables = (
+        "NEXTAUTH_SECRET",
+        "SALT",
+        "ENCRYPTION_KEY",
+        "POSTGRES_USER",
+        "POSTGRES_PASSWORD",
+        "CLICKHOUSE_USER",
+        "CLICKHOUSE_PASSWORD",
+    )
+    for variable in required_variables:
+        assert f"${{{variable}:?" in compose
+
+
+def test_compose_contains_no_previous_f01_literals():
+    compose = COMPOSE_FILE.read_text(encoding="utf-8")
+
+    for insecure_value in (
+        "mysecret",
+        "mysalt",
+        "0000000000000000000000000000000000000000000000000000000000000000",
+        'CLICKHOUSE_PASSWORD: "clickhouse"',
+        "POSTGRES_PASSWORD: postgres",
+    ):
+        assert insecure_value not in compose
+
+
+def test_authentication_failure_logs_no_api_key(running_server, caplog):
+    caplog.set_level(logging.WARNING, logger="enterpriseguard.security")
+    status, _ = _post(
+        f"{running_server['base_url']}/v1/decisions",
+        {"target": "host-01", "intent": "isolate"},
+        api_key="sensitive-test-api-key",
+    )
+    assert status == 401
+    assert "security_event=authentication_failure" in caplog.text
+    assert "sensitive-test-api-key" not in caplog.text
+    assert "X-ADIE-Key" not in caplog.text
+
+
+def test_missing_api_key_logs_configuration_name_only(monkeypatch, caplog):
+    import enterpriseguard.api.server as server_mod
+
+    caplog.set_level(logging.WARNING, logger="enterpriseguard.security")
+    monkeypatch.delenv("AAAC_API_KEY", raising=False)
+    assert server_mod._get_api_key() is None
+    server_mod._security_event(
+        "configuration_error",
+        request_id="request-1",
+        setting="AAAC_API_KEY",
+    )
+    assert "security_event=configuration_error" in caplog.text
+    assert 'setting="AAAC_API_KEY"' in caplog.text
+    assert "secret" not in caplog.text.lower()
+    assert "request_id=\"request-1\"" in caplog.text
+
+
+def test_security_event_schema_escapes_paths_and_rejects_unsupported_data(caplog):
+    import enterpriseguard.api.server as server_mod
+
+    caplog.set_level(logging.WARNING, logger="enterpriseguard.security")
+    server_mod._security_event(
+        "authentication_failure",
+        path="/v1/\nforged=event",
+        request_id="request-2",
+    )
+    assert "forged=event" in caplog.text
+    assert "\\n" in caplog.text
+    assert "\nforged=event" not in caplog.text
+
+    with pytest.raises(ValueError, match="unsupported security event"):
+        server_mod._security_event("audit_event", request_id="request-3")
+    with pytest.raises(ValueError, match="unsupported fields"):
+        server_mod._security_event(
+            "request_failure",
+            method="POST",
+            path="/v1/decisions",
+            request_id="request-4",
+            payload='{"secret":"value"}',
+        )
 
 
 # ───────────────────── fixtures ─────────────────────

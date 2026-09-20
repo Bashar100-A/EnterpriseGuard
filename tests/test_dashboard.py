@@ -93,6 +93,15 @@ def _get(url, api_key=None):
         return e.code, e.read().decode("utf-8")
 
 
+def _get_with_headers(url, api_key=None):
+    headers = {}
+    if api_key is not None:
+        headers["X-ADIE-Key"] = api_key
+    req = urllib.request.Request(url, headers=headers, method="GET")
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        return resp.status, resp.headers, resp.read().decode("utf-8")
+
+
 def _post_json(url, payload, api_key=None):
     headers = {"Content-Type": "application/json"}
     if api_key is not None:
@@ -109,11 +118,43 @@ def _post_json(url, payload, api_key=None):
 # ─────────── 10. dashboard HTML ───────────
 
 def test_dashboard_returns_html(running_server):
-    status, body = _get(f"{running_server['base_url']}/dashboard")
+    status, headers, body = _get_with_headers(f"{running_server['base_url']}/dashboard")
     assert status == 200
     assert "ADIE Dashboard" in body
     assert "<html" in body.lower()
     assert "X-ADIE-Key" in body
+    csp = headers["Content-Security-Policy"]
+    assert "default-src 'none'" in csp
+    assert "script-src 'nonce-" in csp
+    assert "style-src 'nonce-" in csp
+    assert "unsafe-inline" not in csp
+    assert "unsafe-eval" not in csp
+    assert headers["X-Content-Type-Options"] == "nosniff"
+
+
+def test_dashboard_uses_safe_dynamic_rendering(running_server):
+    payloads = (
+        "<script>alert(1)</script>",
+        '"><img src=x onerror=alert(1)>',
+    )
+    for payload in payloads:
+        status, _ = _post_json(
+            f"{running_server['base_url']}/v1/decisions",
+            {"target": payload, "intent": "isolate"},
+            api_key=running_server["api_key"],
+        )
+        assert status == 200
+
+    status, _, body = _get_with_headers(
+        f"{running_server['base_url']}/dashboard"
+    )
+    assert status == 200
+    assert "tr.innerHTML" not in body
+    assert "rows.innerHTML" not in body
+    assert "textContent" in body
+    assert "replaceChildren" in body
+    for payload in payloads:
+        assert payload not in body
 
 
 # ─────────── 11. recent without auth ───────────

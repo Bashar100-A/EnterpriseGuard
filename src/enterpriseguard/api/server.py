@@ -17,10 +17,13 @@ Requires Python 3.11+ (datetime.fromisoformat Z-suffix support).
 from __future__ import annotations
 
 import argparse
+import base64
 import json
+import logging
 import os
 import secrets
 import sys
+import uuid
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -42,11 +45,33 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8443
 API_VERSION = "0.5.0"
 MAX_BODY_BYTES = 256 * 1024
+_SECURITY_LOGGER = logging.getLogger("enterpriseguard.security")
+_SECURITY_EVENT_FIELDS = {
+    "authentication_failure": frozenset({"path", "request_id"}),
+    "authorization_failure": frozenset({"path", "request_id"}),
+    "configuration_error": frozenset({"setting", "request_id"}),
+    "request_failure": frozenset({"method", "path", "request_id"}),
+}
+_SENSITIVE_LOG_FIELD_NAMES = frozenset(
+    {
+        "api_key",
+        "authorization",
+        "credential",
+        "key",
+        "password",
+        "payload",
+        "private_key",
+        "request_body",
+        "response_body",
+        "secret",
+        "token",
+    }
+)
 
 _HTML_DASHBOARD = """<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <title>ADIE Dashboard</title>
-<style>
+<style nonce="{{CSP_NONCE}}">
 body{font-family:system-ui,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;color:#1a1a2e}
 h1{color:#0f3460;border-bottom:3px solid #0f3460;padding-bottom:.5rem}
 .bar{display:flex;gap:.5rem;margin:1rem 0;flex-wrap:wrap}
@@ -61,14 +86,15 @@ tr:hover{background:#f5f5f5}
 .authorized-no{color:#c62828;font-weight:bold}
 .footer{margin-top:1rem;color:#666;font-size:.85rem}
 .error{color:#c62828;font-weight:bold}
+.hidden{display:none}
 </style></head><body>
 <h1>ADIE Dashboard</h1>
 <div class="bar">
   <input id="key" type="password" placeholder="X-ADIE-Key (kept in memory only)">
-  <button onclick="load()">Refresh</button>
+  <button id="refresh" type="button">Refresh</button>
 </div>
 <div id="status" class="footer">Enter API key and click Refresh.</div>
-<table id="table" style="display:none">
+<table id="table" class="hidden">
   <thead><tr>
     <th>Decision ID</th><th>Target</th><th>Action</th>
     <th>Authorized</th><th>Created (UTC)</th>
@@ -76,7 +102,7 @@ tr:hover{background:#f5f5f5}
   <tbody id="rows"></tbody>
 </table>
 <div id="footer" class="footer"></div>
-<script>
+  <script nonce="{{CSP_NONCE}}">
 async function load() {
   const key = document.getElementById('key').value;
   const status = document.getElementById('status');
@@ -89,28 +115,56 @@ async function load() {
     const r = await fetch('/v1/decisions/recent?limit=100', {headers:{'X-ADIE-Key': key}});
     if (!r.ok) { status.textContent = 'Error: HTTP ' + r.status; status.className='footer error'; return; }
     const data = await r.json();
-    rows.innerHTML = '';
+    rows.replaceChildren();
     for (const d of data.decisions) {
       const c = d.contract || {};
       const tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td><code>' + (c.decision_id || '?').slice(0,20) + '...</code></td>' +
-        '<td>' + (c.target_resource_id || '') + '</td>' +
-        '<td>' + (c.action || '') + '</td>' +
-        '<td class="' + (c.authorized ? 'authorized-yes' : 'authorized-no') + '">' +
-          (c.authorized ? 'YES' : 'NO') + '</td>' +
-        '<td><code>' + (c.created_at || '') + '</code></td>';
+      const addCell = (value, code = false) => {
+        const cell = document.createElement('td');
+        const content = code ? document.createElement('code') : cell;
+        content.textContent = value;
+        if (code) cell.appendChild(content);
+        tr.appendChild(cell);
+      };
+      addCell((c.decision_id || '?').slice(0,20) + '...', true);
+      addCell(c.target_resource_id || '');
+      addCell(c.action || '');
+      const authorized = document.createElement('td');
+      authorized.className = c.authorized ? 'authorized-yes' : 'authorized-no';
+      authorized.textContent = c.authorized ? 'YES' : 'NO';
+      tr.appendChild(authorized);
+      addCell(c.created_at || '', true);
       rows.appendChild(tr);
     }
-    table.style.display = 'table';
+    table.classList.remove('hidden');
     footer.textContent = 'Showing ' + data.count + ' recent decisions.';
     status.textContent = 'OK';
   } catch (e) {
     status.textContent = 'Error: ' + e.message; status.className='footer error';
   }
 }
+document.getElementById('refresh').addEventListener('click', load);
 </script>
 </body></html>"""
+
+
+def _dashboard_html(nonce: str) -> str:
+    """Render the dashboard with a request-specific CSP nonce."""
+    return _HTML_DASHBOARD.replace("{{CSP_NONCE}}", nonce)
+
+
+def _dashboard_csp(nonce: str) -> str:
+    """Return the restrictive policy for the inline dashboard assets."""
+    return (
+        "default-src 'none'; "
+        f"script-src 'nonce-{nonce}'; "
+        f"style-src 'nonce-{nonce}'; "
+        "connect-src 'self'; "
+        "img-src 'none'; "
+        "base-uri 'none'; "
+        "form-action 'none'; "
+        "frame-ancestors 'none'"
+    )
 
 
 class APIError(Exception):
@@ -121,6 +175,26 @@ class APIError(Exception):
 
 def _get_api_key() -> str | None:
     return os.environ.get("AAAC_API_KEY")
+
+
+def _security_event(event: str, **fields: object) -> None:
+    """Emit only the approved, escaped security-event schema."""
+    allowed_fields = _SECURITY_EVENT_FIELDS.get(event)
+    if allowed_fields is None:
+        raise ValueError(f"unsupported security event: {event}")
+    if set(fields) - allowed_fields:
+        raise ValueError(f"unsupported fields for security event: {event}")
+    if set(fields) & _SENSITIVE_LOG_FIELD_NAMES:
+        raise ValueError("sensitive security-event fields are forbidden")
+    details = " ".join(
+        f"{key}={json.dumps(str(fields[key])[:256], ensure_ascii=True)}"
+        for key in sorted(fields)
+    )
+    _SECURITY_LOGGER.warning(
+        "security_event=%s%s",
+        event,
+        f" {details}" if details else "",
+    )
 
 
 def _get_data_dir() -> Path:
@@ -271,11 +345,19 @@ class _Handler(BaseHTTPRequestHandler):
             self.wfile.write(body)
         except (BrokenPipeError, ConnectionResetError):
             pass
-    def _send_html(self, status: int, html: str) -> None:
+    def _send_html(
+        self,
+        status: int,
+        html: str,
+        *,
+        content_security_policy: str | None = None,
+    ) -> None:
         body = html.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("X-Content-Type-Options", "nosniff")
+        if content_security_policy:
+            self.send_header("Content-Security-Policy", content_security_policy)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         try:
@@ -305,10 +387,20 @@ class _Handler(BaseHTTPRequestHandler):
     def _check_auth(self) -> bool:
         expected = _get_api_key()
         if not expected:
+            _security_event(
+                "configuration_error",
+                request_id=self._request_id(),
+                setting="AAAC_API_KEY",
+            )
             self._send_json(503, {"error": "api_key_not_configured"})
             return False
         provided = self.headers.get("X-ADIE-Key", "")
         if not secrets.compare_digest(provided, expected):
+            _security_event(
+                "authentication_failure",
+                path=self._path(),
+                request_id=self._request_id(),
+            )
             self._send_json(401, {"error": "unauthorized"})
             return False
         return True
@@ -316,12 +408,25 @@ class _Handler(BaseHTTPRequestHandler):
     def _path(self) -> str:
         return urlparse(self.path).path
 
+    def _request_id(self) -> str:
+        request_id = getattr(self, "_security_request_id", None)
+        if request_id is None:
+            request_id = uuid.uuid4().hex
+            self._security_request_id = request_id
+        return request_id
+
     # ---- routes ----
 
     def do_GET(self) -> None:  # noqa: N802
         try:
             self._route_get()
         except Exception:
+            _security_event(
+                "request_failure",
+                method="GET",
+                path=self._path(),
+                request_id=self._request_id(),
+            )
             try:
                 self._send_json(500, {"error": "internal"})
             except Exception:
@@ -333,7 +438,12 @@ class _Handler(BaseHTTPRequestHandler):
             self._send_json(200, {"status": "ok", "version": API_VERSION})
             return
         if path == "/dashboard":
-            self._send_html(200, _HTML_DASHBOARD)
+            nonce = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+            self._send_html(
+                200,
+                _dashboard_html(nonce),
+                content_security_policy=_dashboard_csp(nonce),
+            )
             return
         if path == "/v1/decisions/recent":
             self._handle_recent()
@@ -344,6 +454,12 @@ class _Handler(BaseHTTPRequestHandler):
         try:
             self._route_post()
         except Exception:
+            _security_event(
+                "request_failure",
+                method="POST",
+                path=self._path(),
+                request_id=self._request_id(),
+            )
             try:
                 self._send_json(500, {"error": "internal"})
             except Exception:
