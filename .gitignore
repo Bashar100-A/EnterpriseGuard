@@ -171,3 +171,15 @@ Thumbs.db
 # ADIE generated reports (regenerate per release)
 adie_validation_report.html
 adie_validation_report.json
+
+# Security: Ignore Private Keys & Backups
+*.pem
+keys/*_private*
+backups/
+ls-files keys/ backups/ EnterpriseGuard/config/ EnterpriseGuard/tests/config/*/tests/**/*.pem
+
+# Security: Ignore Private Keys & Backups
+*.pem
+!keys/adie_public.pem
+keys/*_private*
+backups/
