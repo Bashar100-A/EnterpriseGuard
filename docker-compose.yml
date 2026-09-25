@@ -1,70 +1,25 @@
+version: '3.8'
 services:
-  langfuse:
-    image: langfuse/langfuse:latest
-    container_name: langfuse
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_URL: "postgresql://postgres:postgres@db:5432/postgres"
-      NEXTAUTH_SECRET: "${NEXTAUTH_SECRET:?NEXTAUTH_SECRET must be provided by the deployment environment}"
-      SALT: "${SALT:?SALT must be provided by the deployment environment}"
-      ENCRYPTION_KEY: "${ENCRYPTION_KEY:?ENCRYPTION_KEY must be provided by the deployment environment}"
-      NEXTAUTH_URL: "http://localhost:3000"
-      TELEMETRY_ENABLED: "false"
-      CLICKHOUSE_URL: "clickhouse://clickhouse:clickhouse@clickhouse:9000/langfuse?dial_timeout=10s"
-      CLICKHOUSE_MIGRATION_URL: "clickhouse://clickhouse:clickhouse@clickhouse:9000/langfuse?dial_timeout=10s"
-      CLICKHOUSE_USER: "${CLICKHOUSE_USER:?CLICKHOUSE_USER must be provided by the deployment environment}"
-      CLICKHOUSE_PASSWORD: "${CLICKHOUSE_PASSWORD:?CLICKHOUSE_PASSWORD must be provided by the deployment environment}"
-      CLICKHOUSE_DB: "langfuse"
-      CLICKHOUSE_CLUSTER_ENABLED: "false"
-    depends_on:
-      - db
-      - clickhouse
-
-  db:
+  postgres:
     image: postgres:15-alpine
-    container_name: langfuse-db
     environment:
-      POSTGRES_USER: "${POSTGRES_USER:?POSTGRES_USER must be provided by the deployment environment}"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be provided by the deployment environment}"
-      POSTGRES_DB: postgres
-    volumes:
-      - langfuse-db:/var/lib/postgresql/data
-
+      POSTGRES_USER: ${POSTGRES_USER:-eg_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-enterpriseguard}
+    ports:
+      - "127.0.0.1:5432:5432"
   clickhouse:
-    image: clickhouse/clickhouse-server:23.8
-    container_name: langfuse-clickhouse
+    image: clickhouse/clickhouse-server:latest
     environment:
-      CLICKHOUSE_USER: "${CLICKHOUSE_USER:?CLICKHOUSE_USER must be provided by the deployment environment}"
-      CLICKHOUSE_PASSWORD: "${CLICKHOUSE_PASSWORD:?CLICKHOUSE_PASSWORD must be provided by the deployment environment}"
-      CLICKHOUSE_DB: langfuse
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
     ports:
-      - "8123:8123"
-      - "9000:9000"
-    volumes:
-      - langfuse-clickhouse:/var/lib/clickhouse
-
-  aaac-server:
+      - "127.0.0.1:8123:8123"
+  app:
     build: .
-    container_name: aaac-server
+    environment:
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      SALT: ${SALT}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
     ports:
-      - "8443:8443"
-    secrets:
-      - aaac_tls_cert
-      - aaac_tls_key
-    volumes:
-      - ./tools/hardware_identity.json:/app/tools/hardware_identity.json:ro
-      - ./tools/innocence_chain.json:/app/tools/innocence_chain.json
-      - ./tools/ring_storage.jsonl:/app/tools/ring_storage.jsonl
-      - ~/.enterpriseguard:/root/.enterpriseguard:ro
-    restart: unless-stopped
-
-volumes:
-  langfuse-db:
-  langfuse-clickhouse:
-
-secrets:
-  aaac_tls_cert:
-    file: "${AAAC_TLS_CERT_FILE:?AAAC_TLS_CERT_FILE must point to an operator-provided certificate}"
-  aaac_tls_key:
-    file: "${AAAC_TLS_KEY_FILE:?AAAC_TLS_KEY_FILE must point to an operator-provided private key}"
+      - "127.0.0.1:8443:8443"
