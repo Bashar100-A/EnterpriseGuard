@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import logging
 import os
 import secrets
 import sys
@@ -43,6 +44,7 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8443
 API_VERSION = "0.5.0"
 MAX_BODY_BYTES = 256 * 1024
+_SECURITY_LOGGER = logging.getLogger("enterpriseguard.security")
 
 _HTML_DASHBOARD = """<!DOCTYPE html>
 <html><head><meta charset="utf-8">
@@ -151,6 +153,20 @@ class APIError(Exception):
 
 def _get_api_key() -> str | None:
     return os.environ.get("AAAC_API_KEY")
+
+
+def _security_event(event: str, **fields: object) -> None:
+    """Emit structured security metadata without request secrets."""
+    details = " ".join(
+        f"{key}={value!s}"
+        for key, value in sorted(fields.items())
+        if key not in {"api_key", "authorization", "password", "secret", "token"}
+    )
+    _SECURITY_LOGGER.warning(
+        "security_event=%s%s",
+        event,
+        f" {details}" if details else "",
+    )
 
 
 def _get_data_dir() -> Path:
@@ -343,10 +359,12 @@ class _Handler(BaseHTTPRequestHandler):
     def _check_auth(self) -> bool:
         expected = _get_api_key()
         if not expected:
+            _security_event("configuration_error", setting="AAAC_API_KEY")
             self._send_json(503, {"error": "api_key_not_configured"})
             return False
         provided = self.headers.get("X-ADIE-Key", "")
         if not secrets.compare_digest(provided, expected):
+            _security_event("authentication_failure", path=self._path())
             self._send_json(401, {"error": "unauthorized"})
             return False
         return True
@@ -360,6 +378,7 @@ class _Handler(BaseHTTPRequestHandler):
         try:
             self._route_get()
         except Exception:
+            _security_event("request_failure", method="GET", path=self._path())
             try:
                 self._send_json(500, {"error": "internal"})
             except Exception:
@@ -387,6 +406,7 @@ class _Handler(BaseHTTPRequestHandler):
         try:
             self._route_post()
         except Exception:
+            _security_event("request_failure", method="POST", path=self._path())
             try:
                 self._send_json(500, {"error": "internal"})
             except Exception:
