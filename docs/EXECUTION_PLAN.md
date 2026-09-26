@@ -19,3 +19,8 @@ This document serves as the authoritative execution plan for EnterpriseGuard, co
 | **Phase C Gate** | All Phase C requirements fulfilled | ✅ **PASSED** | **Gate Cleared (Commit: b3e5847)** |
 
 ---
+
+### Authoritative Execution-Plan Exception: P0.9-F
+By owner decision, P0.9-F is a narrowly scoped exception to the general rule against deleting working code.
+`src/enterpriseguard` is the canonical implementation authority. The four explicitly retired root duplicate
+implementations (commit 8ee5e24) must not be restored. Root package compatibility boundaries are preserved.
