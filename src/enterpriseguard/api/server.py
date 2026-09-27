@@ -46,6 +46,28 @@ API_VERSION = "0.5.0"
 MAX_BODY_BYTES = 256 * 1024
 _SECURITY_LOGGER = logging.getLogger("enterpriseguard.security")
 
+_SECURITY_EVENT_FIELDS = {
+    "authentication_failure": frozenset({"path", "request_id"}),
+    "authorization_failure": frozenset({"path", "request_id"}),
+    "configuration_error": frozenset({"setting", "request_id"}),
+    "request_failure": frozenset({"method", "path", "request_id"}),
+}
+_SENSITIVE_LOG_FIELD_NAMES = frozenset(
+    {
+        "api_key",
+        "authorization",
+        "credential",
+        "key",
+        "password",
+        "payload",
+        "private_key",
+        "request_body",
+        "response_body",
+        "secret",
+        "token",
+    }
+)
+
 _HTML_DASHBOARD = """<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <title>ADIE Dashboard</title>
@@ -156,11 +178,17 @@ def _get_api_key() -> str | None:
 
 
 def _security_event(event: str, **fields: object) -> None:
-    """Emit structured security metadata without request secrets."""
+    """Emit only the approved, escaped security-event schema."""
+    allowed_fields = _SECURITY_EVENT_FIELDS.get(event)
+    if allowed_fields is None:
+        raise ValueError(f"unsupported security event: {event}")
+    if set(fields) - allowed_fields:
+        raise ValueError(f"unsupported fields for security event: {event}")
+    if set(fields) & _SENSITIVE_LOG_FIELD_NAMES:
+        raise ValueError("sensitive security-event fields are forbidden")
     details = " ".join(
-        f"{key}={value!s}"
-        for key, value in sorted(fields.items())
-        if key not in {"api_key", "authorization", "password", "secret", "token"}
+        f"{key}={json.dumps(str(fields[key])[:256], ensure_ascii=True)}"
+        for key in sorted(fields)
     )
     _SECURITY_LOGGER.warning(
         "security_event=%s%s",
