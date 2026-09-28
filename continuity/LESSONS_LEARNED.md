@@ -141,6 +141,102 @@ fails, and raw output is posted for verification.
 
 ---
 
+## Lesson 14: Rule 1 is a boundary, not a guideline
+
+**Date:** 2026-09-28
+**Context:** DC-150h.1 protected-directory investigation
+
+While investigating 8 stray files in `adie/` and `intelligence/`,
+the following commands were executed against protected paths:
+
+- `diff <(git show HEAD:root/file) src/file` (implicit read) —
+  proposed by the assistant
+- `sha256sum src/file` (implicit read) — proposed by the assistant
+- `cat src/file` (explicit read) — executed by the owner, after
+  writing `# ممنوع (src محمي)` in the same terminal
+
+**Lesson:**
+
+Rule 1 forbids reading any file inside protected directories. The
+prohibition is **absolute**, not conditional on the content being
+"safe" or "irrelevant". Commands that read by inference (`diff`,
+`sha256sum`, `cmp`, `rsync --dry-run`, editors) violate Rule 1
+exactly as `cat` does.
+
+Both the assistant and the owner are responsible for respecting
+Rule 1. The assistant MUST NOT propose content-reading commands
+against protected paths, even with warnings attached. The owner
+MUST NOT execute such commands even when proposed.
+
+"Safe" reads are a slippery slope: the same logic that permits
+`sha256sum` permits `diff`, which permits `head`, which permits
+`cat`, which permits `Edit`.
+
+**Preventive rules:**
+
+- The assistant MUST refuse to propose any command that implicitly
+  or explicitly reads a protected file.
+- For metadata, use only `git ls-files` or `git cat-file -s`
+  (index-only, no working-tree access).
+- If content verification is truly necessary, request an explicit
+  owner-approved audit path (Rule 15 exception) with written scope.
+- Terminal `history` and chat logs retain exposed content; treat any
+  read as irrevocable.
+- When a violation occurs, document it immediately in
+  `DECISIONS_LOG.md` per Rule 4, including the involved commands
+  and the scope of exposure.
+
+**Related Rule:** `continuity/RULES.md` — Rule 1 (Protected Directories), Rule 15 (Owner Authority)
+
+---
+
+## Lesson 13: Chat-output paste is a write primitive
+
+**Date:** 2026-09-27
+**Context:** Multiple incidents in a single session
+
+During the 2026-09-27 / 2026-09-28 session, terminal output was
+pasted back into the shell on at least six occasions. In three cases
+this created spurious empty files at the repository root:
+
+- `.hidden{display:none}`
+- `authorized.className`
+- `authorized.textContent`
+- `content.textContent`
+- `import`
+- `}`
+
+In other cases, script text fragmented across commands (heredoc
+content interleaving with subsequent prompt input).
+
+**Root cause:** Chat output that includes shell-significant characters
+(`>`, `|`, `<`, `{`, `}`, `(`, `)`) becomes active syntax when pasted
+into a terminal. A line beginning with `>` is interpreted as
+redirection, `|` as a pipe, and so on.
+
+**Lesson:**
+
+Chat output must never be pasted directly into a shell prompt. The
+shell cannot distinguish "quoted text" from "command" once it reaches
+the prompt buffer. Every paste is a potential write primitive.
+
+**Preventive rules:**
+
+- After any paste into a terminal, run `git status --short`
+  immediately to detect spurious files.
+- Prefer `cat > file << 'EOF'` with single-quoted heredoc delimiters
+  (no variable expansion) over raw multi-line pastes.
+- Prefer redirections from files (`< file`) over piping chat text.
+- For long scripts, write to a file first, verify with `wc -l` and
+  `head`, then execute.
+- Never paste a diff or script output containing `>`, `|`, or
+  `{ }` directly; wrap in a file.
+- Treat the terminal history as part of the attack surface.
+
+**Related Rule:** `continuity/RULES.md` — Rule 6 (Atomic Writes), Rule 4 (Raw Evidence)
+
+---
+
 ## Lesson 12: Plans in chat have no authority
 
 **Date:** 2026-09-17
