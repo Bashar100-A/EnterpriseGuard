@@ -1,0 +1,79 @@
+==========================================
+ EnterpriseGuard - Contracts Structure Inspection
+==========================================
+
+--- [1] Detailed Imports (Lines 90-130) ---
+
+
+No prediction contract is allowed to mutate after creation.
+"""
+
+
+from __future__ import annotations
+
+
+# ============================================================================
+# Standard library
+# ============================================================================
+
+import dataclasses
+
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Any, Mapping, Sequence
+
+
+# ============================================================================
+# Module metadata
+# ============================================================================
+
+__all__ = [
+    "PredictionStatus",
+    "PredictionTarget",
+    "PredictionEvidence",
+    "PredictionCandidate",
+    "PredictionRequest",
+    "PredictionResult",
+]
+
+
+# ============================================================================
+# Utility functions
+# ============================================================================
+
+
+def _utc_now() -> datetime:
+
+--- [2] Lines surrounding first class (Lines 300-330) ---
+        )
+
+    try:
+        return tuple(value)
+
+    except TypeError as exc:
+        raise TypeError(
+            f"{field_name} must be a sequence"
+        ) from exc
+
+
+# ============================================================================
+# Prediction status
+# ============================================================================
+
+
+class PredictionStatus(str, Enum):
+    """
+    Lifecycle status of a prediction result.
+    """
+
+    GENERATED = "generated"
+
+    ACCEPTED = "accepted"
+
+    REJECTED = "rejected"
+
+    EXPIRED = "expired"
+
+    INVALID = "invalid"
+

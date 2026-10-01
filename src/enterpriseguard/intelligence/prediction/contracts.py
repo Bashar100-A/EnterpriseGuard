@@ -101,6 +101,11 @@ from __future__ import annotations
 # ============================================================================
 
 import dataclasses
+import hashlib
+import math
+import jcs
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -113,6 +118,8 @@ from typing import Any, Mapping, Sequence
 # ============================================================================
 
 __all__ = [
+    "TypedFeatureSnapshot",
+    "PredictionContract",
     "PredictionStatus",
     "PredictionTarget",
     "PredictionEvidence",
@@ -312,6 +319,59 @@ def _validate_sequence(
 # Prediction status
 # ============================================================================
 
+
+
+
+# ============================================================================
+# Pydantic Immutable Domain Contracts (Phase 2 - JCS Deterministic)
+# ============================================================================
+
+
+class TypedFeatureSnapshot(BaseModel):
+    """
+    Immutable snapshot of feature inputs for prediction.
+    Strictly rejects NaN, Inf, or undefined float values to ensure deterministic hashing.
+    """
+    model_config = ConfigDict(frozen=True)
+
+    snapshot_id: str
+    features: dict[str, Any]
+
+    @field_validator("features")
+    @classmethod
+    def _validate_features(cls, v: dict[str, Any]) -> dict[str, Any]:
+        for k, val in v.items():
+            if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
+                raise ValueError(f"Feature '{k}' contains non-serializable float value (NaN/Inf)")
+        return v
+
+
+class PredictionContract(BaseModel):
+    """
+    Immutable domain contract representing a cryptographically verifiable prediction evidence.
+    """
+    model_config = ConfigDict(frozen=True)
+
+    contract_id: str
+    model_name: str
+    model_version: str
+    feature_snapshot: TypedFeatureSnapshot
+    prediction_value: Any
+    confidence: dict[str, Any]
+    created_at: str
+
+    def canonical_bytes(self) -> bytes:
+        """
+        Returns deterministic RFC 8785 (JCS) JSON bytes representation.
+        """
+        payload = self.model_dump(mode="json")
+        return jcs.canonicalize(payload)
+
+    def canonical_hash(self) -> str:
+        """
+        Computes SHA-256 hash over canonical JCS bytes.
+        """
+        return hashlib.sha256(self.canonical_bytes()).hexdigest()
 
 class PredictionStatus(str, Enum):
     """

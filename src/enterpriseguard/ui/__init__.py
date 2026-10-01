@@ -1,4 +1,4 @@
-"""PyQt6 desktop user interface for EnterpriseGuard."""
+"""PyQt5 desktop user interface for EnterpriseGuard."""
 
 from .app import EnterpriseGuardUI
 

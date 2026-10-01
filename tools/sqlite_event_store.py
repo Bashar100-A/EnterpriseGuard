@@ -32,7 +32,7 @@ class SQLiteEventStore:
             conn.execute("PRAGMA mmap_size = 268435456;")
             conn.execute("PRAGMA cache_size = -64000;")
             conn.execute("PRAGMA temp_store = MEMORY;")
-            conn.execute("PRAGMA wal_autocheckpoint = 100000;")
+            conn.execute("PRAGMA wal_autocheckpoint = 10000;")
             
             self._local.conn = conn
             

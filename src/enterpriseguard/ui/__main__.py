@@ -1,6 +1,6 @@
 import sys
 import logging
-from PyQt6.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication
 from enterpriseguard.ui.app import EnterpriseGuardUI
 
 from enterpriseguard.intelligence.dashboard_service import DashboardService

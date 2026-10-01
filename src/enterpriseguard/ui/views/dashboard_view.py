@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import (
+from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import (
 	QGridLayout,
 	QLabel,
 	QPushButton,

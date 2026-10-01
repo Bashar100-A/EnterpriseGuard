@@ -1,0 +1,137 @@
+==========================================
+ EnterpriseGuard - Inspection Report
+ Date: Wed Sep 30 12:13:33 PM UTC 2026
+==========================================
+
+--- [1] Environment & Dependencies Check ---
+Pydantic version: 2.13.5
+JCS status: Installed
+
+--- [2] Git Working Tree Status ---
+ M docker-compose.yml
+ M pyproject.toml
+ M requirements.txt
+ M src/enterpriseguard/intelligence/training/model_loader.py
+ M src/enterpriseguard/ui/__init__.py
+ M src/enterpriseguard/ui/__main__.py
+ M src/enterpriseguard/ui/app.py
+ M src/enterpriseguard/ui/views/dashboard_view.py
+ M src/enterpriseguard/ui/views/integrity_view.py
+ M src/enterpriseguard/ui/views/policy_view.py
+ M tests/test_ui.py
+ M tools/sovereign_http_server.py
+ M tools/sqlite_event_store.py
+?? .trunk/
+?? =2.0
+?? certs/
+?? collect_info.sh
+?? collect_report.sh
+?? data/
+?? docs/AUDIT_PLAN_PHASE_2.md
+?? enterpriseguard/tools/
+?? hardware_identity.json
+?? inspection_report.txt
+?? installl.sh
+?? model_loader.py
+?? scripts/benchmarks/c2_sqlite_store/
+?? scripts/benchmarks/measure_percentiles.py
+?? src/enterpriseguard/adie/canonicalization.py
+?? src/enterpriseguard/intelligence/ai_diagnostics.py
+?? src/enterpriseguard/intelligence/attack_analyzer.py
+?? src/enterpriseguard/intelligence/rag_system.py
+?? src/enterpriseguard/intelligence/training/test_model_loader.py
+?? src/enterpriseguard/sdk/canonicalization.py
+?? src/enterpriseguard/sdk/key_lifecycle.py
+?? tests/test_aaac_cli.py
+?? tests/test_aaac_connector.py
+?? tests/test_aaac_security_pipeline.py
+?? tests/test_adie_canonicalization.py
+?? tests/test_adie_key_lifecycle.py
+?? tests/test_alerts_monitor.py
+?? tests/test_behavior_monitor_advanced.py
+?? tests/test_intelligence_system.py
+?? tests/test_model_loader.py
+?? tests/test_permission_control_advanced.py
+?? tests/test_time_drift.py
+?? tools/run_canonical_d1_simulation.py
+?? tools/run_canonical_sdk_d1_simulation.py
+?? tools/run_d1_pilot_simulation.py
+?? "\330\247\331\204\330\256\330\267\331\210 2 .md"
+
+--- [3] Imports in prediction/contracts.py ---
+"""
+EnterpriseGuard - ADIE Prediction Contracts
+============================================
+
+Adaptive Defense Intelligence Engine (ADIE)
+
+Prediction Domain Contracts
+----------------------------
+
+This module defines the immutable domain contracts used by the
+ADIE prediction layer.
+
+Architecture
+------------
+
+    EnterpriseState
+          |
+          v
+    Prediction Input
+          |
+          v
+    Prediction Engine
+          |
+          v
+    Prediction Result
+
+--- [4] Defined Classes in prediction/contracts.py ---
+316:class PredictionStatus(str, Enum):
+338:class PredictionTarget:
+394:class PredictionEvidence:
+459:class PredictionCandidate:
+585:class PredictionRequest:
+687:class PredictionResult:
+1430:    # Test 20: dataclass contract
+
+--- [5] Tail of prediction/contracts.py ---
+
+        print(
+            "[PASS] Error validation"
+        )
+
+        print(
+            "[PASS] Domain-layer isolation"
+        )
+
+        print("=" * 70)
+
+        print(
+            "SELF-TEST PASSED"
+        )
+
+        print("=" * 70)
+
+    except AssertionError as exc:
+
+        print(
+            "[FAIL] Assertion error:"
+        )
+
+        print(
+            exc
+        )
+
+        raise SystemExit(1)
+
+    except Exception as exc:
+
+        print(
+            "[FAIL] Unexpected error:"
+        )
+
+        print(
+            exc
+        )
+
+        raise SystemExit(1)

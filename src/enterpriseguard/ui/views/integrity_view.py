@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QTextEdit, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QHBoxLayout, QPushButton, QTextEdit, QVBoxLayout, QWidget
 
 
 class IntegrityView(QWidget):

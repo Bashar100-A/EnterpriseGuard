@@ -1,25 +1,45 @@
-version: '3.8'
+secrets:
+  aaac_tls_cert:
+    file: ${AAAC_TLS_CERT_FILE:?AAAC_TLS_CERT_FILE must be provided by the deployment
+      environment}
+  aaac_tls_key:
+    file: ${AAAC_TLS_KEY_FILE:?AAAC_TLS_KEY_FILE must be provided by the deployment
+      environment}
 services:
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be provided by the deployment environment}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be provided by the deployment environment}
-      POSTGRES_DB: ${POSTGRES_DB:-enterpriseguard}
-    ports:
-      - "127.0.0.1:5432:5432"
-  clickhouse:
-    image: clickhouse/clickhouse-server:latest
-    environment:
-      CLICKHOUSE_USER: ${CLICKHOUSE_USER:?CLICKHOUSE_USER must be provided by the deployment environment}
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?CLICKHOUSE_PASSWORD must be provided by the deployment environment}
-    ports:
-      - "127.0.0.1:8123:8123"
   app:
     build: .
+    command: python3 tools/sovereign_http_server.py --cert /run/secrets/aaac_tls_cert
+      --key /run/secrets/aaac_tls_key --host 0.0.0.0 --port 8443
     environment:
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET must be provided by the deployment environment}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be provided by the deployment
+        environment}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET must be provided by the
+        deployment environment}
       SALT: ${SALT:?SALT must be provided by the deployment environment}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be provided by the deployment environment}
     ports:
-      - "127.0.0.1:8443:8443"
+    - 127.0.0.1:8443:8443
+    secrets:
+    - aaac_tls_cert
+    - aaac_tls_key
+    volumes:
+    - ./tools:/app/tools
+    - ./hardware_identity.json:/app/hardware_identity.json
+  clickhouse:
+    environment:
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?CLICKHOUSE_PASSWORD must be provided
+        by the deployment environment}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:?CLICKHOUSE_USER must be provided by the
+        deployment environment}
+    image: clickhouse/clickhouse-server:22.3-alpine
+    ports:
+    - 127.0.0.1:8123:8123
+  postgres:
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-enterpriseguard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be provided by
+        the deployment environment}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be provided by the deployment
+        environment}
+    image: postgres:15-alpine
+    ports:
+    - 127.0.0.1:5432:5432

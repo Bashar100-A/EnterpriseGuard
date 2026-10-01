@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from PyQt6.QtWidgets import QFormLayout, QLabel, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QFormLayout, QLabel, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 
 
 class PolicyView(QWidget):
