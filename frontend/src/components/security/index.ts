@@ -20,6 +20,9 @@ export type { EvidenceIndicatorProps } from './EvidenceIndicator'
 export { TechnicalIdentifier } from './TechnicalIdentifier'
 export type { TechnicalIdentifierProps, TruncateMode } from './TechnicalIdentifier'
 
+export { TrustChainVisual } from './TrustChainVisual'
+export type { TrustChainVisualProps } from './TrustChainVisual'
+
 export { DecisionChain } from './DecisionChain'
 export type { DecisionChainProps, ChainStage, ChainStageKey, ChainTier } from './DecisionChain'
 

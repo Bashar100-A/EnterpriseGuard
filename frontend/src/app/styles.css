@@ -2373,3 +2373,182 @@ body {
 .eg-health__services {
   margin-block-end: var(--eg-space-3);
 }
+
+/* ------------------------------------------------------------
+   TrustChainVisual (F.1)
+   A cinematic Merkle visualization. Leaves converge to a root.
+   ------------------------------------------------------------ */
+
+.eg-trust-chain {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: var(--eg-space-3);
+  padding: var(--eg-space-4);
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: linear-gradient(
+    180deg,
+    var(--eg-bg-surface-1) 0%,
+    var(--eg-bg) 100%
+  );
+}
+
+.eg-trust-chain__leaves {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--eg-space-3);
+}
+
+.eg-trust-chain__leaf {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--eg-radius-sm);
+  background: var(--eg-signal-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--eg-signal-blue) 20%, transparent);
+  transform: rotate(45deg);
+}
+
+.eg-trust-chain__leaf[data-empty="true"] {
+  background: var(--eg-unknown-gray);
+  opacity: 0.35;
+  box-shadow: none;
+}
+
+.eg-trust-chain__convergence {
+  position: relative;
+  height: 40px;
+}
+
+.eg-trust-chain__branch {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--eg-signal-blue) 60%, transparent) 0%,
+    color-mix(in srgb, var(--eg-signal-blue) 20%, transparent) 100%
+  );
+  transform-origin: top center;
+}
+
+.eg-trust-chain__root-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--eg-space-1);
+}
+
+.eg-trust-chain__root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+}
+
+.eg-trust-chain__root-empty {
+  font-family: var(--eg-font-mono);
+  font-size: 12px;
+  color: var(--eg-unknown-gray);
+  padding: var(--eg-space-1) var(--eg-space-3);
+  border: 1px dashed var(--eg-unknown-gray);
+  border-radius: var(--eg-radius-sm);
+}
+
+.eg-trust-chain__root-caption {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--eg-text-muted);
+}
+
+.eg-trust-chain__sep { margin-inline: 4px; }
+.eg-trust-chain__height { font-family: var(--eg-font-mono); }
+
+.eg-trust-chain--compact .eg-trust-chain__leaves { gap: var(--eg-space-2); }
+.eg-trust-chain--compact .eg-trust-chain__leaf { width: 8px; height: 8px; }
+.eg-trust-chain--compact .eg-trust-chain__convergence { height: 24px; }
+
+/* ------------------------------------------------------------
+   SibbPage (F.1)
+   ------------------------------------------------------------ */
+
+.eg-sibb__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--eg-space-3);
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-sibb__visual {
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-sibb__visual-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-block-end: var(--eg-space-2);
+}
+
+.eg-sibb__visual-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--eg-text-primary);
+}
+
+.eg-sibb__visual-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: var(--eg-text-muted);
+}
+
+.eg-sibb__integrity {
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-bg-surface-1);
+  margin-block-end: var(--eg-space-4);
+  overflow: hidden;
+}
+
+.eg-sibb__integrity-header {
+  padding: var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--eg-text-secondary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.eg-sibb__integrity-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 1px;
+  background: var(--eg-border-subtle);
+}
+
+.eg-sibb__integrity-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--eg-space-2);
+  padding: var(--eg-space-3);
+  background: var(--eg-bg-surface-1);
+}
+
+.eg-sibb__integrity-name {
+  font-size: 13px;
+  color: var(--eg-text-primary);
+  font-weight: 500;
+}
+
+.eg-sibb__checkpoints {
+  margin-block-end: var(--eg-space-3);
+}

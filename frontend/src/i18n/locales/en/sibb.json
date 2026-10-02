@@ -1,0 +1,36 @@
+{
+  "title": "SIBB Trust Core",
+  "description": "The integrity foundation — baseline, chain, signatures, checkpoints",
+  "metrics": {
+    "label": "Trust Core indicators",
+    "chainHeight": "Chain Height",
+    "baselineState": "Baseline State",
+    "lastCheckpoint": "Last Checkpoint",
+    "signedItems": "Signed Items"
+  },
+  "merkle": {
+    "title": "Merkle Chain",
+    "subtitle": "Cryptographic commitments from baseline to present",
+    "rootLabel": "Current Root",
+    "leafLabel": "Leaf",
+    "rootCaption": "root",
+    "empty": "No chain data in this scope",
+    "rootUnavailable": "Root not established"
+  },
+  "checkpoints": {
+    "caption": "Recent Checkpoints",
+    "id": "Checkpoint ID",
+    "height": "Height",
+    "state": "State",
+    "createdAt": "Created",
+    "empty": "No checkpoints recorded in this scope"
+  },
+  "integrity": {
+    "label": "Integrity Status",
+    "baseline": "Baseline",
+    "chain": "Chain",
+    "signature": "Signature",
+    "storage": "Storage"
+  },
+  "backendNote": "Backend integration comes in a later phase. SIBB state is not fabricated. Every indicator remains unknown until the trust core supplies a cryptographic proof."
+}
