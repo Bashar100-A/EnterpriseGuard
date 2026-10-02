@@ -16,7 +16,7 @@ export interface DataStateProps {
   state: DataStateValue
   children?: ReactNode
   /** Called when the user clicks Retry (only shown in error state). */
-  onRetry?: () => void
+  onRetry?: (() => void) | undefined
   /** Optional custom retry label. */
   retryLabel?: ReactNode
   /** Optional custom message for any state. */
@@ -26,7 +26,7 @@ export interface DataStateProps {
 interface PlaceholderProps {
   title: string
   message: string
-  onRetry?: () => void
+  onRetry?: (() => void) | undefined
   retryLabel?: ReactNode
   tone?: 'neutral' | 'warning' | 'critical'
 }
@@ -43,11 +43,7 @@ function Placeholder({
       <div className="eg-datastate__title">{title}</div>
       <div className="eg-datastate__message">{message}</div>
       {onRetry !== undefined && (
-        <button
-          type="button"
-          className="eg-datastate__action"
-          onClick={onRetry}
-        >
+        <button type="button" className="eg-datastate__action" onClick={onRetry}>
           {retryLabel ?? 'Retry'}
         </button>
       )}
@@ -74,7 +70,11 @@ export function DataState({
   const { t } = useTranslation('states')
 
   if (state === 'loaded') {
-    return <div className="eg-datastate" data-state="loaded">{children}</div>
+    return (
+      <div className="eg-datastate" data-state="loaded">
+        {children}
+      </div>
+    )
   }
 
   if (state === 'partial') {
@@ -95,8 +95,8 @@ export function DataState({
 
   const title = t(`dataState.${state}.title`) as string
   const msg = message ?? (t(`dataState.${state}.message`) as string)
-  let tone: PlaceholderProps['tone'] = 'neutral'
 
+  let tone: PlaceholderProps['tone'] = 'neutral'
   if (state === 'error') {
     tone = 'critical'
   } else if (state === 'stale' || state === 'unavailable') {
