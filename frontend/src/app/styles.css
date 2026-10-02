@@ -114,10 +114,6 @@ body {
    AppShell in Phase C)
    ------------------------------------------------------------ */
 
-.eg-root {
-  padding: var(--eg-space-4);
-}
-
 .eg-title {
   color: var(--eg-trust-emerald);
   font-size: var(--eg-font-size-title);
@@ -142,4 +138,78 @@ body {
   font-family: var(--eg-font-mono);
   direction: ltr;
   unicode-bidi: embed;
+}
+
+/* ------------------------------------------------------------
+   AppShell layout (Phase C.1)
+   Direction-aware via CSS logical properties (inline-start/end).
+   ------------------------------------------------------------ */
+
+.eg-shell {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  width: 100%;
+  background: var(--eg-bg);
+  color: var(--eg-text-primary);
+  overflow: hidden;
+}
+
+.eg-shell__skip-link {
+  position: absolute;
+  inset-block-start: -100px;
+  inset-inline-start: var(--eg-space-2);
+  padding: var(--eg-space-2) var(--eg-space-3);
+  background: var(--eg-bg-surface-2);
+  color: var(--eg-text-primary);
+  border: 1px solid var(--eg-border-strong);
+  border-radius: var(--eg-radius-sm);
+  text-decoration: none;
+  z-index: 100;
+  transition: inset-block-start 120ms ease;
+}
+
+.eg-shell__skip-link:focus {
+  inset-block-start: var(--eg-space-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eg-shell__skip-link {
+    transition: none;
+  }
+}
+
+.eg-shell__topbar {
+  background: var(--eg-bg-surface-1);
+  border-bottom: 1px solid var(--eg-border-subtle);
+}
+
+.eg-shell__body {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.eg-shell__nav {
+  background: var(--eg-bg-surface-1);
+  border-inline-end: 1px solid var(--eg-border-subtle);
+  overflow-y: auto;
+}
+
+.eg-shell__workspace {
+  overflow-y: auto;
+  padding: var(--eg-space-4);
+  min-width: 0;
+  outline: none;
+}
+
+.eg-shell__workspace:focus {
+  outline: none;
+}
+
+.eg-shell__assurance {
+  background: var(--eg-bg-surface-1);
+  border-inline-start: 1px solid var(--eg-border-subtle);
+  overflow-y: auto;
 }
