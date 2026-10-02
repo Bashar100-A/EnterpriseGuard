@@ -1,0 +1,39 @@
+{
+  "title": "Confirm dangerous action",
+  "severity": {
+    "elevated": "Elevated",
+    "high": "High",
+    "critical": "Critical"
+  },
+  "sections": {
+    "intent": "Intent",
+    "explanation": "Why",
+    "impact": "Impact",
+    "authorityRequired": "Required authority",
+    "authorityBackend": "Final authorization",
+    "confirmation": "Confirmation"
+  },
+  "impacts": {
+    "none": "No specific impacts documented."
+  },
+  "acknowledgment": {
+    "label": "I understand the impact of this action",
+    "required": "You must acknowledge the impact before continuing."
+  },
+  "phrase": {
+    "instruction": "Type \"{{phrase}}\" exactly to continue",
+    "placeholder": "Type the confirmation phrase",
+    "mismatch": "The typed phrase does not match."
+  },
+  "actions": {
+    "cancel": "Cancel",
+    "request": "Request authorization"
+  },
+  "note": {
+    "backend": "Confirming sends this request to the backend, which decides whether to authorize and execute. The interface does not authorize actions on its own."
+  },
+  "blocked": {
+    "acknowledge": "Acknowledgement required",
+    "phrase": "Confirmation phrase required"
+  }
+}

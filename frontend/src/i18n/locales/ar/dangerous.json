@@ -1,0 +1,39 @@
+{
+  "title": "تأكيد إجراء خطِر",
+  "severity": {
+    "elevated": "مرتفع",
+    "high": "عالي",
+    "critical": "حرج"
+  },
+  "sections": {
+    "intent": "النية",
+    "explanation": "السبب",
+    "impact": "الأثر",
+    "authorityRequired": "الصلاحية المطلوبة",
+    "authorityBackend": "التفويض النهائي",
+    "confirmation": "التأكيد"
+  },
+  "impacts": {
+    "none": "لم يتم توثيق آثار محددة."
+  },
+  "acknowledgment": {
+    "label": "أفهم أثر هذا الإجراء",
+    "required": "يجب الإقرار بالأثر قبل المتابعة."
+  },
+  "phrase": {
+    "instruction": "اكتب \"{{phrase}}\" بالضبط للمتابعة",
+    "placeholder": "اكتب عبارة التأكيد",
+    "mismatch": "العبارة المكتوبة غير مطابقة."
+  },
+  "actions": {
+    "cancel": "إلغاء",
+    "request": "طلب التفويض"
+  },
+  "note": {
+    "backend": "التأكيد يُرسل الطلب إلى الخادم، الذي يقرر ما إذا كان سيفوّض وينفّذ. الواجهة لا تفوّض الإجراءات بنفسها."
+  },
+  "blocked": {
+    "acknowledge": "الإقرار مطلوب",
+    "phrase": "عبارة التأكيد مطلوبة"
+  }
+}
