@@ -58,3 +58,126 @@ Unknown never becomes Healthy silently.
 - npm run test
 - npm run build
 - npm run coverage (informational)
+
+---
+
+## Phase D Additions
+
+### TypeScript strictness
+
+- `noUncheckedIndexedAccess` makes `Record<string, number>` unsafe to increment.
+  Use a typed interface instead:
+  ```ts
+  // ❌ fails under strict
+  const calls: Record<string, number> = { a: 0 }
+  calls.a++  // number | undefined
+
+  // ✅ explicit shape
+  interface Calls { a: number }
+  const calls: Calls = { a: 0 }
+  calls.a += 1
+ETE"
+fi
+
+echo
+echo "Report: OUT"echo"Baseline:OUT"echo"Baseline:BASELINE_FILE"
+
+---
+
+## Phase D Additions
+
+### TypeScript strictness
+
+- `noUncheckedIndexedAccess` makes `Record<string, number>` unsafe to increment.
+  Use a typed interface instead:
+  ```ts
+  // fails under strict
+  const calls: Record<string, number> = { a: 0 }
+  calls.a++  // number | undefined
+
+  // explicit shape
+  interface Calls { a: number }
+  const calls: Calls = { a: 0 }
+  calls.a += 1
+  ```
+
+- `exactOptionalPropertyTypes` requires `prop?: T | undefined` for
+  properties that may be explicitly passed `undefined`:
+  ```ts
+  // fails
+  interface P { onRetry?: () => void }
+  <Comp onRetry={maybeUndefined} />
+
+  // explicit
+  interface P { onRetry?: (() => void) | undefined }
+  ```
+
+### Test helpers
+
+- Never pass a bare arrow function as a default handler in test helpers.
+  If any test asserts `.toHaveBeenCalled*` on it, the assertion fails with
+  "not a spy or a call to a spy".
+  ```ts
+  // bad
+  const onClose = handlers.onClose ?? (() => {})
+
+  // good
+  const onClose = handlers.onClose ?? vi.fn()
+  ```
+
+- When a word can appear in two places (label + state badge),
+  use `getAllByText(...)` instead of `getByText(...)` to avoid
+  "multiple elements found" failures.
+
+- When two texts are similar but distinct (e.g. "Stale" vs "Chart data is stale"),
+  use the full exact string in `getByText(...)` — never `/stale/i` which matches both.
+
+- `getByRole(\"button\", { name: X })` matches both the visible label and
+  `aria-label`. If a button has a visible label AND another button has the
+  same accessible name via `aria-label`, use a class selector instead:
+  ```ts
+  const xBtn = document.querySelector(\".eg-danger__close\")
+  ```
+
+### i18n key hygiene
+
+- For any component that renders both a short state badge and a
+  long placeholder message, keep them in separate key groups:
+  ```json
+  {
+    \"chart\": {
+      \"state\": { \"empty\": \"Empty\" },
+      \"frame\": { \"empty\": \"No chart data available\" }
+    }
+  }
+  ```
+  This prevents DOM text collisions that break `getByText`.
+
+- When adding a state-driven component, always map every value of the
+  source union (`DataStateValue`, `ChartState`, etc.) in the locale files.
+  Missing keys silently fall back to the key name.
+
+### Removed / deprecated
+
+- `within` from Testing Library should only be imported when actually used —
+  ESLint flags unused imports as errors in this project.
+
+### Phase D primitives (for reference)
+
+| File | Purpose |
+|---|---|
+| `components/security/tone.ts` | `SemanticTone` contract + all mappings |
+| `components/security/StatusBadge.tsx` | Categorical status (18 keys to 5 tones) |
+| `components/security/SeverityBadge.tsx` | Ordered severity (5 levels to 3 tones) |
+| `components/security/StateIndicator.tsx` | Dot + label, compact |
+| `components/security/VerificationBadge.tsx` | Evidence proof state |
+| `components/security/EnvironmentBadge.tsx` | Deployment environment (no tone) |
+| `components/security/EvidenceIndicator.tsx` | Evidence state + optional count |
+| `components/security/TechnicalIdentifier.tsx` | Mono, LTR-forced, copyable |
+| `components/states/DataState.tsx` | Honest data wrapper (9 states) |
+| `components/data-display/MetricCard.tsx` | Full-provenance metric |
+| `components/data-display/ChartFrame.tsx` | Chart wrapper (8 states) |
+| `components/data-display/EnterpriseTable.tsx` | Generic table primitive |
+| `components/command/CommandPalette.tsx` | Ctrl+K palette |
+| `components/command/useCommandPalette.ts` | Palette state + shortcut |
+| `components/dangerous/DangerousActionDialog.tsx` | Intent to Impact to Authority to Confirm |
