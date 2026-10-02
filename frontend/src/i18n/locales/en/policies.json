@@ -1,0 +1,30 @@
+{
+  "title": "Policies",
+  "description": "The rules that govern decisions — catalog, versions, and coverage",
+  "metrics": {
+    "label": "Policy indicators",
+    "active": "Active Policies",
+    "draft": "Drafts",
+    "expiring": "Expiring Soon",
+    "conflicts": "Conflicts"
+  },
+  "table": {
+    "caption": "Policy Catalog",
+    "id": "Policy ID",
+    "name": "Name",
+    "scope": "Scope",
+    "state": "State",
+    "effectiveAt": "Effective",
+    "empty": "No policies configured in this scope"
+  },
+  "versions": {
+    "caption": "Recent Version Activity",
+    "policyId": "Policy ID",
+    "version": "Version",
+    "author": "Author",
+    "state": "State",
+    "createdAt": "Created",
+    "empty": "No version activity in this scope"
+  },
+  "backendNote": "Backend integration comes in a later phase. No policies are fabricated. This page reflects the honest current state."
+}
