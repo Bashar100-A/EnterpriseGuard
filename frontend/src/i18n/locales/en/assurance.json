@@ -1,0 +1,30 @@
+{
+  "title": "Assurance",
+  "toggle": {
+    "label": "Assurance panel",
+    "open": "Open assurance panel",
+    "close": "Close assurance panel"
+  },
+  "sections": {
+    "systemState": "System State",
+    "dataFreshness": "Data Freshness",
+    "evidenceState": "Evidence State",
+    "verification": "Verification",
+    "permissions": "Permissions",
+    "auditReference": "Audit Reference"
+  },
+  "values": {
+    "unknown": "Unknown",
+    "unavailable": "Unavailable",
+    "notConnected": "Not Connected",
+    "notEvaluated": "Not Evaluated",
+    "notAuthorized": "Not Authorized",
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "stale": "Stale",
+    "fresh": "Fresh"
+  },
+  "hint": {
+    "noBackend": "Backend not connected — values reflect real connection state."
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "title": "الضمان",
+  "toggle": {
+    "label": "لوحة الضمان",
+    "open": "فتح لوحة الضمان",
+    "close": "إغلاق لوحة الضمان"
+  },
+  "sections": {
+    "systemState": "حالة النظام",
+    "dataFreshness": "حداثة البيانات",
+    "evidenceState": "حالة الأدلة",
+    "verification": "التحقق",
+    "permissions": "الصلاحيات",
+    "auditReference": "المرجع التدقيقي"
+  },
+  "values": {
+    "unknown": "غير معروف",
+    "unavailable": "غير متاح",
+    "notConnected": "غير متصل",
+    "notEvaluated": "لم يتم التقييم",
+    "notAuthorized": "غير مصرّح",
+    "verified": "موثّق",
+    "unverified": "غير موثّق",
+    "stale": "قديم",
+    "fresh": "حديث"
+  },
+  "hint": {
+    "noBackend": "الخادم غير متصل — القيم تعكس الحالة الفعلية للاتصال."
+  }
+}

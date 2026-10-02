@@ -4,11 +4,6 @@ import { useTranslation } from 'react-i18next'
 import i18n, { changeLanguage, type SupportedLanguage } from '../../i18n'
 import { useTheme, THEME_MODES, type ThemeMode } from '../../theme'
 
-/**
- * Environment label derived from Vite's build mode. This is a real value,
- * not fake telemetry: Vite sets MODE to 'development' for `vite dev` and
- * 'production' for `vite build`.
- */
 function resolveEnvironmentKey(): 'production' | 'development' | 'test' | 'unknown' {
   const mode = import.meta.env.MODE
   if (mode === 'production') return 'production'
@@ -71,20 +66,20 @@ function ThemeSwitcher({ mode, onCycle, label }: ThemeSwitcherProps): ReactEleme
 }
 
 export interface TopbarProps {
-  /** Current workspace breadcrumb (route path). Defaults to '/'. */
   currentPath?: string
+  /** Whether the assurance rail is currently open. */
+  assuranceOpen?: boolean
+  /** Called when the user toggles the assurance panel. */
+  onToggleAssurance?: () => void
 }
 
-/**
- * Topbar — global command bar (spec §15).
- * Left: workspace breadcrumb. Center: search trigger (visual, no behavior).
- * Right: environment badge, language switcher, theme switcher, user slot.
- *
- * No business logic. No operational data. No fake telemetry.
- * All state is either real (Vite mode, i18n, theme) or explicitly 'Unknown'.
- */
-export function Topbar({ currentPath = '/' }: TopbarProps): ReactElement {
+export function Topbar({
+  currentPath = '/',
+  assuranceOpen = false,
+  onToggleAssurance,
+}: TopbarProps): ReactElement {
   const { t } = useTranslation('topbar')
+  const { t: tA } = useTranslation('assurance')
   const { mode, setMode } = useTheme()
 
   const currentLang: SupportedLanguage = i18n.language === 'ar' ? 'ar' : 'en'
@@ -100,9 +95,8 @@ export function Topbar({ currentPath = '/' }: TopbarProps): ReactElement {
     setMode(next)
   }, [mode, setMode])
 
-  // Very small breadcrumb derivation — no routing yet.
   const pathSegment = currentPath === '/' ? 'overview' : currentPath.replace(/^\//, '')
-  const breadcrumbLabel = t(`breadcrumb.home`)
+  const breadcrumbLabel = t('breadcrumb.home')
 
   return (
     <div className="eg-topbar">
@@ -149,6 +143,20 @@ export function Topbar({ currentPath = '/' }: TopbarProps): ReactElement {
         >
           {t('systemState.unknown')}
         </span>
+
+        {onToggleAssurance !== undefined && (
+          <button
+            type="button"
+            className="eg-topbar__icon-btn"
+            onClick={onToggleAssurance}
+            aria-label={assuranceOpen ? tA('toggle.close') : tA('toggle.open')}
+            aria-pressed={assuranceOpen}
+            title={assuranceOpen ? tA('toggle.close') : tA('toggle.open')}
+            data-assurance-open={assuranceOpen}
+          >
+            <span aria-hidden="true">◇</span>
+          </button>
+        )}
 
         <LanguageSwitcher
           current={currentLang}

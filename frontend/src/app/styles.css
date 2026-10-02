@@ -653,3 +653,129 @@ body {
 }
 
 .eg-context__value--muted { color: var(--eg-unknown-gray); }
+
+/* ------------------------------------------------------------
+   AssuranceRail (Phase C.5)
+   Contextual, collapsible, on inline-end side of the shell.
+   ------------------------------------------------------------ */
+
+.eg-shell__assurance {
+  width: 280px;
+  border-inline-start: 1px solid var(--eg-border-subtle);
+  background: var(--eg-bg-surface-1);
+  overflow-y: auto;
+}
+
+.eg-assurance {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: 13px;
+}
+
+.eg-assurance__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+}
+
+.eg-assurance__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--eg-text-secondary);
+}
+
+.eg-assurance__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  color: var(--eg-text-secondary);
+  border: 1px solid transparent;
+  border-radius: var(--eg-radius-sm);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.eg-assurance__close:hover {
+  background: var(--eg-bg-surface-2);
+  color: var(--eg-text-primary);
+}
+
+.eg-assurance__close:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: 1px;
+}
+
+.eg-assurance__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--eg-space-2) 0;
+}
+
+.eg-assurance__section {
+  padding: var(--eg-space-2) var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+}
+
+.eg-assurance__section:last-of-type { border-block-end: none; }
+
+.eg-assurance__section-title {
+  margin: 0 0 var(--eg-space-1);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--eg-text-muted);
+}
+
+.eg-assurance__section-body { min-height: 20px; }
+
+.eg-assurance__value {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--eg-radius-sm);
+  border: 1px solid var(--eg-border-subtle);
+  background: var(--eg-bg-surface-2);
+  color: var(--eg-text-secondary);
+}
+
+.eg-assurance__value--unknown,
+.eg-assurance__value--unavailable,
+.eg-assurance__value--notConnected,
+.eg-assurance__value--notEvaluated,
+.eg-assurance__value--notAuthorized {
+  color: var(--eg-unknown-gray);
+  border-color: var(--eg-unknown-gray);
+}
+
+.eg-assurance__value--verified,
+.eg-assurance__value--fresh {
+  color: var(--eg-trust-emerald);
+  border-color: var(--eg-trust-emerald);
+}
+
+.eg-assurance__value--unverified,
+.eg-assurance__value--stale {
+  color: var(--eg-warning-amber);
+  border-color: var(--eg-warning-amber);
+}
+
+.eg-assurance__hint {
+  padding: var(--eg-space-2) var(--eg-space-3);
+  border-block-start: 1px solid var(--eg-border-subtle);
+  color: var(--eg-text-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}

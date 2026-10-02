@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { AppShell } from '../layouts/AppShell'
 import { NavigationRail, useRailExpanded } from '../components/navigation'
 import { Topbar } from '../components/topbar'
+import { AssuranceRail, useAssuranceOpen } from '../components/assurance'
 import { ContextStrip, WorkspaceHeader } from '../components/workspace'
 import type { NavigationItem } from '../components/navigation'
 
@@ -15,7 +16,8 @@ function resolveEnvironment(): string {
 }
 
 export default function App(): ReactElement {
-  const [expanded, setExpanded] = useRailExpanded()
+  const [navExpanded, setNavExpanded] = useRailExpanded()
+  const [assuranceOpen, setAssuranceOpen] = useAssuranceOpen()
   const [activePath, setActivePath] = useState('/')
   const { t } = useTranslation('workspace')
 
@@ -23,22 +25,27 @@ export default function App(): ReactElement {
     setActivePath(item.to)
   }
 
-  // Breadcrumb shows only the path prefix; the current page identity
-  // is rendered as the h1 title below. This avoids duplicating the
-  // page name in both places (and keeps getByText unambiguous).
   const breadcrumb = [{ label: t('breadcrumb.home'), current: true }]
 
   return (
     <AppShell
-      topbar={<Topbar currentPath={activePath} />}
+      topbar={
+        <Topbar
+          currentPath={activePath}
+          assuranceOpen={assuranceOpen}
+          onToggleAssurance={() => setAssuranceOpen(!assuranceOpen)}
+        />
+      }
       navigationRail={
         <NavigationRail
-          expanded={expanded}
-          onToggleExpanded={() => setExpanded(!expanded)}
+          expanded={navExpanded}
+          onToggleExpanded={() => setNavExpanded(!navExpanded)}
           activePath={activePath}
           onNavigate={handleNavigate}
         />
       }
+      assuranceOpen={assuranceOpen}
+      assuranceRail={<AssuranceRail onClose={() => setAssuranceOpen(false)} />}
     >
       <WorkspaceHeader
         breadcrumb={breadcrumb}
