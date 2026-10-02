@@ -1,0 +1,13 @@
+{
+  "boundary": {
+    "title": "Something went wrong",
+    "message": "The workspace could not be rendered.",
+    "reference": "Reference",
+    "retry": "Retry",
+    "diagnostics": "View Diagnostics"
+  },
+  "notFound": {
+    "title": "Not Found",
+    "message": "The requested resource does not exist."
+  }
+}

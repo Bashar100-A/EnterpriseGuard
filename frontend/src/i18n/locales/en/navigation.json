@@ -1,0 +1,32 @@
+{
+  "groups": {
+    "command": "Command",
+    "intelligence": "Intelligence",
+    "trust": "Trust",
+    "govern": "Govern",
+    "operate": "Operate",
+    "assurance": "Assurance",
+    "administration": "Administration"
+  },
+  "items": {
+    "overview": "Overview",
+    "securityOperations": "Security Operations",
+    "threatIntelligence": "Threat Intelligence",
+    "decisionIntelligence": "Decision Intelligence",
+    "evidence": "Evidence",
+    "provenance": "Provenance",
+    "sibbTrustCore": "SIBB Trust Core",
+    "policies": "Policies",
+    "governance": "Governance",
+    "approvals": "Approvals",
+    "executionManifests": "Execution Manifests",
+    "systemHealth": "System Health",
+    "inspection": "Inspection",
+    "maintenance": "Maintenance",
+    "analytics": "Analytics",
+    "reports": "Reports",
+    "audit": "Audit",
+    "usersAccess": "Users & Access",
+    "configuration": "Configuration"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "app": {
+    "vendor": "EnterpriseGuard",
+    "product": "ADIE",
+    "surface": "سطح التحكم السيادي"
+  },
+  "actions": {
+    "retry": "إعادة المحاولة",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "close": "إغلاق",
+    "copy": "نسخ",
+    "copied": "تم النسخ",
+    "search": "بحث",
+    "navigate": "تنقل"
+  }
+}

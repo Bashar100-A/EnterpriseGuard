@@ -1,0 +1,35 @@
+{
+  "trust": {
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "invalid": "Invalid",
+    "unknown": "Unknown",
+    "notAvailable": "Not Available",
+    "pending": "Pending",
+    "degraded": "Degraded",
+    "critical": "Critical",
+    "stale": "Stale"
+  },
+  "data": {
+    "loading": "Loading",
+    "loaded": "Loaded",
+    "empty": "No Data",
+    "partial": "Partial",
+    "unknown": "Unknown",
+    "error": "Error",
+    "unavailable": "Unavailable",
+    "permissionDenied": "Permission Denied",
+    "notConnected": "Not Connected",
+    "notEvaluated": "Not Evaluated"
+  },
+  "freshness": {
+    "fresh": "Fresh",
+    "stale": "Stale",
+    "unknown": "Unknown"
+  },
+  "environment": {
+    "production": "Production",
+    "staging": "Staging",
+    "development": "Development"
+  }
+}

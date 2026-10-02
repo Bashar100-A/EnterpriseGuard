@@ -1,0 +1,32 @@
+{
+  "groups": {
+    "command": "القيادة",
+    "intelligence": "الاستخبارات",
+    "trust": "الثقة",
+    "govern": "الحوكمة",
+    "operate": "التشغيل",
+    "assurance": "الضمان",
+    "administration": "الإدارة"
+  },
+  "items": {
+    "overview": "نظرة عامة",
+    "securityOperations": "العمليات الأمنية",
+    "threatIntelligence": "استخبارات التهديدات",
+    "decisionIntelligence": "استخبارات القرار",
+    "evidence": "الأدلة",
+    "provenance": "المصدرية",
+    "sibbTrustCore": "نواة الثقة SIBB",
+    "policies": "السياسات",
+    "governance": "الحوكمة",
+    "approvals": "الموافقات",
+    "executionManifests": "بيانات التنفيذ",
+    "systemHealth": "صحة النظام",
+    "inspection": "الفحص",
+    "maintenance": "الصيانة",
+    "analytics": "التحليلات",
+    "reports": "التقارير",
+    "audit": "التدقيق",
+    "usersAccess": "المستخدمون والصلاحيات",
+    "configuration": "الإعدادات"
+  }
+}

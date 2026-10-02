@@ -1,0 +1,35 @@
+{
+  "trust": {
+    "verified": "موثّق",
+    "unverified": "غير موثّق",
+    "invalid": "غير صالح",
+    "unknown": "غير معروف",
+    "notAvailable": "غير متاح",
+    "pending": "قيد الانتظار",
+    "degraded": "متدهور",
+    "critical": "حرج",
+    "stale": "قديم"
+  },
+  "data": {
+    "loading": "جارٍ التحميل",
+    "loaded": "محمل",
+    "empty": "لا بيانات",
+    "partial": "جزئي",
+    "unknown": "غير معروف",
+    "error": "خطأ",
+    "unavailable": "غير متاح",
+    "permissionDenied": "الصلاحية مرفوضة",
+    "notConnected": "غير متصل",
+    "notEvaluated": "لم يتم التقييم"
+  },
+  "freshness": {
+    "fresh": "حديث",
+    "stale": "قديم",
+    "unknown": "غير معروف"
+  },
+  "environment": {
+    "production": "الإنتاج",
+    "staging": "الاختبار",
+    "development": "التطوير"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "app": {
+    "vendor": "EnterpriseGuard",
+    "product": "ADIE",
+    "surface": "Sovereign Control Surface"
+  },
+  "actions": {
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "copy": "Copy",
+    "copied": "Copied",
+    "search": "Search",
+    "navigate": "Navigate"
+  }
+}
