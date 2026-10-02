@@ -2351,3 +2351,25 @@ body {
   outline: 2px solid var(--eg-signal-blue);
   outline-offset: 2px;
 }
+
+/* ------------------------------------------------------------
+   HealthPage (E.5)
+   ------------------------------------------------------------ */
+
+.eg-health__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--eg-space-3);
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-health__charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: var(--eg-space-3);
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-health__services {
+  margin-block-end: var(--eg-space-3);
+}

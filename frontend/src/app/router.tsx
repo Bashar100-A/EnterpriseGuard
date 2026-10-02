@@ -7,6 +7,7 @@ import { EvidencePage } from '../features/evidence'
 import { OverviewPage } from '../features/overview'
 import { DecisionsPage } from '../features/decisions'
 import { GovernancePage } from '../features/governance'
+import { HealthPage } from '../features/health'
 
 export interface RouteSpec {
   path: string
@@ -46,6 +47,7 @@ function buildChildRoutes(): RouteObject[] {
       : spec.path === '/evidence' ? <EvidencePage />
       : spec.path === '/decisions' ? <DecisionsPage />
       : spec.path === '/governance' ? <GovernancePage />
+      : spec.path === '/health' ? <HealthPage />
       : <PageShell titleKey={spec.titleKey} groupKey={spec.groupKey} />
     if (i === 0) {
       children.push({ index: true, element })

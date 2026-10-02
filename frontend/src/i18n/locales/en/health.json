@@ -1,0 +1,31 @@
+{
+  "title": "System Health",
+  "description": "Live operational state of services, resources, and dependencies",
+  "metrics": {
+    "label": "Health indicators",
+    "uptime": "Uptime",
+    "availability": "Availability",
+    "latencyP99": "Latency P99",
+    "errorRate": "Error Rate",
+    "unit": {
+      "percent": "%",
+      "ms": "ms",
+      "hours": "h"
+    }
+  },
+  "services": {
+    "caption": "Services",
+    "name": "Service",
+    "state": "State",
+    "region": "Region",
+    "since": "Since",
+    "empty": "No services registered in this scope"
+  },
+  "resources": {
+    "cpu": "CPU Usage",
+    "cpuSub": "Average across all nodes",
+    "memory": "Memory Usage",
+    "memorySub": "Resident memory as share of capacity"
+  },
+  "backendNote": "Backend integration comes in a later phase. Health values are not fabricated; they remain unknown until the backend reports actual state."
+}

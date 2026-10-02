@@ -17,6 +17,7 @@ import enEvidence from './locales/en/evidence.json'
 import enOverview from './locales/en/overview.json'
 import enDecisions from './locales/en/decisions.json'
 import enGovernance from './locales/en/governance.json'
+import enHealth from './locales/en/health.json'
 
 import arCommon from './locales/ar/common.json'
 import arNavigation from './locales/ar/navigation.json'
@@ -34,6 +35,7 @@ import arEvidence from './locales/ar/evidence.json'
 import arOverview from './locales/ar/overview.json'
 import arDecisions from './locales/ar/decisions.json'
 import arGovernance from './locales/ar/governance.json'
+import arHealth from './locales/ar/health.json'
 
 export const SUPPORTED_LANGUAGES = ['en', 'ar'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
@@ -58,6 +60,7 @@ export const NAMESPACES = [
   'overview',
   'decisions',
   'governance',
+  'health',
 ] as const
 
 function isSupported(value: string | null | undefined): value is SupportedLanguage {
@@ -88,6 +91,7 @@ const resources = {
     overview: enOverview,
     decisions: enDecisions,
     governance: enGovernance,
+    health: enHealth,
   },
   ar: {
     common: arCommon,
@@ -106,6 +110,7 @@ const resources = {
     overview: arOverview,
     decisions: arDecisions,
     governance: arGovernance,
+    health: arHealth,
   },
 }
 
