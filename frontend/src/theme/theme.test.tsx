@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import type { ReactNode } from 'react'
+
+import { ThemeProvider, useTheme } from './index'
 import {
-  ThemeProvider,
-  useTheme,
   resolveTheme,
   THEME_MODES,
   THEME_STORAGE_KEY,
   THEME_ATTRIBUTE,
   DEFAULT_THEME_MODE,
-} from './index'
+} from './constants'
 
 function installMatchMedia(matches: boolean): void {
   Object.defineProperty(window, 'matchMedia', {

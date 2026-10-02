@@ -8,42 +8,16 @@ import {
   type ReactNode,
 } from 'react'
 
-export const THEME_MODES = ['dark', 'light', 'system'] as const
-export type ThemeMode = (typeof THEME_MODES)[number]
+import {
+  applyResolvedTheme,
+  getStoredMode,
+  resolveTheme,
+  type ResolvedTheme,
+  type ThemeMode,
+} from './constants'
 
-export type ResolvedTheme = 'dark' | 'light'
-
-export const DEFAULT_THEME_MODE: ThemeMode = 'dark'
-export const THEME_STORAGE_KEY = 'eg.theme'
-export const THEME_ATTRIBUTE = 'data-theme'
-
-function isThemeMode(value: unknown): value is ThemeMode {
-  return value === 'dark' || value === 'light' || value === 'system'
-}
-
-function getStoredMode(): ThemeMode {
-  if (typeof window === 'undefined') return DEFAULT_THEME_MODE
-  const raw = window.localStorage.getItem(THEME_STORAGE_KEY)
-  return isThemeMode(raw) ? raw : DEFAULT_THEME_MODE
-}
-
-function getSystemTheme(): ResolvedTheme {
-  if (typeof window === 'undefined') return 'dark'
-  if (typeof window.matchMedia !== 'function') return 'dark'
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-}
-
-export function resolveTheme(mode: ThemeMode): ResolvedTheme {
-  if (mode === 'system') return getSystemTheme()
-  return mode
-}
-
-function applyResolvedTheme(resolved: ResolvedTheme): void {
-  if (typeof document === 'undefined') return
-  document.documentElement.setAttribute(THEME_ATTRIBUTE, resolved)
-}
-
-// Apply at module load to avoid flash of wrong theme before React mounts.
+// Apply at module load to avoid a flash of the wrong theme before React
+// mounts. Runs once per page load.
 if (typeof document !== 'undefined') {
   applyResolvedTheme(resolveTheme(getStoredMode()))
 }
@@ -67,7 +41,7 @@ export function ThemeProvider({ children }: ThemeProviderProps): ReactElement {
   const setMode = useCallback((next: ThemeMode) => {
     setModeState(next)
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem(THEME_STORAGE_KEY, next)
+      window.localStorage.setItem('eg.theme', next)
     }
   }, [])
 
@@ -103,6 +77,7 @@ export function ThemeProvider({ children }: ThemeProviderProps): ReactElement {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext)
   if (!ctx) {
@@ -110,3 +85,18 @@ export function useTheme(): ThemeContextValue {
   }
   return ctx
 }
+
+// Re-export the constants for ergonomic imports in application code.
+export {
+  THEME_MODES,
+  DEFAULT_THEME_MODE,
+  THEME_STORAGE_KEY,
+  THEME_ATTRIBUTE,
+  isThemeMode,
+  getStoredMode,
+  getSystemTheme,
+  resolveTheme,
+  applyResolvedTheme,
+  type ThemeMode,
+  type ResolvedTheme,
+} from './constants'
