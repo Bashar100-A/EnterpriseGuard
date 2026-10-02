@@ -48,6 +48,16 @@
     "test": "الاختبار",
     "unknown": "غير معروفة"
   },
+  "evidence": {
+    "label": "الأدلة",
+    "verified": "أدلة موثّقة",
+    "unverified": "أدلة غير موثّقة",
+    "invalid": "أدلة غير صالحة",
+    "unknown": "أدلة غير معروفة",
+    "notAvailable": "لا توجد أدلة",
+    "count": "عنصر {{count}}",
+    "count_plural": "{{count}} عناصر"
+  },
   "indicator": {
     "label": "مؤشر الحالة"
   }

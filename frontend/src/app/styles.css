@@ -961,3 +961,132 @@ body {
   border-color: var(--eg-signal-blue);
   background: color-mix(in srgb, var(--eg-signal-blue) 10%, transparent);
 }
+
+/* ------------------------------------------------------------
+   DataState + EvidenceIndicator (D.2b)
+   ------------------------------------------------------------ */
+
+.eg-datastate { display: contents; }
+
+.eg-datastate__placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--eg-space-2);
+  align-items: flex-start;
+  padding: var(--eg-space-4);
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-sm);
+  background: var(--eg-bg-surface-1);
+  min-height: 120px;
+  justify-content: center;
+}
+
+.eg-datastate__placeholder[data-tone="warning"] {
+  border-inline-start: 3px solid var(--eg-warning-amber);
+}
+
+.eg-datastate__placeholder[data-tone="critical"] {
+  border-inline-start: 3px solid var(--eg-critical-red);
+}
+
+.eg-datastate__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--eg-text-primary);
+}
+
+.eg-datastate__message {
+  font-size: 13px;
+  color: var(--eg-text-secondary);
+  max-width: 60ch;
+}
+
+.eg-datastate__action {
+  padding: var(--eg-space-1) var(--eg-space-3);
+  background: transparent;
+  color: var(--eg-signal-blue);
+  border: 1px solid var(--eg-signal-blue);
+  border-radius: var(--eg-radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.eg-datastate__action:hover {
+  background: color-mix(in srgb, var(--eg-signal-blue) 12%, transparent);
+}
+
+.eg-datastate__action:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: 2px;
+}
+
+.eg-datastate__banner {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--eg-space-2) var(--eg-space-3);
+  margin-block-end: var(--eg-space-3);
+  border: 1px solid var(--eg-warning-amber);
+  border-inline-start-width: 3px;
+  border-radius: var(--eg-radius-sm);
+  background: color-mix(in srgb, var(--eg-warning-amber) 8%, transparent);
+}
+
+.eg-datastate__banner-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--eg-warning-amber);
+}
+
+.eg-datastate__banner-message {
+  font-size: 12px;
+  color: var(--eg-text-secondary);
+}
+
+/* EvidenceIndicator */
+
+.eg-evidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: inherit;
+}
+
+.eg-evidence__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.eg-evidence__label {
+  color: var(--eg-text-primary);
+}
+
+.eg-evidence__count {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  height: 16px;
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  border-radius: var(--eg-radius-sm);
+  background: color-mix(in srgb, currentColor 18%, transparent);
+  color: inherit;
+  min-width: 18px;
+  justify-content: center;
+}
+
+.eg-evidence[data-tone="trust"]    { color: var(--eg-trust-emerald); }
+.eg-evidence[data-tone="info"]     { color: var(--eg-signal-blue); }
+.eg-evidence[data-tone="warning"]  { color: var(--eg-warning-amber); }
+.eg-evidence[data-tone="critical"] { color: var(--eg-critical-red); }
+.eg-evidence[data-tone="unknown"]  { color: var(--eg-unknown-gray); }
+
+.eg-evidence__label {
+  color: var(--eg-text-primary);
+}

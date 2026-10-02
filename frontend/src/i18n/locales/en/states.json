@@ -22,6 +22,40 @@
     "notConnected": "Not Connected",
     "notEvaluated": "Not Evaluated"
   },
+  "dataState": {
+    "loading": {
+      "title": "Loading…",
+      "message": "Fetching data."
+    },
+    "empty": {
+      "title": "No data available",
+      "message": "There is currently no data within this scope."
+    },
+    "partial": {
+      "title": "Partial data",
+      "message": "Some fields are missing or incomplete."
+    },
+    "stale": {
+      "title": "Data is stale",
+      "message": "This view may no longer reflect current state."
+    },
+    "unknown": {
+      "title": "Unknown",
+      "message": "Insufficient evidence to determine current state."
+    },
+    "error": {
+      "title": "Could not load",
+      "message": "The requested data could not be loaded."
+    },
+    "unavailable": {
+      "title": "Unavailable",
+      "message": "This data source is not available."
+    },
+    "permissionDenied": {
+      "title": "Permission denied",
+      "message": "You do not have permission to view this data."
+    }
+  },
   "freshness": {
     "fresh": "Fresh",
     "stale": "Stale",
@@ -30,6 +64,8 @@
   "environment": {
     "production": "Production",
     "staging": "Staging",
-    "development": "Development"
+    "development": "Development",
+    "test": "Test",
+    "unknown": "Unknown"
   }
 }

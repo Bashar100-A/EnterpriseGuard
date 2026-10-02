@@ -48,6 +48,16 @@
     "test": "Test",
     "unknown": "Unknown"
   },
+  "evidence": {
+    "label": "Evidence",
+    "verified": "Verified evidence",
+    "unverified": "Unverified evidence",
+    "invalid": "Invalid evidence",
+    "unknown": "Unknown evidence",
+    "notAvailable": "No evidence",
+    "count": "{{count}} item",
+    "count_plural": "{{count}} items"
+  },
   "indicator": {
     "label": "State indicator"
   }

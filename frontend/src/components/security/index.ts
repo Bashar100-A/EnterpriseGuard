@@ -14,7 +14,10 @@ export type { VerificationBadgeProps } from './VerificationBadge'
 export { EnvironmentBadge } from './EnvironmentBadge'
 export type { EnvironmentBadgeProps } from './EnvironmentBadge'
 
-// Types
+export { EvidenceIndicator } from './EvidenceIndicator'
+export type { EvidenceIndicatorProps } from './EvidenceIndicator'
+
+// Types and helpers
 export { SEMANTIC_TONES, ENVIRONMENT_KEYS, isEnvironmentKey } from './tone'
 export {
   toneForStatus,
