@@ -1,0 +1,64 @@
+/* UI-01.B.1 — Foundation CSS tokens (semantic only, no design system) */
+
+:root {
+  /* Semantic colors */
+  --eg-trust-emerald: #10B981;
+  --eg-signal-blue:   #38BDF8;
+  --eg-warning-amber: #F59E0B;
+  --eg-critical-red:  #EF4444;
+  --eg-unknown-gray:  #6B7280;
+
+  /* Surfaces */
+  --eg-bg:      #0B1220;
+  --eg-fg:      #E5E7EB;
+  --eg-border:  #1F2937;
+
+  /* Spacing scale */
+  --eg-space-1: 4px;
+  --eg-space-2: 8px;
+  --eg-space-3: 16px;
+  --eg-space-4: 24px;
+
+  /* Radius */
+  --eg-radius-sm: 4px;
+  --eg-radius-md: 8px;
+
+  /* Typography */
+  --eg-font-sans:        system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --eg-font-size-body:   14px;
+  --eg-font-size-title:  20px;
+  --eg-line-height-body: 1.5;
+}
+
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  background: var(--eg-bg);
+  color: var(--eg-fg);
+  font-family: var(--eg-font-sans);
+  font-size: var(--eg-font-size-body);
+  line-height: var(--eg-line-height-body);
+}
+
+.eg-root {
+  padding: var(--eg-space-4);
+}
+
+.eg-title {
+  color: var(--eg-trust-emerald);
+  font-size: var(--eg-font-size-title);
+  margin: 0 0 var(--eg-space-2);
+}
+
+.eg-status {
+  color: var(--eg-signal-blue);
+  margin: 0 0 var(--eg-space-3);
+}
+
+.eg-note {
+  color: var(--eg-unknown-gray);
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-sm);
+  padding: var(--eg-space-2);
+  display: inline-block;
+}

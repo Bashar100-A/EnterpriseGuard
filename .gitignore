@@ -183,3 +183,16 @@ ls-files keys/ backups/ EnterpriseGuard/config/ EnterpriseGuard/tests/config/*/t
 !keys/adie_public.pem
 keys/*_private*
 backups/
+
+# --- UI-01.B.1: frontend artifacts (must never enter Git) ---
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# --- UI-01.B.1: pilot artifacts (not part of the product) ---
+frontend/*.b1empty
+frontend/*.b1bak
