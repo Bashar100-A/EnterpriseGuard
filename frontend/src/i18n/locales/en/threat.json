@@ -1,0 +1,25 @@
+{
+  "title": "Threat Intelligence",
+  "description": "Threat feeds, indicators of compromise, and adversary tracking",
+  "metrics": {
+    "label": "Threat indicators",
+    "activeThreats": "Active Threats",
+    "iocs": "Indicators (IOCs)",
+    "feedsActive": "Feeds Active",
+    "lastUpdate": "Last Update"
+  },
+  "volume": {
+    "title": "Threat Volume",
+    "subtitle": "Threats observed across the selected window"
+  },
+  "iocs": {
+    "caption": "Indicators of Compromise",
+    "id": "IOC",
+    "type": "Type",
+    "severity": "Severity",
+    "source": "Source",
+    "observedAt": "Observed At",
+    "empty": "No indicators in this scope"
+  },
+  "backendNote": "Backend integration comes in a later phase. No threat data is fabricated. This page reflects the honest current state."
+}

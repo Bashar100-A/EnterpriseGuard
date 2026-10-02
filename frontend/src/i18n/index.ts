@@ -21,6 +21,7 @@ import enHealth from './locales/en/health.json'
 import enSibb from './locales/en/sibb.json'
 import enProvenance from './locales/en/provenance.json'
 import enOperations from './locales/en/operations.json'
+import enThreat from './locales/en/threat.json'
 
 import arCommon from './locales/ar/common.json'
 import arNavigation from './locales/ar/navigation.json'
@@ -42,6 +43,7 @@ import arHealth from './locales/ar/health.json'
 import arSibb from './locales/ar/sibb.json'
 import arProvenance from './locales/ar/provenance.json'
 import arOperations from './locales/ar/operations.json'
+import arThreat from './locales/ar/threat.json'
 
 export const SUPPORTED_LANGUAGES = ['en', 'ar'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
@@ -70,6 +72,7 @@ export const NAMESPACES = [
   'sibb',
   'provenance',
   'operations',
+  'threat',
 ] as const
 
 function isSupported(value: string | null | undefined): value is SupportedLanguage {
@@ -104,6 +107,7 @@ const resources = {
     sibb: enSibb,
     provenance: enProvenance,
     operations: enOperations,
+    threat: enThreat,
   },
   ar: {
     common: arCommon,
@@ -126,6 +130,7 @@ const resources = {
     sibb: arSibb,
     provenance: arProvenance,
     operations: arOperations,
+    threat: arThreat,
   },
 }
 

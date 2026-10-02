@@ -1,0 +1,1 @@
+export { ThreatPage } from './ThreatPage'

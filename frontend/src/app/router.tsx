@@ -11,6 +11,7 @@ import { HealthPage } from '../features/health'
 import { SibbPage } from '../features/sibb'
 import { ProvenancePage } from '../features/provenance'
 import { OperationsPage } from '../features/operations'
+import { ThreatPage } from '../features/threat'
 
 export interface RouteSpec {
   path: string
@@ -48,6 +49,7 @@ function buildChildRoutes(): RouteObject[] {
     const element =
       spec.path === '/' ? <OverviewPage />
       : spec.path === '/operations' ? <OperationsPage />
+      : spec.path === '/intelligence' ? <ThreatPage />
       : spec.path === '/evidence' ? <EvidencePage />
       : spec.path === '/decisions' ? <DecisionsPage />
       : spec.path === '/governance' ? <GovernancePage />
