@@ -1,0 +1,39 @@
+{
+  "tone": {
+    "trust": "Trust",
+    "info": "Information",
+    "warning": "Attention",
+    "critical": "Critical",
+    "unknown": "Unknown"
+  },
+  "status": {
+    "verified": "Verified",
+    "validated": "Validated",
+    "healthy": "Healthy",
+    "pending": "Pending",
+    "proposed": "Proposed",
+    "information": "Information",
+    "reviewRequired": "Review Required",
+    "degraded": "Degraded",
+    "stale": "Stale",
+    "policyConflict": "Policy Conflict",
+    "critical": "Critical",
+    "verificationFailed": "Verification Failure",
+    "boundaryViolation": "Boundary Violation",
+    "error": "Error",
+    "unknown": "Unknown",
+    "unavailable": "Unavailable",
+    "notEvaluated": "Not Evaluated",
+    "notConnected": "Not Connected"
+  },
+  "severity": {
+    "info": "Info",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "critical": "Critical"
+  },
+  "indicator": {
+    "label": "State indicator"
+  }
+}

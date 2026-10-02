@@ -1,0 +1,39 @@
+{
+  "tone": {
+    "trust": "ثقة",
+    "info": "معلومة",
+    "warning": "تنبيه",
+    "critical": "حرج",
+    "unknown": "غير معروف"
+  },
+  "status": {
+    "verified": "موثّق",
+    "validated": "مُصادَق",
+    "healthy": "سليم",
+    "pending": "قيد الانتظار",
+    "proposed": "مقترح",
+    "information": "معلومة",
+    "reviewRequired": "يلزم مراجعة",
+    "degraded": "متدهور",
+    "stale": "قديم",
+    "policyConflict": "تعارض سياسات",
+    "critical": "حرج",
+    "verificationFailed": "فشل التحقق",
+    "boundaryViolation": "خرق حدود",
+    "error": "خطأ",
+    "unknown": "غير معروف",
+    "unavailable": "غير متاح",
+    "notEvaluated": "لم يتم التقييم",
+    "notConnected": "غير متصل"
+  },
+  "severity": {
+    "info": "معلومة",
+    "low": "منخفض",
+    "medium": "متوسط",
+    "high": "مرتفع",
+    "critical": "حرج"
+  },
+  "indicator": {
+    "label": "مؤشر الحالة"
+  }
+}

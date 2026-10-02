@@ -850,3 +850,91 @@ body {
 }
 
 .eg-notfound__message { margin: 0; color: var(--eg-text-secondary); }
+
+/* ------------------------------------------------------------
+   Security primitives — StatusBadge, SeverityBadge, StateIndicator (D.1)
+   All colors come from semantic tokens. data-tone drives the color.
+   ------------------------------------------------------------ */
+
+.eg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.6;
+  border-radius: var(--eg-radius-sm);
+  border: 1px solid currentColor;
+  background: transparent;
+  white-space: nowrap;
+}
+
+.eg-badge__dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.eg-badge__label { color: inherit; }
+
+/* Tone → color */
+
+.eg-badge[data-tone="trust"],
+.eg-indicator[data-tone="trust"] {
+  color: var(--eg-trust-emerald);
+}
+
+.eg-badge[data-tone="info"],
+.eg-indicator[data-tone="info"] {
+  color: var(--eg-signal-blue);
+}
+
+.eg-badge[data-tone="warning"],
+.eg-indicator[data-tone="warning"] {
+  color: var(--eg-warning-amber);
+}
+
+.eg-badge[data-tone="critical"],
+.eg-indicator[data-tone="critical"] {
+  color: var(--eg-critical-red);
+}
+
+.eg-badge[data-tone="unknown"],
+.eg-indicator[data-tone="unknown"] {
+  color: var(--eg-unknown-gray);
+}
+
+/* Soft background per tone */
+
+.eg-badge[data-tone="trust"]   { background: color-mix(in srgb, var(--eg-trust-emerald) 10%, transparent); }
+.eg-badge[data-tone="info"]    { background: color-mix(in srgb, var(--eg-signal-blue) 10%, transparent); }
+.eg-badge[data-tone="warning"] { background: color-mix(in srgb, var(--eg-warning-amber) 12%, transparent); }
+.eg-badge[data-tone="critical"]{ background: color-mix(in srgb, var(--eg-critical-red) 12%, transparent); }
+.eg-badge[data-tone="unknown"] { background: color-mix(in srgb, var(--eg-unknown-gray) 12%, transparent); }
+
+/* StateIndicator */
+
+.eg-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: inherit;
+}
+
+.eg-indicator__dot {
+  display: inline-block;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.eg-indicator[data-size="sm"] .eg-indicator__dot { width: 6px; height: 6px; }
+.eg-indicator[data-size="md"] .eg-indicator__dot { width: 8px; height: 8px; }
+.eg-indicator[data-size="lg"] .eg-indicator__dot { width: 10px; height: 10px; }
+
+.eg-indicator__label { color: var(--eg-text-primary); }
