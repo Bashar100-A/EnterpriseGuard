@@ -20,6 +20,9 @@ export type { EvidenceIndicatorProps } from './EvidenceIndicator'
 export { TechnicalIdentifier } from './TechnicalIdentifier'
 export type { TechnicalIdentifierProps, TruncateMode } from './TechnicalIdentifier'
 
+export { DecisionChain } from './DecisionChain'
+export type { DecisionChainProps, ChainStage, ChainStageKey, ChainTier } from './DecisionChain'
+
 // Types and helpers
 export { SEMANTIC_TONES, ENVIRONMENT_KEYS, isEnvironmentKey } from './tone'
 export {

@@ -2153,3 +2153,163 @@ body {
 .eg-overview__activity {
   margin-block-end: var(--eg-space-3);
 }
+
+/* ------------------------------------------------------------
+   DecisionChain (E.3)
+   The canonical ADIE pipeline. Three tiers, arrows between them.
+   No calculation. No fabrication. Structure only.
+   ------------------------------------------------------------ */
+
+.eg-chain {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: var(--eg-space-2);
+  align-items: stretch;
+  width: 100%;
+}
+
+.eg-chain__segment {
+  display: contents;
+}
+
+.eg-chain__connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--eg-text-muted);
+  user-select: none;
+  padding-inline: var(--eg-space-1);
+}
+
+.eg-chain__tier {
+  display: flex;
+  flex-direction: column;
+  gap: var(--eg-space-2);
+  padding: var(--eg-space-3);
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-bg-surface-1);
+  min-width: 0;
+}
+
+.eg-chain__tier--observed {
+  border-block-start: 3px solid var(--eg-signal-blue);
+}
+
+.eg-chain__tier--decided {
+  border-block-start: 3px solid var(--eg-warning-amber);
+}
+
+.eg-chain__tier--executed {
+  border-block-start: 3px solid var(--eg-trust-emerald);
+}
+
+.eg-chain__tier-header {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--eg-text-muted);
+}
+
+.eg-chain__stages {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.eg-chain__stage {
+  display: flex;
+  align-items: center;
+  gap: var(--eg-space-2);
+  padding: var(--eg-space-1) var(--eg-space-2);
+  border-radius: var(--eg-radius-sm);
+  min-width: 0;
+}
+
+.eg-chain__stage--clickable {
+  padding: 0;
+}
+
+.eg-chain__stage-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--eg-space-2);
+  width: 100%;
+  padding: var(--eg-space-1) var(--eg-space-2);
+  background: transparent;
+  border: none;
+  border-radius: var(--eg-radius-sm);
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.eg-chain__stage-btn:hover {
+  background: var(--eg-bg-surface-2);
+}
+
+.eg-chain__stage-btn:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: -2px;
+}
+
+.eg-chain__stage-marker {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.eg-chain__stage-marker[data-tone="trust"]    { color: var(--eg-trust-emerald); }
+.eg-chain__stage-marker[data-tone="info"]     { color: var(--eg-signal-blue); }
+.eg-chain__stage-marker[data-tone="warning"]  { color: var(--eg-warning-amber); }
+.eg-chain__stage-marker[data-tone="critical"] { color: var(--eg-critical-red); }
+.eg-chain__stage-marker[data-tone="unknown"]  { color: var(--eg-unknown-gray); }
+
+.eg-chain__stage-label {
+  flex: 1;
+  font-size: 12px;
+  color: var(--eg-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eg-chain__stage-count {
+  font-family: var(--eg-font-mono);
+  font-size: 11px;
+  color: var(--eg-text-muted);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* Responsive: stack tiers vertically on narrow screens */
+
+@media (max-width: 900px) {
+  .eg-chain {
+    grid-template-columns: 1fr;
+    gap: var(--eg-space-3);
+  }
+  .eg-chain__connector {
+    transform: rotate(90deg);
+  }
+}
+
+/* DecisionsPage (E.3) */
+
+.eg-decisions__chain {
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-decisions__table {
+  margin-block-end: var(--eg-space-3);
+}

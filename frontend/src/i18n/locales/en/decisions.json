@@ -1,0 +1,43 @@
+{
+  "title": "Decision Intelligence",
+  "description": "The full chain from observation to execution — every stage distinct and provable",
+  "chain": {
+    "label": "Decision chain",
+    "tier": {
+      "observed": "Observed",
+      "decided": "Decided",
+      "executed": "Executed"
+    },
+    "stage": {
+      "evidence": "Evidence",
+      "state": "State",
+      "prediction": "Prediction",
+      "policy": "Policy",
+      "decision": "Decision",
+      "authority": "Authority",
+      "manifest": "Manifest",
+      "outcome": "Outcome"
+    },
+    "stageDescription": {
+      "evidence": "Raw, verifiable records",
+      "state": "What the system believes is true",
+      "prediction": "What may happen next",
+      "policy": "Which rules apply",
+      "decision": "What was chosen",
+      "authority": "Who had the right to decide",
+      "manifest": "What was planned for execution",
+      "outcome": "What was actually executed"
+    },
+    "empty": "No chain data in this scope",
+    "arrowLabel": "leads to"
+  },
+  "table": {
+    "caption": "Recent Decisions",
+    "id": "Decision ID",
+    "state": "State",
+    "authority": "Authority",
+    "createdAt": "Created",
+    "empty": "No decisions recorded in this scope"
+  },
+  "backendNote": "Backend integration comes in a later phase. This page shows the full chain, but the stages remain empty until real data arrives."
+}
