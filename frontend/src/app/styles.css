@@ -213,3 +213,146 @@ body {
   border-inline-start: 1px solid var(--eg-border-subtle);
   overflow-y: auto;
 }
+
+/* ------------------------------------------------------------
+   NavigationRail (Phase C.2)
+   Collapsed: 72px. Expanded: 260px. Smooth transition.
+   Direction-aware: layout works in RTL without mirroring logic.
+   ------------------------------------------------------------ */
+
+.eg-nav {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  background: var(--eg-bg-surface-1);
+  overflow-x: hidden;
+  transition: width 150ms ease;
+}
+
+.eg-nav--collapsed { width: 72px; }
+.eg-nav--expanded  { width: 260px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .eg-nav { transition: none; }
+}
+
+.eg-nav__items {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-block: var(--eg-space-2);
+}
+
+.eg-nav__group { margin-block-end: var(--eg-space-3); }
+
+.eg-nav__group-label {
+  padding: var(--eg-space-1) var(--eg-space-3);
+  color: var(--eg-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.eg-nav__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.eg-nav__list-item { margin: 0; }
+
+.eg-nav__item {
+  display: flex;
+  align-items: center;
+  gap: var(--eg-space-2);
+  width: 100%;
+  padding: var(--eg-space-2) var(--eg-space-3);
+  background: transparent;
+  border: none;
+  color: var(--eg-text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  text-align: start;
+  cursor: pointer;
+  border-inline-start: 2px solid transparent;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.eg-nav__item:hover {
+  background: var(--eg-bg-surface-2);
+  color: var(--eg-text-primary);
+}
+
+.eg-nav__item:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: -2px;
+}
+
+.eg-nav__item--active {
+  color: var(--eg-trust-emerald);
+  background: var(--eg-bg-surface-2);
+  border-inline-start-color: var(--eg-trust-emerald);
+}
+
+.eg-nav__item-marker {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.eg-nav__item--active .eg-nav__item-marker { opacity: 1; }
+
+.eg-nav__item-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eg-nav--collapsed .eg-nav__item-label {
+  /* Keep label in DOM for accessibility (aria-label already set),
+     but visually hide it in collapsed mode. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.eg-nav__footer {
+  border-block-start: 1px solid var(--eg-border-subtle);
+  padding: var(--eg-space-2);
+}
+
+.eg-nav__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--eg-space-2);
+  background: transparent;
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-sm);
+  color: var(--eg-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.eg-nav__toggle:hover {
+  background: var(--eg-bg-surface-2);
+  color: var(--eg-text-primary);
+}
+
+.eg-nav__toggle:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: 2px;
+}

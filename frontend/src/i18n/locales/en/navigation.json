@@ -28,5 +28,10 @@
     "audit": "Audit",
     "usersAccess": "Users & Access",
     "configuration": "Configuration"
+  },
+  "actions": {
+    "expand": "Expand navigation",
+    "collapse": "Collapse navigation",
+    "toggleRail": "Toggle navigation rail"
   }
 }

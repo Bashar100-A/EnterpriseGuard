@@ -28,5 +28,10 @@
     "audit": "التدقيق",
     "usersAccess": "المستخدمون والصلاحيات",
     "configuration": "الإعدادات"
+  },
+  "actions": {
+    "expand": "توسيع التنقل",
+    "collapse": "طي التنقل",
+    "toggleRail": "إظهار/إخفاء شريط التنقل"
   }
 }
