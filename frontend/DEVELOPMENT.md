@@ -181,3 +181,131 @@ echo "Report: OUT"echo"Baseline:OUT"echo"Baseline:BASELINE_FILE"
 | `components/command/CommandPalette.tsx` | Ctrl+K palette |
 | `components/command/useCommandPalette.ts` | Palette state + shortcut |
 | `components/dangerous/DangerousActionDialog.tsx` | Intent to Impact to Authority to Confirm |
+
+---
+
+## Phase E + F Additions
+
+### SCRIPT pattern — auto-detect HEAD
+
+Beginning with E.1, every phase script auto-detects the current HEAD
+and verifies the context (last commit subject) instead of using a
+hardcoded REF_HEAD hash:
+
+```bash
+BEFORE_HEAD=$(git rev-parse HEAD)
+LAST_SUBJECT=$(git log -1 --pretty=%s)
+if ! echo "$LAST_SUBJECT" | grep -q "Expected context"; then
+  echo "FAIL: wrong starting commit"; exit 1
+fi
+```
+
+This avoids the recurring "REF_HEAD stale after previous commit" failure.
+
+### Exit-code capture — the pipe trap
+
+NEVER do this:
+```bash
+# bad — $? is the exit of tail (always 0)
+npm run typecheck 2>&1 | tail -n 10 || true
+TC=$?
+```
+
+ALWAYS do this:
+```bash
+# good
+run_check() {
+  local log="/tmp/check.log"
+  if "$@" > "$log" 2>&1; then
+    return 0
+  else
+    local ec=$?
+    tail -n 20 "$log"
+    return $ec
+  fi
+}
+run_check "typecheck" npm run --silent typecheck || TC_OK=1
+```
+
+### i18n label collisions
+
+Any label that appears in BOTH a metric card and a table caption
+(e.g. "Active Policies", "Pending Approvals") will fail `getByText`.
+Use `getAllByText(...).length > 0` in tests:
+
+```ts
+// bad
+expect(screen.getByText("Active Policies")).toBeTruthy()
+
+// good
+expect(screen.getAllByText("Active Policies").length).toBeGreaterThan(0)
+```
+
+When it is ambiguous whether a label appears once or many times,
+prefer `getAllByText` — it never fails for the wrong reason.
+
+### Unused imports break build, not tests
+
+Vitest does not check imports. `tsc` and ESLint do. If a component
+compiles at runtime but the build fails, check for unused imports
+and unused `const` declarations first.
+
+Rule: always run `npm run typecheck` before commit, even when
+`npm run test` is green.
+
+### Page pattern (Phase E)
+
+Every real page follows the same skeleton:
+
+1. `src/features/<name>/<Name>Page.tsx` — the page component
+2. `src/features/<name>/index.ts` — barrel export
+3. `src/features/<name>/<Name>Page.test.tsx` — 15-25 tests
+4. `src/i18n/locales/{en,ar}/<name>.json` — bilingual strings
+5. Register namespace in `src/i18n/index.ts`
+6. Add route in `src/app/router.tsx` via the ternary chain
+7. Append CSS in `src/app/styles.css`
+
+Pages always use `WorkspaceHeader` + `ContextStrip` at the top, and
+end with a `.eg-note` when the backend is not connected.
+
+### No fake data — the rule is absolute
+
+Every page in UI-01 has `backendConnected = false`. Metrics render as
+—, charts render empty, tables render empty, badges say "Unknown",
+and state indicators say "Not Connected". This is not a placeholder
+pattern — it is the honest state. The same pages will show real data
+without code changes when the backend arrives.
+
+### Full page inventory (Phase E + F)
+
+| Path | Feature | Notes |
+|---|---|---|
+| `/` | Overview | Situation Room with doctrine strip |
+| `/evidence` | Evidence | EvidenceIndicator + TechnicalIdentifier |
+| `/decisions` | Decision Intelligence | DecisionChain (3 tiers, 8 stages) |
+| `/governance` | Governance | DangerousActionDialog integration |
+| `/health` | System Health | MetricCards + ChartFrames + Services table |
+| `/sibb` | SIBB Trust Core | TrustChainVisual (Merkle) |
+| `/provenance` | Provenance | Legend + EvidenceIndicator per row |
+
+### Components added in Phase E+F
+
+| File | Purpose |
+|---|---|
+| `components/security/DecisionChain.tsx` | 3-tier ADIE pipeline visualization |
+| `components/security/TrustChainVisual.tsx` | Cinematic Merkle chain |
+
+### Golden rule — router.tsx ternary chain
+
+The route builder uses a single ternary chain. When adding a page:
+
+```tsx
+const element =
+  spec.path === "/" ? <OverviewPage />
+  : spec.path === "/evidence" ? <EvidencePage />
+  : spec.path === "/new" ? <NewPage />       // add here
+  : <PageShell titleKey={spec.titleKey} groupKey={spec.groupKey} />
+```
+
+Never replace with a switch or a map — the ternary form is greppable
+and unambiguous.
