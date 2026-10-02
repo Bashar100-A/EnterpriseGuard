@@ -58,6 +58,11 @@
     "count": "{{count}} item",
     "count_plural": "{{count}} items"
   },
+  "identifier": {
+    "copy": "Copy identifier",
+    "copied": "Copied",
+    "copyFailed": "Copy failed"
+  },
   "indicator": {
     "label": "State indicator"
   }

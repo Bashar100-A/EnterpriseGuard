@@ -1090,3 +1090,87 @@ body {
 .eg-evidence__label {
   color: var(--eg-text-primary);
 }
+
+/* ------------------------------------------------------------
+   TechnicalIdentifier (D.3)
+   Monospace, LTR-forced, selectable, optional copy button.
+   ------------------------------------------------------------ */
+
+.eg-tech-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.eg-tech-id__label {
+  font-size: 11px;
+  color: var(--eg-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.eg-tech-id__value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  font-family: var(--eg-font-mono);
+  direction: ltr;
+  unicode-bidi: embed;
+  color: var(--eg-text-primary);
+  background: var(--eg-bg-surface-2);
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-sm);
+  padding: 2px 6px;
+  user-select: all;
+  cursor: text;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.eg-tech-id--sm .eg-tech-id__value { font-size: 11px; padding: 1px 5px; }
+.eg-tech-id--md .eg-tech-id__value { font-size: 12px; padding: 2px 6px; }
+
+.eg-tech-id__prefix {
+  color: var(--eg-text-muted);
+  user-select: none;
+}
+
+.eg-tech-id__body { letter-spacing: 0.01em; }
+
+.eg-tech-id__copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: transparent;
+  color: var(--eg-text-secondary);
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.eg-tech-id__copy:hover {
+  background: var(--eg-bg-surface-2);
+  color: var(--eg-text-primary);
+}
+
+.eg-tech-id__copy:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: 1px;
+}
+
+.eg-tech-id[data-copied="true"] .eg-tech-id__copy {
+  color: var(--eg-trust-emerald);
+  border-color: var(--eg-trust-emerald);
+}
+
+.eg-tech-id[data-failed="true"] .eg-tech-id__copy {
+  color: var(--eg-critical-red);
+  border-color: var(--eg-critical-red);
+}

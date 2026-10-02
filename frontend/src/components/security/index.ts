@@ -17,6 +17,9 @@ export type { EnvironmentBadgeProps } from './EnvironmentBadge'
 export { EvidenceIndicator } from './EvidenceIndicator'
 export type { EvidenceIndicatorProps } from './EvidenceIndicator'
 
+export { TechnicalIdentifier } from './TechnicalIdentifier'
+export type { TechnicalIdentifierProps, TruncateMode } from './TechnicalIdentifier'
+
 // Types and helpers
 export { SEMANTIC_TONES, ENVIRONMENT_KEYS, isEnvironmentKey } from './tone'
 export {

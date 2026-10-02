@@ -58,6 +58,11 @@
     "count": "عنصر {{count}}",
     "count_plural": "{{count}} عناصر"
   },
+  "identifier": {
+    "copy": "نسخ المعرّف",
+    "copied": "تم النسخ",
+    "copyFailed": "تعذّر النسخ"
+  },
   "indicator": {
     "label": "مؤشر الحالة"
   }
