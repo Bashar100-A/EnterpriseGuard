@@ -779,3 +779,74 @@ body {
   font-size: 11px;
   line-height: 1.4;
 }
+
+/* ------------------------------------------------------------
+   ErrorBoundary + NotFound (Phase C.6)
+   ------------------------------------------------------------ */
+
+.eg-boundary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--eg-space-3);
+  padding: var(--eg-space-4);
+  margin: var(--eg-space-4) auto;
+  max-width: 560px;
+  background: var(--eg-bg-surface-1);
+  border: 1px solid var(--eg-border-subtle);
+  border-inline-start: 3px solid var(--eg-critical-red);
+  border-radius: var(--eg-radius-md);
+}
+
+.eg-boundary__title {
+  margin: 0;
+  color: var(--eg-text-primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.eg-boundary__message {
+  margin: 0;
+  color: var(--eg-text-secondary);
+  font-size: 13px;
+}
+
+.eg-boundary__reference {
+  margin: 0;
+  color: var(--eg-text-muted);
+  font-size: 12px;
+}
+
+.eg-boundary__reference-label {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+}
+
+.eg-boundary__retry {
+  align-self: flex-start;
+  padding: var(--eg-space-2) var(--eg-space-3);
+  background: transparent;
+  color: var(--eg-signal-blue);
+  border: 1px solid var(--eg-signal-blue);
+  border-radius: var(--eg-radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.eg-boundary__retry:hover { background: color-mix(in srgb, var(--eg-signal-blue) 12%, transparent); }
+.eg-boundary__retry:focus-visible { outline: 2px solid var(--eg-signal-blue); outline-offset: 2px; }
+
+.eg-notfound {
+  display: flex;
+  flex-direction: column;
+  gap: var(--eg-space-2);
+  padding: var(--eg-space-4);
+}
+
+.eg-notfound__title {
+  margin: 0;
+  color: var(--eg-text-primary);
+  font-size: 18px;
+}
+
+.eg-notfound__message { margin: 0; color: var(--eg-text-secondary); }

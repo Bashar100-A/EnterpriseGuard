@@ -9,5 +9,10 @@
   "notFound": {
     "title": "Not Found",
     "message": "The requested resource does not exist."
+  },
+  "placeholder": {
+    "notConnected": "Not Connected",
+    "foundationNote": "This workspace is a placeholder. Backend integration comes in a later phase.",
+    "unknown": "Unknown"
   }
 }

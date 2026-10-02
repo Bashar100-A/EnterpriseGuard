@@ -1,7 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { screen, cleanup } from '@testing-library/react'
-import App from '../app/App'
-import { renderWithProviders } from './renderWithProviders'
+import { renderApp } from './renderWithProviders'
 
 afterEach(() => {
   cleanup()
@@ -11,63 +10,57 @@ afterEach(() => {
   window.localStorage.clear()
 })
 
-describe('App (UI-01 foundation)', () => {
-  it('renders the foundation title', () => {
-    renderWithProviders(<App />)
-    expect(screen.getByText(/Sovereign Control Surface/i)).toBeTruthy()
-  })
-
-  it('renders foundation status', () => {
-    renderWithProviders(<App />)
-    expect(screen.getByText(/Foundation Ready/i)).toBeTruthy()
-  })
-
-  it('declares no operational data is connected', () => {
-    renderWithProviders(<App />)
-    expect(screen.getByText(/no operational data connected/i)).toBeTruthy()
-  })
-
-  it('wraps content in AppShell', () => {
-    const { container } = renderWithProviders(<App />)
+describe('App (UI-01 foundation, routed)', () => {
+  it('renders the shell at root', () => {
+    const { container } = renderApp(['/'])
     expect(container.querySelector('.eg-shell')).not.toBeNull()
   })
 
-  it('has a semantic main landmark', () => {
-    const { container } = renderWithProviders(<App />)
+  it('renders a semantic main landmark', () => {
+    const { container } = renderApp(['/'])
     expect(container.querySelector('main#eg-main')).not.toBeNull()
   })
 
   it('includes the NavigationRail', () => {
-    const { container } = renderWithProviders(<App />)
+    const { container } = renderApp(['/'])
     expect(container.querySelector('nav.eg-nav')).not.toBeNull()
   })
 
   it('includes the Topbar', () => {
-    const { container } = renderWithProviders(<App />)
+    const { container } = renderApp(['/'])
     expect(container.querySelector('.eg-topbar')).not.toBeNull()
   })
 
-  it('includes the WorkspaceHeader', () => {
-    const { container } = renderWithProviders(<App />)
-    expect(container.querySelector('.eg-workspace')).not.toBeNull()
+  it('renders the Overview page title at /', () => {
+    renderApp(['/'])
+    expect(screen.getAllByText('Overview').length).toBeGreaterThan(0)
   })
 
-  it('includes the ContextStrip', () => {
-    const { container } = renderWithProviders(<App />)
-    expect(container.querySelector('.eg-context')).not.toBeNull()
+  it('renders the Evidence page title at /evidence', () => {
+    renderApp(['/evidence'])
+    expect(screen.getAllByText('Evidence').length).toBeGreaterThan(0)
   })
 
-  it('renders the assurance badge as Unknown by default', () => {
-    const { container } = renderWithProviders(<App />)
-    const badge = container.querySelector('.eg-workspace__assurance')
-    expect(badge).not.toBeNull()
-    expect(badge?.getAttribute('data-state')).toBe('unknown')
+  it('renders NotFound at unknown path', () => {
+    renderApp(['/does-not-exist'])
+    expect(screen.getByText(/Not Found/i)).toBeTruthy()
+  })
+
+  it('navigates to another route when clicking a nav item', async () => {
+    const { container } = renderApp(['/'])
+    const evidenceBtn = Array.from(container.querySelectorAll('button.eg-nav__item'))
+      .find((b) => b.textContent?.includes('Evidence'))
+    expect(evidenceBtn).toBeDefined()
+    ;(evidenceBtn as HTMLButtonElement).click()
+    await new Promise((r) => setTimeout(r, 30))
+    const h1 = document.querySelector('.eg-workspace__title')
+    expect(h1?.textContent).toBe('Evidence')
   })
 
   it('renders without error in RTL', () => {
     document.documentElement.dir = 'rtl'
     document.documentElement.lang = 'ar'
-    renderWithProviders(<App />)
-    expect(screen.getByText(/Sovereign Control Surface/i)).toBeTruthy()
+    const { container } = renderApp(['/'])
+    expect(container.querySelector('.eg-shell')).not.toBeNull()
   })
 })

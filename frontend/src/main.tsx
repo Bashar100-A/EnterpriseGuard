@@ -1,9 +1,10 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { RouterProvider } from 'react-router-dom'
 
 import './i18n'
 import { ThemeProvider } from './theme'
-import App from './app/App'
+import { router } from './app/router'
 import './app/styles.css'
 
 const rootEl = document.getElementById('root')
@@ -14,7 +15,7 @@ if (!rootEl) {
 createRoot(rootEl).render(
   <StrictMode>
     <ThemeProvider>
-      <App />
+      <RouterProvider router={router} />
     </ThemeProvider>
   </StrictMode>,
 )
