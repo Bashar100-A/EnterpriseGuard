@@ -1,0 +1,22 @@
+{
+  "metric": {
+    "unknown": "غير معروف",
+    "noData": "لا بيانات",
+    "live": "حيّ",
+    "stale": "قديم",
+    "unavailable": "غير متاح",
+    "notConnected": "غير متصل",
+    "trendUp": "في ارتفاع",
+    "trendDown": "في انخفاض",
+    "trendFlat": "مستقر",
+    "trendUnknown": "الاتجاه غير معروف"
+  },
+  "chart": {
+    "title": "رسم بياني",
+    "loading": "جارٍ تحميل الرسم…",
+    "empty": "لا توجد بيانات للرسم",
+    "error": "تعذّر تحميل الرسم",
+    "stale": "بيانات الرسم قديمة",
+    "unavailable": "الرسم غير متاح"
+  }
+}

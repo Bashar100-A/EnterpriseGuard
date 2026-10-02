@@ -1,0 +1,22 @@
+{
+  "metric": {
+    "unknown": "Unknown",
+    "noData": "No data",
+    "live": "Live",
+    "stale": "Stale",
+    "unavailable": "Unavailable",
+    "notConnected": "Not Connected",
+    "trendUp": "Trending up",
+    "trendDown": "Trending down",
+    "trendFlat": "Stable",
+    "trendUnknown": "Trend unknown"
+  },
+  "chart": {
+    "title": "Chart",
+    "loading": "Loading chart…",
+    "empty": "No chart data",
+    "error": "Could not load chart",
+    "stale": "Chart data is stale",
+    "unavailable": "Chart unavailable"
+  }
+}

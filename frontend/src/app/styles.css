@@ -1174,3 +1174,98 @@ body {
   color: var(--eg-critical-red);
   border-color: var(--eg-critical-red);
 }
+
+/* ------------------------------------------------------------
+   MetricCard (D.4a)
+   A metric is never "number + title". Full provenance context.
+   ------------------------------------------------------------ */
+
+.eg-metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--eg-space-2);
+  padding: var(--eg-space-3);
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-bg-surface-1);
+  min-width: 180px;
+}
+
+.eg-metric__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--eg-space-2);
+}
+
+.eg-metric__label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--eg-text-muted);
+}
+
+.eg-metric__action { flex-shrink: 0; }
+
+.eg-metric__value-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--eg-space-2);
+  flex-wrap: wrap;
+}
+
+.eg-metric__value-row[data-tone="trust"]    { color: var(--eg-trust-emerald); }
+.eg-metric__value-row[data-tone="info"]     { color: var(--eg-signal-blue); }
+.eg-metric__value-row[data-tone="warning"]  { color: var(--eg-warning-amber); }
+.eg-metric__value-row[data-tone="critical"] { color: var(--eg-critical-red); }
+.eg-metric__value-row[data-tone="unknown"]  { color: var(--eg-unknown-gray); }
+
+.eg-metric__value {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: currentColor;
+}
+
+.eg-metric__value--missing { color: var(--eg-unknown-gray); }
+
+.eg-metric__unit {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--eg-text-secondary);
+}
+
+.eg-metric__trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.eg-metric__trend[data-trend="up"]   { color: var(--eg-trust-emerald); }
+.eg-metric__trend[data-trend="down"] { color: var(--eg-critical-red); }
+.eg-metric__trend[data-trend="flat"] { color: var(--eg-text-muted); }
+
+.eg-metric__context {
+  font-size: 12px;
+  color: var(--eg-text-secondary);
+}
+
+.eg-metric__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--eg-space-2);
+  margin-block-start: auto;
+  padding-block-start: var(--eg-space-2);
+  border-block-start: 1px solid var(--eg-border-subtle);
+}
+
+.eg-metric__timestamp {
+  font-size: 11px;
+  color: var(--eg-text-muted);
+  font-variant-numeric: tabular-nums;
+}
