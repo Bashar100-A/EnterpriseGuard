@@ -3,6 +3,7 @@ import { RootLayout } from './RootLayout'
 import { ErrorBoundary } from './ErrorBoundary'
 import { PageShell } from './PageShell'
 import { NotFound } from './NotFound'
+import { EvidencePage } from '../features/evidence'
 
 export interface RouteSpec {
   path: string
@@ -37,7 +38,10 @@ function buildChildRoutes(): RouteObject[] {
   const children: RouteObject[] = []
 
   ROUTE_SPECS.forEach((spec, i) => {
-    const element = <PageShell titleKey={spec.titleKey} groupKey={spec.groupKey} />
+    const element =
+      spec.path === '/evidence'
+        ? <EvidencePage />
+        : <PageShell titleKey={spec.titleKey} groupKey={spec.groupKey} />
     if (i === 0) {
       children.push({ index: true, element })
     } else {

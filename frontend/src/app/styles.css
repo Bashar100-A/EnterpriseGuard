@@ -2083,3 +2083,19 @@ body {
 .eg-danger__btn--confirm:hover:not(:disabled) {
   filter: brightness(1.08);
 }
+
+/* ------------------------------------------------------------
+   EvidencePage (E.2)
+   First real page. Full-provenance, no fabricated rows.
+   ------------------------------------------------------------ */
+
+.eg-evidence-page__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--eg-space-3);
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-evidence-page__table {
+  margin-block-end: var(--eg-space-3);
+}

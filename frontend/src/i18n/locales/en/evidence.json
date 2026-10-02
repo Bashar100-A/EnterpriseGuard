@@ -1,0 +1,19 @@
+{
+  "title": "Evidence",
+  "description": "Verified and unverified items within the current scope",
+  "metrics": {
+    "total": "Total Items",
+    "verified": "Verified",
+    "unknown": "Unknown",
+    "invalid": "Invalid"
+  },
+  "table": {
+    "caption": "Evidence Items",
+    "id": "Identifier",
+    "source": "Source",
+    "verifiedAt": "Verified At",
+    "verification": "Verification",
+    "empty": "No evidence available in this scope"
+  },
+  "backendNote": "Backend integration comes in a later phase. This page shows only what has been verified; nothing is inferred."
+}
