@@ -1447,3 +1447,182 @@ body {
   color: var(--eg-text-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* ------------------------------------------------------------
+   EnterpriseTable (D.4c)
+   Table primitive with explicit states. No hidden behavior.
+   Rows render only in loaded/partial states.
+   ------------------------------------------------------------ */
+
+.eg-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--eg-space-2);
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-bg-surface-1);
+  overflow: hidden;
+}
+
+.eg-table__caption {
+  padding: var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--eg-text-primary);
+}
+
+.eg-table__banner {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--eg-space-2) var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+  background: color-mix(in srgb, var(--eg-warning-amber) 8%, transparent);
+}
+
+.eg-table__banner-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--eg-warning-amber);
+}
+
+.eg-table__banner-hint {
+  font-size: 11px;
+  color: var(--eg-text-secondary);
+}
+
+.eg-table__scroll {
+  overflow-x: auto;
+}
+
+.eg-table__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.eg-table__table thead {
+  background: var(--eg-bg-surface-2);
+}
+
+.eg-table__table th {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--eg-text-muted);
+  padding: var(--eg-space-2) var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.eg-table__table td {
+  padding: var(--eg-space-2) var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+  color: var(--eg-text-primary);
+  vertical-align: middle;
+}
+
+.eg-table__table tbody tr:last-child td {
+  border-block-end: none;
+}
+
+.eg-table__row:hover {
+  background: var(--eg-bg-surface-2);
+}
+
+.eg-table__cell--start  { text-align: start; }
+.eg-table__cell--center { text-align: center; }
+.eg-table__cell--end    { text-align: end; }
+
+.eg-table__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  border: none;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.eg-table__sort:hover { color: var(--eg-text-primary); }
+
+.eg-table__sort:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: 1px;
+}
+
+.eg-table__sort-arrow {
+  color: var(--eg-text-muted);
+  font-size: 11px;
+}
+
+.eg-table__placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--eg-space-2);
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--eg-space-4);
+  min-height: 140px;
+}
+
+.eg-table__placeholder[data-tone="warning"] {
+  border-inline-start: 3px solid var(--eg-warning-amber);
+}
+
+.eg-table__placeholder[data-tone="critical"] {
+  border-inline-start: 3px solid var(--eg-critical-red);
+}
+
+.eg-table__placeholder-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--eg-text-primary);
+}
+
+.eg-table__placeholder-hint {
+  font-size: 12px;
+  color: var(--eg-text-secondary);
+  max-width: 60ch;
+}
+
+.eg-table__retry {
+  padding: var(--eg-space-1) var(--eg-space-3);
+  background: transparent;
+  color: var(--eg-signal-blue);
+  border: 1px solid var(--eg-signal-blue);
+  border-radius: var(--eg-radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.eg-table__retry:hover {
+  background: color-mix(in srgb, var(--eg-signal-blue) 12%, transparent);
+}
+
+.eg-table__retry:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: 2px;
+}
+
+.eg-table__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--eg-space-2);
+  padding: var(--eg-space-2) var(--eg-space-3);
+  border-block-start: 1px solid var(--eg-border-subtle);
+}
+
+.eg-table__count {
+  font-size: 11px;
+  color: var(--eg-text-muted);
+  font-variant-numeric: tabular-nums;
+}

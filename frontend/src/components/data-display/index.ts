@@ -8,3 +8,11 @@ export type {
 
 export { ChartFrame } from './ChartFrame'
 export type { ChartFrameProps, ChartState } from './ChartFrame'
+
+export { EnterpriseTable } from './EnterpriseTable'
+export type {
+  EnterpriseTableProps,
+  EnterpriseColumn,
+  ColumnAlign,
+  SortDirection,
+} from './EnterpriseTable'

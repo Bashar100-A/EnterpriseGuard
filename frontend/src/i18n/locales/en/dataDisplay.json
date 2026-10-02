@@ -42,5 +42,39 @@
       "expand": "Expand",
       "collapse": "Collapse"
     }
+  },
+  "table": {
+    "state": {
+      "loading": "Loading",
+      "empty": "Empty",
+      "partial": "Partial",
+      "stale": "Stale",
+      "error": "Error",
+      "unavailable": "Unavailable",
+      "permissionDenied": "Denied",
+      "loaded": "Loaded",
+      "unknown": "Unknown"
+    },
+    "loading": "Loading rows…",
+    "empty": "No rows to display",
+    "emptyHint": "There is currently no data within this scope.",
+    "error": "Could not load rows",
+    "errorHint": "The requested data could not be loaded.",
+    "stale": "Data is stale",
+    "staleHint": "This view may no longer reflect current state.",
+    "unavailable": "Data unavailable",
+    "unavailableHint": "The data source is not available.",
+    "permissionDenied": "Permission denied",
+    "permissionDeniedHint": "You do not have permission to view these rows.",
+    "partial": "Partial data",
+    "partialHint": "Some rows could not be loaded.",
+    "retry": "Retry",
+    "sortAsc": "Sort ascending",
+    "sortDesc": "Sort descending",
+    "sortedAsc": "sorted ascending",
+    "sortedDesc": "sorted descending",
+    "selected": "{{count}} selected",
+    "row": "Row",
+    "noColumns": "No columns configured"
   }
 }
