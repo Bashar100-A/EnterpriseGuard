@@ -2313,3 +2313,41 @@ body {
 .eg-decisions__table {
   margin-block-end: var(--eg-space-3);
 }
+
+/* ------------------------------------------------------------
+   GovernancePage (E.4)
+   ------------------------------------------------------------ */
+
+.eg-governance__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--eg-space-3);
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-governance__policies,
+.eg-governance__approvals {
+  margin-block-end: var(--eg-space-3);
+}
+
+.eg-governance__propose {
+  padding: 6px 14px;
+  background: var(--eg-signal-blue);
+  color: #001018;
+  border: 1px solid var(--eg-signal-blue);
+  border-radius: var(--eg-radius-sm);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.eg-governance__propose:hover {
+  filter: brightness(1.08);
+}
+
+.eg-governance__propose:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: 2px;
+}

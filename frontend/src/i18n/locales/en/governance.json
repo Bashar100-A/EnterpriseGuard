@@ -1,0 +1,38 @@
+{
+  "title": "Governance",
+  "description": "Policies, approvals, and the authority boundary — who can do what, and why",
+  "metrics": {
+    "label": "Governance indicators",
+    "activePolicies": "Active Policies",
+    "pendingApprovals": "Pending Approvals",
+    "approvedToday": "Approved (24h)",
+    "rejectedToday": "Rejected (24h)"
+  },
+  "policies": {
+    "caption": "Active Policies",
+    "id": "Policy ID",
+    "name": "Name",
+    "scope": "Scope",
+    "state": "State",
+    "empty": "No policies configured in this scope"
+  },
+  "approvals": {
+    "caption": "Pending Approvals",
+    "id": "Approval ID",
+    "request": "Request",
+    "requester": "Requester",
+    "state": "State",
+    "empty": "No pending approvals in this scope"
+  },
+  "propose": {
+    "label": "Propose Policy",
+    "intent": "Create a new policy in the current scope",
+    "explanation": "A new policy changes what actions are permitted. This affects all future requests until superseded.",
+    "impact1": "All future matching requests will be evaluated against the new policy.",
+    "impact2": "The policy takes effect immediately upon backend authorization.",
+    "impact3": "Existing decisions are not retroactively re-evaluated.",
+    "authorityRequired": "Role: POLICY_ADMIN / Policy: POL-GOV-001",
+    "backendAuthority": "ADIE policy service"
+  },
+  "backendNote": "Backend integration comes in a later phase. No policies or approvals are shown until the backend supplies them. This page never fabricates an authorization."
+}
