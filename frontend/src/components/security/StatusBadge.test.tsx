@@ -1,8 +1,8 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { screen, cleanup } from '@testing-library/react'
 import { renderWithThemeOnly } from '../../test/renderWithProviders'
-import { StatusBadge, toneForStatus } from './StatusBadge'
-import type { StatusKey } from './StatusBadge'
+import { StatusBadge } from './StatusBadge'
+import { toneForStatus, type StatusKey } from './tone'
 
 afterEach(() => {
   cleanup()

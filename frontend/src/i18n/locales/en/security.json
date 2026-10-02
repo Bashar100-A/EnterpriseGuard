@@ -33,6 +33,21 @@
     "high": "High",
     "critical": "Critical"
   },
+  "verification": {
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "invalid": "Invalid",
+    "unknown": "Unknown",
+    "notAvailable": "Not Available"
+  },
+  "environment": {
+    "label": "Environment",
+    "production": "Production",
+    "staging": "Staging",
+    "development": "Development",
+    "test": "Test",
+    "unknown": "Unknown"
+  },
   "indicator": {
     "label": "State indicator"
   }

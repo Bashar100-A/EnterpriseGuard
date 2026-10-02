@@ -938,3 +938,26 @@ body {
 .eg-indicator[data-size="lg"] .eg-indicator__dot { width: 10px; height: 10px; }
 
 .eg-indicator__label { color: var(--eg-text-primary); }
+
+/* ------------------------------------------------------------
+   EnvironmentBadge (D.2a)
+   Not a semantic tone. Production gets a subtle amber accent.
+   ------------------------------------------------------------ */
+
+.eg-badge--environment {
+  color: var(--eg-text-secondary);
+  border-color: var(--eg-border-strong);
+  background: var(--eg-bg-surface-2);
+}
+
+.eg-badge--environment[data-environment="production"] {
+  color: var(--eg-warning-amber);
+  border-color: var(--eg-warning-amber);
+  background: color-mix(in srgb, var(--eg-warning-amber) 10%, transparent);
+}
+
+.eg-badge--environment[data-environment="staging"] {
+  color: var(--eg-signal-blue);
+  border-color: var(--eg-signal-blue);
+  background: color-mix(in srgb, var(--eg-signal-blue) 10%, transparent);
+}

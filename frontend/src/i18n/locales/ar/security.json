@@ -33,6 +33,21 @@
     "high": "مرتفع",
     "critical": "حرج"
   },
+  "verification": {
+    "verified": "موثّق",
+    "unverified": "غير موثّق",
+    "invalid": "غير صالح",
+    "unknown": "غير معروف",
+    "notAvailable": "غير متاح"
+  },
+  "environment": {
+    "label": "البيئة",
+    "production": "الإنتاج",
+    "staging": "الاختبار",
+    "development": "التطوير",
+    "test": "الاختبار",
+    "unknown": "غير معروفة"
+  },
   "indicator": {
     "label": "مؤشر الحالة"
   }

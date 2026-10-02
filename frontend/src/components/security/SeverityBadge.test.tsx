@@ -1,7 +1,8 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { screen, cleanup } from '@testing-library/react'
 import { renderWithThemeOnly } from '../../test/renderWithProviders'
-import { SeverityBadge, toneForSeverity } from './SeverityBadge'
+import { SeverityBadge } from './SeverityBadge'
+import { toneForSeverity } from './tone'
 
 afterEach(() => {
   cleanup()
