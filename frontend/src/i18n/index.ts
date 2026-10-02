@@ -11,6 +11,7 @@ import enWorkspace from './locales/en/workspace.json'
 import enAssurance from './locales/en/assurance.json'
 import enSecurity from './locales/en/security.json'
 import enDataDisplay from './locales/en/dataDisplay.json'
+import enCommand from './locales/en/command.json'
 
 import arCommon from './locales/ar/common.json'
 import arNavigation from './locales/ar/navigation.json'
@@ -22,6 +23,7 @@ import arWorkspace from './locales/ar/workspace.json'
 import arAssurance from './locales/ar/assurance.json'
 import arSecurity from './locales/ar/security.json'
 import arDataDisplay from './locales/ar/dataDisplay.json'
+import arCommand from './locales/ar/command.json'
 
 export const SUPPORTED_LANGUAGES = ['en', 'ar'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
@@ -40,6 +42,7 @@ export const NAMESPACES = [
   'assurance',
   'security',
   'dataDisplay',
+  'command',
 ] as const
 
 function isSupported(value: string | null | undefined): value is SupportedLanguage {
@@ -64,6 +67,7 @@ const resources = {
     assurance: enAssurance,
     security: enSecurity,
     dataDisplay: enDataDisplay,
+    command: enCommand,
   },
   ar: {
     common: arCommon,
@@ -76,6 +80,7 @@ const resources = {
     assurance: arAssurance,
     security: arSecurity,
     dataDisplay: arDataDisplay,
+    command: arCommand,
   },
 }
 

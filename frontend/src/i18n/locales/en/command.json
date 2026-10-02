@@ -1,0 +1,39 @@
+{
+  "title": "Command palette",
+  "placeholder": "Type a command or search…",
+  "noResults": "No commands match your search",
+  "noResultsHint": "Try a different keyword.",
+  "hints": {
+    "navigate": "Navigate",
+    "run": "Run",
+    "close": "Close",
+    "open": "Open"
+  },
+  "group": {
+    "navigate": "Navigate",
+    "workspace": "Workspace",
+    "language": "Language",
+    "theme": "Theme",
+    "system": "System",
+    "help": "Help"
+  },
+  "commands": {
+    "overview": "Go to Overview",
+    "evidence": "Go to Evidence",
+    "decisions": "Go to Decision Intelligence",
+    "sibb": "Go to SIBB Trust Core",
+    "governance": "Go to Governance",
+    "audit": "Go to Audit",
+    "inspection": "Go to Inspection",
+    "maintenance": "Go to Maintenance",
+    "settings": "Open Settings",
+    "languageEnglish": "Switch to English",
+    "languageArabic": "Switch to Arabic",
+    "themeDark": "Set theme: Dark",
+    "themeLight": "Set theme: Light",
+    "themeSystem": "Set theme: System",
+    "toggleAssurance": "Toggle assurance panel",
+    "toggleRail": "Toggle navigation rail"
+  },
+  "comingSoon": "Coming in a later phase"
+}

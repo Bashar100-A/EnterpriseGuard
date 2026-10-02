@@ -1626,3 +1626,188 @@ body {
   color: var(--eg-text-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* ------------------------------------------------------------
+   CommandPalette (D.5a)
+   Fixed overlay, centered dialog, keyboard-navigable.
+   ------------------------------------------------------------ */
+
+.eg-cmd-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 900;
+  display: flex;
+  justify-content: center;
+  padding-block-start: 12vh;
+  padding-inline: var(--eg-space-3);
+}
+
+.eg-cmd {
+  width: 100%;
+  max-width: 560px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--eg-bg-surface-1);
+  border: 1px solid var(--eg-border-strong);
+  border-radius: var(--eg-radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.eg-cmd__header {
+  display: flex;
+  align-items: center;
+  gap: var(--eg-space-2);
+  padding: var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+}
+
+.eg-cmd__icon {
+  font-size: 14px;
+  color: var(--eg-text-muted);
+}
+
+.eg-cmd__input {
+  flex: 1;
+  padding: 4px 0;
+  background: transparent;
+  color: var(--eg-text-primary);
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.eg-cmd__input::placeholder {
+  color: var(--eg-text-muted);
+}
+
+.eg-cmd__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  color: var(--eg-text-secondary);
+  border: 1px solid transparent;
+  border-radius: var(--eg-radius-sm);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.eg-cmd__close:hover {
+  background: var(--eg-bg-surface-2);
+  color: var(--eg-text-primary);
+}
+
+.eg-cmd__close:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: 1px;
+}
+
+.eg-cmd__body {
+  flex: 1;
+  overflow-y: auto;
+  padding-block: var(--eg-space-2);
+}
+
+.eg-cmd__group {
+  padding: var(--eg-space-1) var(--eg-space-3);
+  margin-block-start: var(--eg-space-1);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--eg-text-muted);
+}
+
+.eg-cmd__item {
+  display: flex;
+  align-items: center;
+  gap: var(--eg-space-2);
+  padding: var(--eg-space-2) var(--eg-space-3);
+  cursor: pointer;
+  color: var(--eg-text-primary);
+  font-size: 13px;
+  user-select: none;
+}
+
+.eg-cmd__item--active {
+  background: var(--eg-bg-surface-2);
+  color: var(--eg-text-primary);
+}
+
+.eg-cmd__item--active::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--eg-signal-blue);
+}
+
+.eg-cmd__item--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.eg-cmd__item-label { flex: 1; }
+
+.eg-cmd__item-shortcut {
+  font-size: 11px;
+  padding: 1px 6px;
+  color: var(--eg-text-muted);
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-sm);
+  background: var(--eg-bg-surface-2);
+}
+
+.eg-cmd__empty {
+  padding: var(--eg-space-4);
+  text-align: center;
+}
+
+.eg-cmd__empty-title {
+  color: var(--eg-text-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.eg-cmd__empty-hint {
+  margin-block-start: 4px;
+  color: var(--eg-text-muted);
+  font-size: 12px;
+}
+
+.eg-cmd__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--eg-space-4);
+  padding: var(--eg-space-2) var(--eg-space-3);
+  border-block-start: 1px solid var(--eg-border-subtle);
+  background: var(--eg-bg-surface-2);
+  font-size: 11px;
+  color: var(--eg-text-muted);
+}
+
+.eg-cmd__hint { display: inline-flex; align-items: center; gap: 4px; }
+
+.eg-cmd__hint kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+  color: var(--eg-text-secondary);
+  background: var(--eg-bg-surface-1);
+  border: 1px solid var(--eg-border-strong);
+  border-radius: 3px;
+}
