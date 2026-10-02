@@ -2099,3 +2099,57 @@ body {
 .eg-evidence-page__table {
   margin-block-end: var(--eg-space-3);
 }
+
+/* ------------------------------------------------------------
+   OverviewPage (E.1) — Situation Room
+   Professional operations layout. Doctrine strip at the top.
+   ------------------------------------------------------------ */
+
+.eg-overview__doctrine {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--eg-space-3);
+  padding: var(--eg-space-3) var(--eg-space-4);
+  margin-block-end: var(--eg-space-4);
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: linear-gradient(
+    180deg,
+    var(--eg-bg-surface-1) 0%,
+    var(--eg-bg-surface-2) 100%
+  );
+  font-family: var(--eg-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.eg-overview__doctrine-term {
+  color: var(--eg-text-primary);
+  font-weight: 600;
+}
+
+.eg-overview__doctrine-sep {
+  color: var(--eg-signal-blue);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.eg-overview__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--eg-space-3);
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-overview__charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: var(--eg-space-3);
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-overview__activity {
+  margin-block-end: var(--eg-space-3);
+}

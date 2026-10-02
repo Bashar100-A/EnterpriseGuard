@@ -1,0 +1,30 @@
+{
+  "title": "Overview",
+  "description": "Sovereign Control Surface — operational overview",
+  "doctrine": {
+    "observed": "Observed",
+    "decided": "Decided",
+    "executed": "Executed"
+  },
+  "metrics": {
+    "label": "Key operational indicators",
+    "systemHealth": "System Health",
+    "activeEvidence": "Active Evidence",
+    "pendingApprovals": "Pending Approvals",
+    "lastDecision": "Last Decision"
+  },
+  "charts": {
+    "decisionVolume": "Decision Volume",
+    "decisionVolumeSub": "Decisions across the selected window",
+    "evidenceFreshness": "Evidence Freshness",
+    "evidenceFreshnessSub": "Distribution of evidence by verification age"
+  },
+  "activity": {
+    "caption": "Recent Activity",
+    "time": "Time",
+    "actor": "Actor",
+    "action": "Action",
+    "empty": "No recent activity in this scope"
+  },
+  "backendNote": "Backend integration comes in a later phase. This overview reflects the current honest state; nothing is inferred or simulated."
+}

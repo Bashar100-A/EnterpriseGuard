@@ -4,6 +4,7 @@ import { ErrorBoundary } from './ErrorBoundary'
 import { PageShell } from './PageShell'
 import { NotFound } from './NotFound'
 import { EvidencePage } from '../features/evidence'
+import { OverviewPage } from '../features/overview'
 
 export interface RouteSpec {
   path: string
@@ -39,9 +40,9 @@ function buildChildRoutes(): RouteObject[] {
 
   ROUTE_SPECS.forEach((spec, i) => {
     const element =
-      spec.path === '/evidence'
-        ? <EvidencePage />
-        : <PageShell titleKey={spec.titleKey} groupKey={spec.groupKey} />
+      spec.path === '/' ? <OverviewPage />
+      : spec.path === '/evidence' ? <EvidencePage />
+      : <PageShell titleKey={spec.titleKey} groupKey={spec.groupKey} />
     if (i === 0) {
       children.push({ index: true, element })
     } else {

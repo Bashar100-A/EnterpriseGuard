@@ -1,0 +1,30 @@
+{
+  "title": "نظرة عامة",
+  "description": "سطح التحكم السيادي — نظرة تشغيلية",
+  "doctrine": {
+    "observed": "مُلاحَظ",
+    "decided": "مُقرَّر",
+    "executed": "مُنفَّذ"
+  },
+  "metrics": {
+    "label": "المؤشرات التشغيلية الأساسية",
+    "systemHealth": "صحة النظام",
+    "activeEvidence": "الأدلة النشطة",
+    "pendingApprovals": "الموافقات المعلّقة",
+    "lastDecision": "آخر قرار"
+  },
+  "charts": {
+    "decisionVolume": "حجم القرارات",
+    "decisionVolumeSub": "القرارات عبر النافذة المختارة",
+    "evidenceFreshness": "حداثة الأدلة",
+    "evidenceFreshnessSub": "توزيع الأدلة حسب عمر التحقق"
+  },
+  "activity": {
+    "caption": "النشاط الأخير",
+    "time": "الوقت",
+    "actor": "الفاعل",
+    "action": "الإجراء",
+    "empty": "لا يوجد نشاط حديث في هذا النطاق"
+  },
+  "backendNote": "تكامل الخادم في مرحلة لاحقة. تعكس هذه النظرة الحالة الصادقة الحالية؛ لا شيء مستنتج أو محاكى."
+}
