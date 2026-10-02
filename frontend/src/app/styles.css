@@ -2552,3 +2552,58 @@ body {
 .eg-sibb__checkpoints {
   margin-block-end: var(--eg-space-3);
 }
+
+/* ------------------------------------------------------------
+   ProvenancePage (F.2)
+   ------------------------------------------------------------ */
+
+.eg-prov__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--eg-space-3);
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-prov__legend {
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-bg-surface-1);
+  margin-block-end: var(--eg-space-4);
+  overflow: hidden;
+}
+
+.eg-prov__legend-header {
+  padding: var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--eg-text-secondary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.eg-prov__legend-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: var(--eg-space-3);
+  gap: var(--eg-space-3);
+}
+
+.eg-prov__legend-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--eg-space-2);
+  border-inline-start: 2px solid var(--eg-border-strong);
+}
+
+.eg-prov__legend-caption {
+  font-size: 12px;
+  color: var(--eg-text-secondary);
+}
+
+.eg-prov__table {
+  margin-block-end: var(--eg-space-3);
+}

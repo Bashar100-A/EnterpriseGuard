@@ -1,0 +1,27 @@
+{
+  "title": "Provenance",
+  "description": "Where each item came from — source, chain, and origin",
+  "metrics": {
+    "label": "Provenance indicators",
+    "sources": "Sources",
+    "chains": "Chains",
+    "verifiedLinks": "Verified Links",
+    "unresolvedLinks": "Unresolved Links"
+  },
+  "table": {
+    "caption": "Provenance Records",
+    "id": "Provenance ID",
+    "item": "Item",
+    "source": "Source",
+    "chain": "Chain",
+    "verified": "Verified",
+    "empty": "No provenance records in this scope"
+  },
+  "legend": {
+    "label": "Legend",
+    "verified": "Verified — source and chain proven",
+    "unverified": "Unverified — chain not yet confirmed",
+    "unknown": "Unknown — no data available"
+  },
+  "backendNote": "Backend integration comes in a later phase. No provenance is fabricated. Each record must be proven by the SIBB trust core before it is marked verified."
+}
