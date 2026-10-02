@@ -10,6 +10,7 @@ import { GovernancePage } from '../features/governance'
 import { HealthPage } from '../features/health'
 import { SibbPage } from '../features/sibb'
 import { ProvenancePage } from '../features/provenance'
+import { OperationsPage } from '../features/operations'
 
 export interface RouteSpec {
   path: string
@@ -46,6 +47,7 @@ function buildChildRoutes(): RouteObject[] {
   ROUTE_SPECS.forEach((spec, i) => {
     const element =
       spec.path === '/' ? <OverviewPage />
+      : spec.path === '/operations' ? <OperationsPage />
       : spec.path === '/evidence' ? <EvidencePage />
       : spec.path === '/decisions' ? <DecisionsPage />
       : spec.path === '/governance' ? <GovernancePage />

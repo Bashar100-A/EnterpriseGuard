@@ -1,0 +1,21 @@
+{
+  "title": "Security Operations",
+  "description": "Active incident queue, response actions, and operational metrics",
+  "metrics": {
+    "label": "Operational indicators",
+    "activeIncidents": "Active Incidents",
+    "critical": "Critical",
+    "resolved24h": "Resolved (24h)",
+    "mttr": "MTTR"
+  },
+  "incidents": {
+    "caption": "Incident Queue",
+    "id": "Incident ID",
+    "severity": "Severity",
+    "state": "State",
+    "source": "Source",
+    "detectedAt": "Detected At",
+    "empty": "No active incidents in this scope"
+  },
+  "backendNote": "Backend integration comes in a later phase. No incidents are fabricated. This page reflects the honest current state."
+}
