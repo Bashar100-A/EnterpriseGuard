@@ -13,10 +13,34 @@
   },
   "chart": {
     "title": "Chart",
-    "loading": "Loading chart…",
-    "empty": "No chart data",
-    "error": "Could not load chart",
-    "stale": "Chart data is stale",
-    "unavailable": "Chart unavailable"
+    "state": {
+      "loading": "Loading",
+      "ready": "Ready",
+      "empty": "Empty",
+      "partial": "Partial",
+      "stale": "Stale",
+      "error": "Error",
+      "unavailable": "Unavailable",
+      "permissionDenied": "Denied"
+    },
+    "frame": {
+      "loading": "Loading chart…",
+      "empty": "No chart data available",
+      "emptyHint": "There is currently nothing to plot within this scope.",
+      "error": "Could not load chart",
+      "stale": "Chart data is stale",
+      "staleHint": "This view may no longer reflect current state.",
+      "unavailable": "Chart unavailable",
+      "unavailableHint": "The chart data source is not available.",
+      "permissionDenied": "Permission denied",
+      "permissionDeniedHint": "You do not have permission to view this chart.",
+      "partial": "Partial data",
+      "partialHint": "Some series could not be loaded."
+    },
+    "actions": {
+      "retry": "Retry",
+      "expand": "Expand",
+      "collapse": "Collapse"
+    }
   }
 }

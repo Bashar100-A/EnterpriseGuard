@@ -5,3 +5,6 @@ export type {
   MetricDataState,
   TrendDirection,
 } from './MetricCard'
+
+export { ChartFrame } from './ChartFrame'
+export type { ChartFrameProps, ChartState } from './ChartFrame'
