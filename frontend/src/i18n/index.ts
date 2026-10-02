@@ -6,12 +6,14 @@ import enNavigation from './locales/en/navigation.json'
 import enStates from './locales/en/states.json'
 import enErrors from './locales/en/errors.json'
 import enAccessibility from './locales/en/accessibility.json'
+import enTopbar from './locales/en/topbar.json'
 
 import arCommon from './locales/ar/common.json'
 import arNavigation from './locales/ar/navigation.json'
 import arStates from './locales/ar/states.json'
 import arErrors from './locales/ar/errors.json'
 import arAccessibility from './locales/ar/accessibility.json'
+import arTopbar from './locales/ar/topbar.json'
 
 export const SUPPORTED_LANGUAGES = ['en', 'ar'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
@@ -19,7 +21,14 @@ export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
 export const DEFAULT_LANGUAGE: SupportedLanguage = 'en'
 export const LANGUAGE_STORAGE_KEY = 'eg.language'
 
-export const NAMESPACES = ['common', 'navigation', 'states', 'errors', 'accessibility'] as const
+export const NAMESPACES = [
+  'common',
+  'navigation',
+  'states',
+  'errors',
+  'accessibility',
+  'topbar',
+] as const
 
 function isSupported(value: string | null | undefined): value is SupportedLanguage {
   return value === 'en' || value === 'ar'
@@ -38,6 +47,7 @@ const resources = {
     states: enStates,
     errors: enErrors,
     accessibility: enAccessibility,
+    topbar: enTopbar,
   },
   ar: {
     common: arCommon,
@@ -45,6 +55,7 @@ const resources = {
     states: arStates,
     errors: arErrors,
     accessibility: arAccessibility,
+    topbar: arTopbar,
   },
 }
 

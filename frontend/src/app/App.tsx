@@ -1,12 +1,12 @@
 import { useState, type ReactElement } from 'react'
 import { AppShell } from '../layouts/AppShell'
 import { NavigationRail, useRailExpanded } from '../components/navigation'
+import { Topbar } from '../components/topbar'
 import type { NavigationItem } from '../components/navigation'
 
 /**
- * UI-01 foundation App — wires the AppShell and NavigationRail.
+ * UI-01 foundation App — wires AppShell, NavigationRail, and Topbar.
  * Content is a placeholder while Phase C builds the rest of the layout.
- * No routing library; onNavigate is a no-op hook for future wiring.
  */
 export default function App(): ReactElement {
   const [expanded, setExpanded] = useRailExpanded()
@@ -18,6 +18,7 @@ export default function App(): ReactElement {
 
   return (
     <AppShell
+      topbar={<Topbar currentPath={activePath} />}
       navigationRail={
         <NavigationRail
           expanded={expanded}

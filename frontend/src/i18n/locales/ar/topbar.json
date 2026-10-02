@@ -1,0 +1,42 @@
+{
+  "breadcrumb": {
+    "home": "الرئيسية"
+  },
+  "search": {
+    "label": "بحث",
+    "hint": "البحث — في مرحلة لاحقة",
+    "shortcut": "Ctrl K"
+  },
+  "command": {
+    "label": "لوحة الأوامر",
+    "hint": "لوحة الأوامر — في مرحلة لاحقة"
+  },
+  "environment": {
+    "label": "البيئة",
+    "production": "الإنتاج",
+    "development": "التطوير",
+    "test": "الاختبار",
+    "unknown": "غير معروفة"
+  },
+  "systemState": {
+    "label": "حالة النظام",
+    "unknown": "غير معروفة"
+  },
+  "language": {
+    "label": "اللغة",
+    "en": "EN",
+    "ar": "AR"
+  },
+  "theme": {
+    "label": "المظهر",
+    "dark": "داكن",
+    "light": "فاتح",
+    "system": "النظام",
+    "cycle": "تبديل المظهر"
+  },
+  "user": {
+    "label": "المستخدم",
+    "placeholder": "المستخدم",
+    "notConnected": "المصادقة غير متصلة"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "breadcrumb": {
+    "home": "Home"
+  },
+  "search": {
+    "label": "Search",
+    "hint": "Search — coming in a later phase",
+    "shortcut": "Ctrl K"
+  },
+  "command": {
+    "label": "Command palette",
+    "hint": "Command palette — coming in a later phase"
+  },
+  "environment": {
+    "label": "Environment",
+    "production": "Production",
+    "development": "Development",
+    "test": "Test",
+    "unknown": "Unknown"
+  },
+  "systemState": {
+    "label": "System state",
+    "unknown": "Unknown"
+  },
+  "language": {
+    "label": "Language",
+    "en": "EN",
+    "ar": "AR"
+  },
+  "theme": {
+    "label": "Theme",
+    "dark": "Dark",
+    "light": "Light",
+    "system": "System",
+    "cycle": "Cycle theme"
+  },
+  "user": {
+    "label": "User",
+    "placeholder": "User",
+    "notConnected": "Authentication not connected"
+  }
+}
