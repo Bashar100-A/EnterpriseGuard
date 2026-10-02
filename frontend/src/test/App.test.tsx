@@ -1,16 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
-import type { ReactElement } from 'react'
+import { screen, cleanup } from '@testing-library/react'
 import App from '../app/App'
-import { ThemeProvider } from '../theme'
-
-/**
- * The production entry point (main.tsx) wraps App in ThemeProvider.
- * Tests must do the same, because Topbar (rendered by App) uses useTheme().
- */
-function renderApp(): ReturnType<typeof render> {
-  return render(<ThemeProvider><App /></ThemeProvider> as ReactElement)
-}
+import { renderWithProviders } from './renderWithProviders'
 
 afterEach(() => {
   cleanup()
@@ -22,44 +13,61 @@ afterEach(() => {
 
 describe('App (UI-01 foundation)', () => {
   it('renders the foundation title', () => {
-    renderApp()
+    renderWithProviders(<App />)
     expect(screen.getByText(/Sovereign Control Surface/i)).toBeTruthy()
   })
 
   it('renders foundation status', () => {
-    renderApp()
+    renderWithProviders(<App />)
     expect(screen.getByText(/Foundation Ready/i)).toBeTruthy()
   })
 
   it('declares no operational data is connected', () => {
-    renderApp()
+    renderWithProviders(<App />)
     expect(screen.getByText(/no operational data connected/i)).toBeTruthy()
   })
 
   it('wraps content in AppShell', () => {
-    const { container } = renderApp()
+    const { container } = renderWithProviders(<App />)
     expect(container.querySelector('.eg-shell')).not.toBeNull()
   })
 
   it('has a semantic main landmark', () => {
-    const { container } = renderApp()
+    const { container } = renderWithProviders(<App />)
     expect(container.querySelector('main#eg-main')).not.toBeNull()
   })
 
   it('includes the NavigationRail', () => {
-    const { container } = renderApp()
+    const { container } = renderWithProviders(<App />)
     expect(container.querySelector('nav.eg-nav')).not.toBeNull()
   })
 
   it('includes the Topbar', () => {
-    const { container } = renderApp()
+    const { container } = renderWithProviders(<App />)
     expect(container.querySelector('.eg-topbar')).not.toBeNull()
+  })
+
+  it('includes the WorkspaceHeader', () => {
+    const { container } = renderWithProviders(<App />)
+    expect(container.querySelector('.eg-workspace')).not.toBeNull()
+  })
+
+  it('includes the ContextStrip', () => {
+    const { container } = renderWithProviders(<App />)
+    expect(container.querySelector('.eg-context')).not.toBeNull()
+  })
+
+  it('renders the assurance badge as Unknown by default', () => {
+    const { container } = renderWithProviders(<App />)
+    const badge = container.querySelector('.eg-workspace__assurance')
+    expect(badge).not.toBeNull()
+    expect(badge?.getAttribute('data-state')).toBe('unknown')
   })
 
   it('renders without error in RTL', () => {
     document.documentElement.dir = 'rtl'
     document.documentElement.lang = 'ar'
-    renderApp()
+    renderWithProviders(<App />)
     expect(screen.getByText(/Sovereign Control Surface/i)).toBeTruthy()
   })
 })

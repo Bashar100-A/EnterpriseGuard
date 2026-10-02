@@ -1,0 +1,28 @@
+{
+  "breadcrumb": {
+    "home": "الرئيسية"
+  },
+  "context": {
+    "environment": "البيئة",
+    "region": "المنطقة",
+    "dataFreshness": "حداثة البيانات",
+    "lastVerification": "آخر تحقق"
+  },
+  "assurance": {
+    "label": "الضمان",
+    "verified": "موثّق",
+    "unverified": "غير موثّق",
+    "unknown": "غير معروف",
+    "critical": "حرج"
+  },
+  "actions": {
+    "filter": "تصفية",
+    "export": "تصدير",
+    "refresh": "تحديث"
+  },
+  "foundation": {
+    "title": "سطح التحكم السيادي",
+    "status": "الأساس جاهز — UI-01 Foundation",
+    "note": "بيئة الأساس — لا توجد بيانات تشغيلية متصلة."
+  }
+}

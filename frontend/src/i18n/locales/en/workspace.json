@@ -1,0 +1,28 @@
+{
+  "breadcrumb": {
+    "home": "Home"
+  },
+  "context": {
+    "environment": "Environment",
+    "region": "Region",
+    "dataFreshness": "Data Freshness",
+    "lastVerification": "Last Verification"
+  },
+  "assurance": {
+    "label": "Assurance",
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "unknown": "Unknown",
+    "critical": "Critical"
+  },
+  "actions": {
+    "filter": "Filter",
+    "export": "Export",
+    "refresh": "Refresh"
+  },
+  "foundation": {
+    "title": "Sovereign Control Surface",
+    "status": "Foundation Ready — UI-01 Foundation",
+    "note": "Foundation environment — no operational data connected."
+  }
+}

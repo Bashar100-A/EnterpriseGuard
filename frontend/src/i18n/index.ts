@@ -7,6 +7,7 @@ import enStates from './locales/en/states.json'
 import enErrors from './locales/en/errors.json'
 import enAccessibility from './locales/en/accessibility.json'
 import enTopbar from './locales/en/topbar.json'
+import enWorkspace from './locales/en/workspace.json'
 
 import arCommon from './locales/ar/common.json'
 import arNavigation from './locales/ar/navigation.json'
@@ -14,6 +15,7 @@ import arStates from './locales/ar/states.json'
 import arErrors from './locales/ar/errors.json'
 import arAccessibility from './locales/ar/accessibility.json'
 import arTopbar from './locales/ar/topbar.json'
+import arWorkspace from './locales/ar/workspace.json'
 
 export const SUPPORTED_LANGUAGES = ['en', 'ar'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
@@ -28,6 +30,7 @@ export const NAMESPACES = [
   'errors',
   'accessibility',
   'topbar',
+  'workspace',
 ] as const
 
 function isSupported(value: string | null | undefined): value is SupportedLanguage {
@@ -48,6 +51,7 @@ const resources = {
     errors: enErrors,
     accessibility: enAccessibility,
     topbar: enTopbar,
+    workspace: enWorkspace,
   },
   ar: {
     common: arCommon,
@@ -56,6 +60,7 @@ const resources = {
     errors: arErrors,
     accessibility: arAccessibility,
     topbar: arTopbar,
+    workspace: arWorkspace,
   },
 }
 
