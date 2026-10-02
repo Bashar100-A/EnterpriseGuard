@@ -3,20 +3,37 @@
 @tailwind components;
 @tailwind utilities;
 
-/* UI-01.B.1 — Foundation CSS tokens (semantic only, no design system) */
+/* ============================================================
+   UI-01 — Design tokens
+   Dark is the default theme (operations platform convention).
+   Semantic security-state colors are identical in both themes.
+   ============================================================ */
 
 :root {
-  /* Semantic colors */
-  --eg-trust-emerald: #10B981;
-  --eg-signal-blue:   #38BDF8;
-  --eg-warning-amber: #F59E0B;
-  --eg-critical-red:  #EF4444;
-  --eg-unknown-gray:  #6B7280;
+  /* Semantic security-state colors (identical in dark and light) */
+  --eg-trust-emerald: #10b981;
+  --eg-signal-blue: #38bdf8;
+  --eg-warning-amber: #f59e0b;
+  --eg-critical-red: #ef4444;
+  --eg-unknown-gray: #6b7280;
 
-  /* Surfaces */
-  --eg-bg:      #0B1220;
-  --eg-fg:      #E5E7EB;
-  --eg-border:  #1F2937;
+  /* Surfaces — dark theme default */
+  --eg-bg: #0b1220;
+  --eg-bg-surface-1: #18253a;
+  --eg-bg-surface-2: #1d2b40;
+
+  /* Borders */
+  --eg-border-subtle: #2b3a50;
+  --eg-border-strong: #3a4b63;
+
+  /* Text */
+  --eg-text-primary: #f8fafc;
+  --eg-text-secondary: #cbd5e1;
+  --eg-text-muted: #94a3b8;
+
+  /* Legacy aliases (kept for existing components) */
+  --eg-fg: var(--eg-text-primary);
+  --eg-border: var(--eg-border-subtle);
 
   /* Spacing scale */
   --eg-space-1: 4px;
@@ -24,26 +41,78 @@
   --eg-space-3: 16px;
   --eg-space-4: 24px;
 
-  /* Radius */
+  /* Radius scale */
   --eg-radius-sm: 4px;
-  --eg-radius-md: 8px;
+  --eg-radius-md: 6px;
+  --eg-radius-lg: 8px;
+  --eg-radius-xl: 12px;
 
   /* Typography */
-  --eg-font-sans:        system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --eg-font-size-body:   14px;
-  --eg-font-size-title:  20px;
+  --eg-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --eg-font-arabic: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
+  --eg-font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --eg-font-size-body: 14px;
+  --eg-font-size-title: 20px;
   --eg-line-height-body: 1.5;
+
+  color-scheme: dark;
 }
 
-html, body, #root { height: 100%; margin: 0; }
+[data-theme='light'] {
+  /* Surfaces */
+  --eg-bg: #f8fafc;
+  --eg-bg-surface-1: #ffffff;
+  --eg-bg-surface-2: #f1f5f9;
+
+  /* Borders */
+  --eg-border-subtle: #e2e8f0;
+  --eg-border-strong: #cbd5e1;
+
+  /* Text */
+  --eg-text-primary: #0f172a;
+  --eg-text-secondary: #334155;
+  --eg-text-muted: #64748b;
+
+  color-scheme: light;
+}
+
+/* Arabic fonts applied when document direction is RTL */
+[dir='rtl'] {
+  font-family: var(--eg-font-arabic);
+}
+
+/* ------------------------------------------------------------
+   Base
+   ------------------------------------------------------------ */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
 
 body {
   background: var(--eg-bg);
-  color: var(--eg-fg);
+  color: var(--eg-text-primary);
   font-family: var(--eg-font-sans);
   font-size: var(--eg-font-size-body);
   line-height: var(--eg-line-height-body);
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------
+   Foundation utility classes (temporary — will be replaced by
+   AppShell in Phase C)
+   ------------------------------------------------------------ */
 
 .eg-root {
   padding: var(--eg-space-4);
@@ -61,9 +130,16 @@ body {
 }
 
 .eg-note {
-  color: var(--eg-unknown-gray);
-  border: 1px solid var(--eg-border);
+  color: var(--eg-text-muted);
+  border: 1px solid var(--eg-border-subtle);
   border-radius: var(--eg-radius-sm);
   padding: var(--eg-space-2);
   display: inline-block;
+}
+
+/* Technical identifiers (hashes, IDs) — monospace, LTR, direction-independent */
+.eg-mono {
+  font-family: var(--eg-font-mono);
+  direction: ltr;
+  unicode-bidi: embed;
 }
