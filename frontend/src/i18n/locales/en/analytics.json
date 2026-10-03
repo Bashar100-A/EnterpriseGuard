@@ -1,0 +1,36 @@
+{
+  "title": "Analytics",
+  "description": "Time series, dimensions, and comparative metrics",
+  "metrics": {
+    "label": "Analytics indicators",
+    "dataPoints": "Data Points",
+    "dimensions": "Dimensions",
+    "windows": "Active Windows",
+    "refreshRate": "Refresh Rate"
+  },
+  "charts": {
+    "volume": "Event Volume",
+    "volumeSub": "Events per time bucket",
+    "latency": "Decision Latency",
+    "latencySub": "Median time from observation to decision",
+    "coverage": "Evidence Coverage",
+    "coverageSub": "Share of items with verified provenance"
+  },
+  "dimensions": {
+    "label": "Analytics Dimensions",
+    "time": "Time",
+    "source": "Source",
+    "severity": "Severity",
+    "scope": "Scope",
+    "authority": "Authority"
+  },
+  "table": {
+    "caption": "Recent Snapshots",
+    "id": "Snapshot ID",
+    "window": "Window",
+    "dataPoints": "Data Points",
+    "createdAt": "Created",
+    "empty": "No analytics snapshots in this scope"
+  },
+  "backendNote": "Backend integration comes in a later phase. No analytics are fabricated. Charts render in the empty state until real data is available."
+}

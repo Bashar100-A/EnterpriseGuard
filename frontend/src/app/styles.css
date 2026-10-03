@@ -2828,3 +2828,62 @@ body {
 .eg-maintenance__history {
   margin-block-end: var(--eg-space-3);
 }
+
+/* ------------------------------------------------------------
+   AnalyticsPage (G.8)
+   ------------------------------------------------------------ */
+
+.eg-analytics__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--eg-space-3);
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-analytics__charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--eg-space-3);
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-analytics__dimensions {
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-bg-surface-1);
+  margin-block-end: var(--eg-space-4);
+  overflow: hidden;
+}
+
+.eg-analytics__dimensions-header {
+  padding: var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--eg-text-secondary);
+}
+
+.eg-analytics__dimensions-list {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: var(--eg-space-3);
+  gap: var(--eg-space-2);
+}
+
+.eg-analytics__dimension-item {
+  padding: var(--eg-space-1) var(--eg-space-3);
+  background: var(--eg-bg-surface-2);
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-sm);
+  font-size: 12px;
+  font-family: var(--eg-font-mono);
+  color: var(--eg-text-primary);
+}
+
+.eg-analytics__snapshots {
+  margin-block-end: var(--eg-space-3);
+}
