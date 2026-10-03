@@ -46,5 +46,20 @@
     "chart": {
       "title": "Sample Chart (empty state)"
     }
+  },
+  "tokenViewerPage": {
+    "title": "Design Tokens",
+    "description": "Every CSS custom property used across the interface.",
+    "note": "Swatches use var(--eg-*) so they reflect the live theme. Tokens marked theme-dependent change with light/dark.",
+    "groups": {
+      "semanticColors": "Semantic Colors",
+      "surfaces": "Surfaces",
+      "borders": "Borders",
+      "text": "Text",
+      "spacing": "Spacing",
+      "radius": "Radius",
+      "typography": "Typography"
+    },
+    "backendNote": "This page is a static reference. No data is fetched. Backend integration comes in a later phase."
   }
 }
