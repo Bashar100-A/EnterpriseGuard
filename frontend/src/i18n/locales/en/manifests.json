@@ -1,0 +1,29 @@
+{
+  "title": "Execution Manifests",
+  "description": "What was planned for execution — the boundary between decision and action",
+  "metrics": {
+    "label": "Manifest indicators",
+    "active": "Active Manifests",
+    "awaitingExecution": "Awaiting Execution",
+    "executed24h": "Executed (24h)",
+    "failed24h": "Failed (24h)"
+  },
+  "manifests": {
+    "caption": "Manifests",
+    "id": "Manifest ID",
+    "intent": "Intent",
+    "state": "State",
+    "requestedBy": "Requested By",
+    "requestedAt": "Requested",
+    "empty": "No manifests in this scope"
+  },
+  "executions": {
+    "caption": "Recent Executions",
+    "manifestId": "Manifest ID",
+    "outcome": "Outcome",
+    "state": "State",
+    "executedAt": "Executed",
+    "empty": "No executions recorded in this scope"
+  },
+  "backendNote": "Backend integration comes in a later phase. No manifests are fabricated. A manifest is a plan — only the backend can execute it."
+}

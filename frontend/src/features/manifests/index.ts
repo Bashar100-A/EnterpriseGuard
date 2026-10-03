@@ -1,0 +1,1 @@
+export { ManifestsPage } from './ManifestsPage'

@@ -24,6 +24,7 @@ import enOperations from './locales/en/operations.json'
 import enThreat from './locales/en/threat.json'
 import enPolicies from './locales/en/policies.json'
 import enApprovals from './locales/en/approvals.json'
+import enManifests from './locales/en/manifests.json'
 
 import arCommon from './locales/ar/common.json'
 import arNavigation from './locales/ar/navigation.json'
@@ -48,6 +49,7 @@ import arOperations from './locales/ar/operations.json'
 import arThreat from './locales/ar/threat.json'
 import arPolicies from './locales/ar/policies.json'
 import arApprovals from './locales/ar/approvals.json'
+import arManifests from './locales/ar/manifests.json'
 
 export const SUPPORTED_LANGUAGES = ['en', 'ar'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
@@ -79,6 +81,7 @@ export const NAMESPACES = [
   'threat',
   'policies',
   'approvals',
+  'manifests',
 ] as const
 
 function isSupported(value: string | null | undefined): value is SupportedLanguage {
@@ -116,6 +119,7 @@ const resources = {
     threat: enThreat,
     policies: enPolicies,
     approvals: enApprovals,
+    manifests: enManifests,
   },
   ar: {
     common: arCommon,
@@ -141,6 +145,7 @@ const resources = {
     threat: arThreat,
     policies: arPolicies,
     approvals: arApprovals,
+    manifests: arManifests,
   },
 }
 
