@@ -196,3 +196,9 @@ frontend/.env.*.local
 # --- UI-01.B.1: pilot artifacts (not part of the product) ---
 frontend/*.b1empty
 frontend/*.b1bak
+# UI-01 accidental artifacts (cleanup I.6)
+/calls
+/each
+/renders
+/toggle
+.gitignore.pre_*
