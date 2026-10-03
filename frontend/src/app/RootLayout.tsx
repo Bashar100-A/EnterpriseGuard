@@ -9,6 +9,7 @@ import { ShortcutsDialog } from '../components/shortcuts'
 import { useCommands } from '../hooks/useCommands'
 import { useGlobalShortcuts } from '../hooks/useGlobalShortcuts'
 import type { NavigationItem } from '../components/navigation'
+import { RouteAnnouncer } from '../components/a11y'
 
 /**
  * RootLayout — the router-aware top-level component.
@@ -59,7 +60,8 @@ export function RootLayout(): ReactElement {
         assuranceRail={<AssuranceRail onClose={() => setAssuranceOpen(false)} />}
       >
         <Outlet />
-      </AppShell>
+        <RouteAnnouncer />
+    </AppShell>
 
       <CommandPalette
         open={cmdOpen}

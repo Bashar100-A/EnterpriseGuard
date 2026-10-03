@@ -5,5 +5,9 @@
   "closeDialog": "إغلاق الحوار",
   "languageSwitcher": "تغيير اللغة",
   "themeSwitcher": "تغيير المظهر",
-  "mainContent": "المحتوى الرئيسي"
+  "mainContent": "المحتوى الرئيسي",
+  "appTitle": "EnterpriseGuard",
+  "pageTitleTemplate": "{{title}} · EnterpriseGuard",
+  "pageChanged": "تم الانتقال إلى {{title}}",
+  "pageChangedFallback": "تم تغيير الصفحة"
 }
