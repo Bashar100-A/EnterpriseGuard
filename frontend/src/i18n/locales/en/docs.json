@@ -20,5 +20,31 @@
     }
   },
   "comingSoon": "Details coming in a later step.",
-  "backendNote": "This page is a static reference. No data is fetched. Backend integration comes in a later phase."
+  "backendNote": "This page is a static reference. No data is fetched. Backend integration comes in a later phase.",
+  "playgroundPage": {
+    "title": "Component Playground",
+    "description": "Every UI primitive, grouped by domain. For design reference only.",
+    "fixtureNote": "Fixture previews are marked with __egFixture and are never consumed by production pages.",
+    "backendNote": "This is a design reference. No data is fetched. Backend integration comes in a later phase.",
+    "sections": {
+      "badges": "Badges",
+      "indicators": "Indicators",
+      "identifiers": "Technical Identifiers",
+      "dataDisplay": "Data Display",
+      "states": "Data States",
+      "chart": "Chart Frame"
+    },
+    "metrics": {
+      "uptime": "Uptime",
+      "requests": "Requests",
+      "errors": "Errors",
+      "latency": "Latency P99"
+    },
+    "table": {
+      "fixtureCaption": "Fixture preview (docs only) — not production data"
+    },
+    "chart": {
+      "title": "Sample Chart (empty state)"
+    }
+  }
 }

@@ -22,7 +22,7 @@ import { ReportsPage } from '../features/reports'
 import { AuditPage } from '../features/audit'
 import { AccessPage } from '../features/access'
 import { ConfigPage } from '../features/config'
-import { DocsPage } from '../features/docs'
+import { DocsPage, PlaygroundPage } from '../features/docs'
 
 export interface RouteSpec {
   path: string
@@ -52,6 +52,7 @@ export const ROUTE_SPECS: RouteSpec[] = [
   { path: '/access',              titleKey: 'usersAccess',          groupKey: 'administration' },
   { path: '/settings',            titleKey: 'configuration',        groupKey: 'administration' },
   { path: '/docs',                titleKey: 'documentation',        groupKey: 'administration' },
+  { path: '/docs/playground',     titleKey: 'playgroundPage',       groupKey: 'administration' },
 ]
 
 function buildChildRoutes(): RouteObject[] {
@@ -76,6 +77,7 @@ function buildChildRoutes(): RouteObject[] {
       : spec.path === '/access' ? <AccessPage />
       : spec.path === '/settings' ? <ConfigPage />
       : spec.path === '/docs' ? <DocsPage />
+      : spec.path === '/docs/playground' ? <PlaygroundPage />
       : spec.path === '/health' ? <HealthPage />
       : spec.path === '/sibb' ? <SibbPage />
       : spec.path === '/provenance' ? <ProvenancePage />
