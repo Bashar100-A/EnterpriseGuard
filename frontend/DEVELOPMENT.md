@@ -457,3 +457,198 @@ This is a design contract, not decoration. It documents the boundary.
 - `npm run build` — clean
 - All pages render in EN + AR, LTR + RTL, dark + light
 - Zero fabricated data anywhere in the UI
+
+---
+
+## Phase H Additions
+
+### Interaction layer — what Phase H adds
+
+Phase H turns the interface from a collection of pages into an
+interactive application. The five interaction primitives:
+
+| Component | Purpose |
+|---|---|
+| Command Palette (Ctrl+K) | Fuzzy-searchable command surface |
+| Global Shortcuts | ? / Ctrl+/ / Ctrl+B / Ctrl+Shift+A / Ctrl+J |
+| Toast System | Unified notifications via `useToast()` |
+| Drawer | Contextual side panel with focus trap |
+| URL State | Shareable filter state via query string |
+
+### Command Palette — real commands
+
+The palette never invents commands. `useCommands()` assembles them from:
+  1. The 19 routes (with translated labels)
+  2. The 2 supported languages
+  3. The 3 theme modes
+  4. Optional UI toggles (rail, assurance panel)
+
+Navigation commands carry three keyword sources:
+- the route path (`/evidence`)
+- the route key (`evidence`)
+- the translated page description (from `usePageDescriptions`)
+
+This is what lets Fuse.js match content-level queries like
+"observation execution" → "Go to Decision Intelligence".
+
+### Fuse.js configuration (canonical)
+
+```ts
+const FUSE_OPTIONS = {
+  keys: [
+    { name: "label", weight: 0.7 },
+    { name: "keywords", weight: 0.3 },
+  ],
+  threshold: 0.4,
+  ignoreLocation: true,
+  minMatchCharLength: 2,
+}
+```
+
+Threshold 0.4 is tuned to allow typos ("evidance" → "evidence")
+without being so loose that unrelated terms match.
+
+### Keyboard shortcuts — the input-suppression rule
+
+Bare-key shortcuts (`?`) must NOT fire when the user is typing in
+an `<input>`, `<textarea>`, `<select>`, or `contenteditable` element.
+Modifier shortcuts (Ctrl+B, Ctrl+J) always fire.
+
+The check lives in `useKeyboardShortcuts`:
+
+```ts
+const hasModifier = e.ctrlKey || e.metaKey || e.altKey
+if (!hasModifier && isInInput(e.target)) continue
+```
+
+### Testing event.target — dispatch from the target
+
+When a hook depends on `event.target`, the test must dispatch from
+the target element, not from `window`:
+
+```ts
+// Bad — e.target === window even though input has focus
+window.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }))
+
+// Good — e.target === input, bubbles:true reaches window listener
+input.dispatchEvent(new KeyboardEvent("keydown", { key: "?", bubbles: true }))
+```
+
+Focus alone does not change the event target. This bit us in H.2.
+
+### Fake timers and waitFor do not mix
+
+When `vi.useFakeTimers()` is active, `waitFor()` will hang because
+it internally polls using the same timers. Use direct assertions
+after `act(() => vi.advanceTimersByTime(n))`:
+
+```ts
+// Bad — times out
+act(() => vi.advanceTimersByTime(1000))
+await waitFor(() => expect(screen.queryByText("x")).toBeNull())
+
+// Good
+act(() => vi.advanceTimersByTime(1000))
+expect(screen.queryByText("x")).toBeNull()
+```
+
+### Toast — API and defaults
+
+```tsx
+const toast = useToast()
+toast.info("Message")
+toast.success("Saved", { description: "Policy POL-042" })
+toast.warning("Stale", { action: { label: "Refresh", onClick: refresh } })
+toast.error("Failed", { duration: 0 })  // 0 = never auto-dismiss
+```
+
+Default durations:
+- info, success — 4000 ms
+- warning — 6000 ms
+- error — 8000 ms
+
+The toast viewport has `role="region"` + `aria-live="polite"`;
+individual warning/error toasts use `role="alert"`. Never remove this —
+it is the accessibility contract for live notifications.
+
+### Drawer — focus discipline
+
+The drawer:
+- remembers the previously-focused element and restores it on close
+- traps Tab/Shift+Tab inside the panel
+- uses logical sides (`start` / `end`) so it mirrors automatically in RTL
+
+Use `useDrawer<T>()` for typed payloads instead of managing open + payload
+separately.
+
+### URL state — the encoding pitfall
+
+`URLSearchParams.set("k", "a,b")` encodes the comma as `%2C`:
+`?k=a%2Cb`. This is standards-compliant and harmless in production —
+`URLSearchParams.get()` decodes automatically — but it surprises tests
+that read `location.search` directly.
+
+In tests, decode before comparing:
+
+```ts
+function useSearch(): string {
+  return decodeURIComponent(useLocation().search)
+}
+```
+
+Never re-implement URL encoding manually — that path leads to bugs.
+
+### URL state — behaviour contract
+
+`useUrlState(key, defaultValue)`: a single value.
+`useUrlListState(key, defaultValue?)`: a comma-separated list.
+
+Both:
+- remove the key entirely when the value equals the default
+- preserve all unrelated query parameters
+- use `replace: true` by default (no history pollution)
+- must be used inside a Router
+
+Example URLs after typical filter use:
+  /evidence                                  (no filter)
+  /evidence?state=verified                   (one filter)
+  /evidence?state=verified&severity=high     (two filters)
+  /evidence?severity=high                    (removed state)
+
+The list form accepts both `?k=a,b` and `?k=a&k=b` on read.
+
+### Total inventory at end of Phase H
+
+| Category | Count |
+|---|---|
+| Real pages | 19 |
+| Security primitives | 9 |
+| Data-display primitives | 3 |
+| State primitives | 1 |
+| Layout components | 5 |
+| Overlays (command, shortcuts, dangerous, drawer) | 4 |
+| Notification components | 1 (ToastProvider) |
+| Hooks (custom) | 9 |
+| i18n namespaces | 29 (en + ar each) |
+
+Hooks at Phase H close:
+- useDirection
+- useRailExpanded
+- useAssuranceOpen
+- useCommandPalette
+- useCommands
+- usePageDescriptions
+- useKeyboardShortcuts
+- useGlobalShortcuts
+- useUrlState, useUrlListState
+- useToast
+- useDrawer
+
+### Quality bars (all met at Phase H close)
+
+- `npm run typecheck` — clean
+- `npm run lint` — 0 warnings
+- `npm run test` — 818 tests passing across 56 files
+- `npm run build` — clean
+- All interactions work in EN + AR, LTR + RTL, dark + light
+- Zero fabricated data anywhere in the UI
