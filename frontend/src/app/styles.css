@@ -2689,3 +2689,90 @@ body {
 .eg-manifests__executions {
   margin-block-end: var(--eg-space-3);
 }
+
+/* ------------------------------------------------------------
+   InspectionPage (G.6)
+   ------------------------------------------------------------ */
+
+.eg-inspection__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--eg-space-3);
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-inspection__scope {
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-bg-surface-1);
+  margin-block-end: var(--eg-space-4);
+  overflow: hidden;
+}
+
+.eg-inspection__scope-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--eg-space-3);
+  padding: var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+}
+
+.eg-inspection__scope-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--eg-text-secondary);
+}
+
+.eg-inspection__run {
+  padding: 6px 14px;
+  background: transparent;
+  color: var(--eg-signal-blue);
+  border: 1px solid var(--eg-signal-blue);
+  border-radius: var(--eg-radius-sm);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.eg-inspection__run:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: var(--eg-unknown-gray);
+  border-color: var(--eg-unknown-gray);
+}
+
+.eg-inspection__run:not(:disabled):hover {
+  background: color-mix(in srgb, var(--eg-signal-blue) 12%, transparent);
+}
+
+.eg-inspection__run:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: 2px;
+}
+
+.eg-inspection__scope-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: var(--eg-space-3);
+  gap: var(--eg-space-2);
+}
+
+.eg-inspection__scope-item {
+  padding: var(--eg-space-2) var(--eg-space-3);
+  background: var(--eg-bg-surface-2);
+  border-radius: var(--eg-radius-sm);
+  font-size: 13px;
+  color: var(--eg-text-primary);
+  border-inline-start: 2px solid var(--eg-border-strong);
+}
+
+.eg-inspection__history {
+  margin-block-end: var(--eg-space-3);
+}

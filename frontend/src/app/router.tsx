@@ -15,6 +15,7 @@ import { ThreatPage } from '../features/threat'
 import { PoliciesPage } from '../features/policies'
 import { ApprovalsPage } from '../features/approvals'
 import { ManifestsPage } from '../features/manifests'
+import { InspectionPage } from '../features/inspection'
 
 export interface RouteSpec {
   path: string
@@ -59,6 +60,7 @@ function buildChildRoutes(): RouteObject[] {
       : spec.path === '/policies' ? <PoliciesPage />
       : spec.path === '/approvals' ? <ApprovalsPage />
       : spec.path === '/manifests' ? <ManifestsPage />
+      : spec.path === '/inspection' ? <InspectionPage />
       : spec.path === '/health' ? <HealthPage />
       : spec.path === '/sibb' ? <SibbPage />
       : spec.path === '/provenance' ? <ProvenancePage />

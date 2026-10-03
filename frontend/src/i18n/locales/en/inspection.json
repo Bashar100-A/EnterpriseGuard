@@ -1,0 +1,34 @@
+{
+  "title": "Inspection",
+  "description": "On-demand system inspection — code, config, dependencies, integrity",
+  "metrics": {
+    "label": "Inspection indicators",
+    "scopeItems": "Scope Items",
+    "lastRun": "Last Run",
+    "passed": "Passed",
+    "failed": "Failed"
+  },
+  "scopes": {
+    "label": "Inspection Scope",
+    "code": "Code",
+    "dependencies": "Dependencies",
+    "configuration": "Configuration",
+    "tests": "Tests",
+    "integrity": "Integrity",
+    "runtime": "Runtime"
+  },
+  "run": {
+    "label": "Run Inspection",
+    "unavailable": "Inspection backend not connected"
+  },
+  "history": {
+    "caption": "Inspection History",
+    "id": "Run ID",
+    "scope": "Scope",
+    "state": "State",
+    "duration": "Duration",
+    "completedAt": "Completed",
+    "empty": "No inspection runs in this scope"
+  },
+  "backendNote": "Backend integration comes in a later phase. The Run button remains disabled until the inspection backend is available. No inspection results are fabricated."
+}
