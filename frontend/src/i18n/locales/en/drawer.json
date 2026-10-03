@@ -1,0 +1,7 @@
+{
+  "close": "Close panel",
+  "dialogLabel": "Details panel",
+  "defaults": {
+    "title": "Details"
+  }
+}

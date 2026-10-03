@@ -3406,3 +3406,135 @@ body {
   outline: 2px solid var(--eg-signal-blue);
   outline-offset: 1px;
 }
+
+/* ------------------------------------------------------------
+   Drawer (H.5)
+   Side panel. Slides from inline-start or inline-end.
+   RTL-aware: side is logical, not left/right.
+   ------------------------------------------------------------ */
+
+.eg-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(1px);
+  z-index: 900;
+  display: flex;
+  pointer-events: auto;
+}
+
+.eg-drawer-overlay:has(.eg-drawer--end) {
+  justify-content: flex-end;
+}
+
+.eg-drawer-overlay:has(.eg-drawer--start) {
+  justify-content: flex-start;
+}
+
+.eg-drawer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--eg-bg-surface-1);
+  border-inline-start: 1px solid var(--eg-border-strong);
+  border-inline-end: 1px solid var(--eg-border-strong);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+  outline: none;
+  animation: eg-drawer-in-end 180ms ease-out;
+  max-width: 100vw;
+}
+
+.eg-drawer--start {
+  animation-name: eg-drawer-in-start;
+}
+
+@keyframes eg-drawer-in-end {
+  from { transform: translateX(8%); opacity: 0; }
+  to   { transform: translateX(0);  opacity: 1; }
+}
+
+@keyframes eg-drawer-in-start {
+  from { transform: translateX(-8%); opacity: 0; }
+  to   { transform: translateX(0);   opacity: 1; }
+}
+
+/* When the document is RTL, visually mirror the slide direction,
+   since the physical sides swap but transform values do not. */
+[dir="rtl"] .eg-drawer--start { animation-name: eg-drawer-in-end; }
+[dir="rtl"] .eg-drawer--end   { animation-name: eg-drawer-in-start; }
+
+@media (prefers-reduced-motion: reduce) {
+  .eg-drawer,
+  .eg-drawer--start,
+  .eg-drawer--end { animation: none; }
+}
+
+.eg-drawer--sm { width: 320px; }
+.eg-drawer--md { width: 420px; }
+.eg-drawer--lg { width: 560px; }
+
+@media (max-width: 640px) {
+  .eg-drawer--sm,
+  .eg-drawer--md,
+  .eg-drawer--lg { width: 100vw; }
+}
+
+.eg-drawer__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--eg-space-3);
+  padding: var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+}
+
+.eg-drawer__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--eg-text-primary);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.eg-drawer__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: transparent;
+  color: var(--eg-text-secondary);
+  border: 1px solid transparent;
+  border-radius: var(--eg-radius-sm);
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.eg-drawer__close:hover {
+  background: var(--eg-bg-surface-2);
+  color: var(--eg-text-primary);
+}
+
+.eg-drawer__close:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: 1px;
+}
+
+.eg-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--eg-space-3);
+}
+
+.eg-drawer__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--eg-space-2);
+  padding: var(--eg-space-3);
+  border-block-start: 1px solid var(--eg-border-subtle);
+  background: var(--eg-bg-surface-2);
+}
