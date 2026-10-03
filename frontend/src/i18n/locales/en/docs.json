@@ -75,5 +75,45 @@
     "emptyCandidatesBody": "Candidates are listed only when a concrete need is identified.",
     "philosophy": "The interface is deliberately icon-light. State is communicated through semantic tones and text — not decorative glyphs. This keeps the UI unambiguous for operators under pressure.",
     "backendNote": "This page is a static reference. No data is fetched. Backend integration comes in a later phase."
+  },
+  "semanticGuidePage": {
+    "title": "Semantic Guide",
+    "description": "How the five tones and the ADIE separation are applied across the interface.",
+    "sections": {
+      "tones": "The Five Tones",
+      "goldenRule": "The Golden Rule",
+      "adie": "ADIE Separation",
+      "examples": "Status Examples"
+    },
+    "tones": {
+      "trust": "Verified, healthy, validated. Used only when a positive assertion is backed by evidence.",
+      "info": "Informational, pending, proposed. Neutral state — not a judgment.",
+      "warning": "Review needed, degraded, stale. Signals caution, not failure.",
+      "critical": "Failure, attack, confirmed loss. Reserved for the highest severity.",
+      "unknown": "Not evaluated, unavailable, not connected. The honest default."
+    },
+    "goldenRule": {
+      "text": "Unknown never silently becomes Trust.",
+      "why": "If a positive state has not been verified, the interface must say so. Substituting Trust for Unknown is the most dangerous lie a security UI can tell.",
+      "correct": "Correct",
+      "incorrect": "Incorrect",
+      "incorrectNote": "Never render verified when the state is unknown."
+    },
+    "adie": {
+      "intro": "The architecture separates four pairs of concepts that are often conflated. Each side answers a different question.",
+      "observed": "Observed",
+      "decided": "Decided",
+      "executed": "Executed",
+      "evidence": "Evidence",
+      "authority": "Authority",
+      "prediction": "Prediction",
+      "decision": "Decision"
+    },
+    "examples": {
+      "pending": "Use for work that is queued but not yet decided.",
+      "unknown": "Use when the state has not been evaluated. Never upgrade to trust silently.",
+      "information": "Use for neutral context that is neither good nor bad."
+    },
+    "backendNote": "This page is a static reference. No data is fetched. Backend integration comes in a later phase."
   }
 }

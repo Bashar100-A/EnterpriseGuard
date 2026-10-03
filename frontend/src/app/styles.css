@@ -4509,3 +4509,98 @@ body {
 .eg-icons__empty-body { font-size: 0.75rem; opacity: 0.75; margin: 0; }
 .eg-icons__philosophy { font-size: 0.8rem; opacity: 0.8; font-style: italic; }
 .eg-icons__backend-note { font-size: 0.75rem; opacity: 0.7; }
+
+/* ===== UI-01.K.5 SemanticGuidePage ===== */
+.eg-semantics {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+.eg-semantics__header { display: flex; flex-direction: column; gap: 0.35rem; }
+.eg-semantics__heading { font-size: 1.125rem; font-weight: 600; }
+.eg-semantics__description { font-size: 0.875rem; opacity: 0.85; }
+.eg-semantics__section { display: flex; flex-direction: column; gap: 0.65rem; }
+.eg-semantics__section-title { font-size: 0.95rem; font-weight: 600; }
+.eg-semantics__tones {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.5rem;
+}
+.eg-semantics__tone {
+  display: flex;
+  gap: 0.65rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid currentColor;
+  border-radius: 0.4rem;
+}
+.eg-semantics__swatch {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  margin-top: 3px;
+}
+.eg-semantics__tone-meta { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.eg-semantics__tone-name { font-family: var(--eg-font-mono); font-size: 0.8rem; font-weight: 600; }
+.eg-semantics__tone-token { font-family: var(--eg-font-mono); font-size: 0.7rem; opacity: 0.6; }
+.eg-semantics__tone-meaning { font-size: 0.75rem; opacity: 0.85; margin: 0.2rem 0 0; }
+.eg-semantics__rule {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-left: 3px solid var(--eg-warning-amber);
+  background: color-mix(in srgb, var(--eg-warning-amber) 8%, transparent);
+  border-radius: 0.3rem;
+}
+.eg-semantics__rule-text { font-size: 0.95rem; font-weight: 600; margin: 0 0 0.35rem; }
+.eg-semantics__rule-why { font-size: 0.8rem; opacity: 0.85; margin: 0; }
+.eg-semantics__examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.eg-semantics__example {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid currentColor;
+  border-radius: 0.4rem;
+  font-size: 0.8rem;
+}
+.eg-semantics__example-label { font-weight: 600; opacity: 0.9; min-width: 4.5rem; }
+.eg-semantics__example-note { font-size: 0.75rem; opacity: 0.65; }
+.eg-semantics__adie-intro { font-size: 0.8rem; opacity: 0.85; margin: 0; }
+.eg-semantics__pairs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.4rem;
+}
+.eg-semantics__pair {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid currentColor;
+  border-radius: 0.4rem;
+  font-size: 0.8rem;
+}
+.eg-semantics__pair-side { flex: 1 1 auto; text-align: center; }
+.eg-semantics__pair-sep { opacity: 0.6; font-weight: 600; }
+.eg-semantics__status-examples { display: flex; flex-direction: column; gap: 0.4rem; }
+.eg-semantics__example-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+}
+.eg-semantics__example-use { opacity: 0.8; }
+.eg-semantics__backend-note { font-size: 0.75rem; opacity: 0.7; }
