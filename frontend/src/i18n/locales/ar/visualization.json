@@ -7,6 +7,12 @@
     "nodeCount": "العُقد",
     "edgeCount": "الاتصالات"
   },
+  "timeline": {
+    "label": "الخط الزمني",
+    "empty": "لا توجد أحداث للعرض",
+    "eventCount": "{{count}} حدث",
+    "unknownTime": "الوقت غير معروف"
+  },
   "legend": {
     "label": "الوسيلة",
     "unknown": "غير معروف",

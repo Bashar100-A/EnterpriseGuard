@@ -7,6 +7,12 @@
     "nodeCount": "Nodes",
     "edgeCount": "Connections"
   },
+  "timeline": {
+    "label": "Timeline",
+    "empty": "No events to display",
+    "eventCount": "{{count}} events",
+    "unknownTime": "Time unknown"
+  },
   "legend": {
     "label": "Legend",
     "unknown": "Unknown",

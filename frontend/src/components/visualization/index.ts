@@ -4,3 +4,6 @@ export type {
   GraphNode,
   GraphEdge,
 } from './RelationshipGraph'
+
+export { Timeline } from './Timeline'
+export type { TimelineProps, TimelineEvent } from './Timeline'

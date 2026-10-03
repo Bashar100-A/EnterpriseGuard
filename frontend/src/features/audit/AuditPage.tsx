@@ -9,6 +9,8 @@ import {
   TechnicalIdentifier,
 } from '../../components/security'
 import type { StatusKey } from '../../components/security'
+import { Timeline } from '../../components/visualization'
+import type { TimelineEvent } from '../../components/visualization'
 
 interface AuditRow {
   id: string
@@ -31,14 +33,14 @@ function resolveEnvironment(): string {
 const FILTER_KEYS = ['actor', 'action', 'authority', 'window'] as const
 
 /**
- * AuditPage — UI-01.G.10.
+ * AuditPage — UI-01.G.10 (+ I.2).
  *
- * The immutable audit trail. Every audit event carries:
- *   Who, What, When, Why, Authority, Result, Reference.
+ * The immutable audit trail. Two complementary views:
+ *   1. Timeline — a visual event stream (chronological)
+ *   2. Table — the tabular audit log (sortable, filterable)
  *
- * The UI never writes to the audit trail. Audit events are appended
- * by the backend only. Filters remain disabled until the filter
- * backend is connected.
+ * Both views are currently empty by design.
+ * The UI never writes to the audit trail.
  */
 export function AuditPage(): ReactElement {
   const { t } = useTranslation('audit')
@@ -48,6 +50,8 @@ export function AuditPage(): ReactElement {
   const backendConnected = false
   const emptyValue: MetricValue = { value: null }
   const events: AuditRow[] = []
+
+  const timelineEvents: TimelineEvent[] = []
 
   const columns: EnterpriseColumn<AuditRow>[] = [
     {
@@ -156,6 +160,10 @@ export function AuditPage(): ReactElement {
             {t('filters.clear')}
           </button>
         </div>
+      </section>
+
+      <section className="eg-audit__timeline">
+        <Timeline events={timelineEvents} />
       </section>
 
       <section className="eg-audit__reference">

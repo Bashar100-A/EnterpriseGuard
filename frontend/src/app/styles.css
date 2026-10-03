@@ -3637,3 +3637,143 @@ body {
 .eg-decisions__graph {
   margin-block-end: var(--eg-space-4);
 }
+
+/* ------------------------------------------------------------
+   Timeline (I.2)
+   Vertical event stream. RTL-aware (spine on inline-start).
+   ------------------------------------------------------------ */
+
+.eg-timeline {
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-bg-surface-1);
+  overflow: hidden;
+}
+
+.eg-timeline--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+}
+
+.eg-timeline__empty {
+  margin: 0;
+  color: var(--eg-text-muted);
+  font-size: 13px;
+}
+
+.eg-timeline__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--eg-space-3);
+  padding: var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+}
+
+.eg-timeline__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--eg-text-primary);
+}
+
+.eg-timeline__count {
+  font-family: var(--eg-font-mono);
+  font-size: 11px;
+  color: var(--eg-text-muted);
+}
+
+.eg-timeline__list {
+  list-style: none;
+  margin: 0;
+  padding: var(--eg-space-3);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* The vertical spine — a single absolutely-positioned element
+   drawn behind the events. Uses logical inset so it appears on
+   the correct side in RTL. */
+.eg-timeline__list::before {
+  content: '';
+  position: absolute;
+  inset-block: var(--eg-space-3);
+  inset-inline-start: calc(var(--eg-space-3) + 10px);
+  width: 1px;
+  background: var(--eg-border-subtle);
+  z-index: 0;
+}
+
+.eg-timeline__event {
+  display: grid;
+  grid-template-columns: 21px 1fr;
+  gap: var(--eg-space-3);
+  padding-block: var(--eg-space-2);
+  position: relative;
+  z-index: 1;
+}
+
+.eg-timeline__marker {
+  grid-column: 1;
+  align-self: start;
+  margin-block-start: 4px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--eg-bg-surface-1);
+  border: 2px solid var(--eg-unknown-gray);
+  justify-self: center;
+}
+
+.eg-timeline__event[data-tone="trust"]    .eg-timeline__marker { border-color: var(--eg-trust-emerald); }
+.eg-timeline__event[data-tone="info"]     .eg-timeline__marker { border-color: var(--eg-signal-blue); }
+.eg-timeline__event[data-tone="warning"]  .eg-timeline__marker { border-color: var(--eg-warning-amber); }
+.eg-timeline__event[data-tone="critical"] .eg-timeline__marker { border-color: var(--eg-critical-red); }
+.eg-timeline__event[data-tone="unknown"]  .eg-timeline__marker { border-color: var(--eg-unknown-gray); }
+
+.eg-timeline__body {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.eg-timeline__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--eg-space-2);
+}
+
+.eg-timeline__time {
+  font-size: 11px;
+  color: var(--eg-text-muted);
+}
+
+.eg-timeline__time[data-unknown="true"] {
+  font-style: italic;
+  color: var(--eg-unknown-gray);
+}
+
+.eg-timeline__title-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--eg-text-primary);
+}
+
+.eg-timeline__description {
+  font-size: 12px;
+  color: var(--eg-text-secondary);
+  line-height: 1.4;
+}
+
+.eg-timeline__extra {
+  margin-block-start: 2px;
+}
+
+.eg-audit__timeline {
+  margin-block-end: var(--eg-space-4);
+}

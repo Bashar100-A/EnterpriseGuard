@@ -45,7 +45,7 @@ describe('AuditPage', () => {
 
   it('renders the filters panel', () => {
     renderWithThemeOnly(<AuditPage />)
-    expect(screen.getByText('Filter')).toBeTruthy()
+    expect(screen.getAllByText('Filter').length).toBeGreaterThan(0)
   })
 
   it('renders four filter rows', () => {
@@ -69,6 +69,11 @@ describe('AuditPage', () => {
   it('Clear filter button is disabled', () => {
     renderWithThemeOnly(<AuditPage />)
     expect(screen.getByTestId('eg-audit-clear').hasAttribute('disabled')).toBe(true)
+  })
+
+  it('renders the Timeline (empty state)', () => {
+    renderWithThemeOnly(<AuditPage />)
+    expect(screen.getByTestId('eg-timeline-empty')).toBeTruthy()
   })
 
   it('renders the reference section', () => {
