@@ -37,12 +37,12 @@ describe('NavigationRail', () => {
     expect(nav?.getAttribute('data-expanded')).toBe('true')
   })
 
-  it('renders all 19 navigation items', () => {
+  it('renders all 20 navigation items', () => {
     render(<NavigationRail expanded onToggleExpanded={() => {}} />)
     const buttons = screen.getAllByRole('button').filter((b) =>
       b.classList.contains('eg-nav__item'),
     )
-    expect(buttons).toHaveLength(19)
+    expect(buttons).toHaveLength(20)
   })
 
   it('renders all 7 group labels in expanded mode', () => {

@@ -33,4 +33,5 @@ export const PAGES: PageRef[] = [
   { path: '/audit',         namespace: 'audit',       keywords: ['audit', 'trail', 'log', 'who', 'when'] },
   { path: '/access',        namespace: 'access',      keywords: ['users', 'roles', 'permissions', 'identity'] },
   { path: '/settings',      namespace: 'config',      keywords: ['config', 'settings', 'flags', 'environment'] },
+  { path: '/docs', namespace: 'docs', keywords: ['docs', 'design', 'system', 'reference', 'tokens', 'icons', 'playground', 'semantics'] },
 ]

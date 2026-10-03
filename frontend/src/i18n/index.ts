@@ -37,6 +37,7 @@ import enToast from './locales/en/toast.json'
 import enDrawer from './locales/en/drawer.json'
 import enVisualization from './locales/en/visualization.json'
 
+import enDocs from './locales/en/docs.json'
 import arCommon from './locales/ar/common.json'
 import arNavigation from './locales/ar/navigation.json'
 import arStates from './locales/ar/states.json'
@@ -73,6 +74,7 @@ import arToast from './locales/ar/toast.json'
 import arDrawer from './locales/ar/drawer.json'
 import arVisualization from './locales/ar/visualization.json'
 
+import arDocs from './locales/ar/docs.json'
 export const SUPPORTED_LANGUAGES = ['en', 'ar'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
 
@@ -115,6 +117,7 @@ export const NAMESPACES = [
   'toast',
   'drawer',
   'visualization',
+  'docs',
 ] as const
 
 function isSupported(value: string | null | undefined): value is SupportedLanguage {
@@ -129,6 +132,7 @@ function detectInitialLanguage(): SupportedLanguage {
 
 const resources = {
   en: {
+    docs: enDocs,
     common: enCommon,
     navigation: enNavigation,
     states: enStates,
@@ -166,6 +170,7 @@ const resources = {
     visualization: enVisualization,
   },
   ar: {
+    docs: arDocs,
     common: arCommon,
     navigation: arNavigation,
     states: arStates,

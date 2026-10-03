@@ -27,7 +27,8 @@
     "reports": "Reports",
     "audit": "Audit",
     "usersAccess": "Users & Access",
-    "configuration": "Configuration"
+    "configuration": "Configuration",
+    "documentation": "Documentation"
   },
   "actions": {
     "expand": "Expand navigation",

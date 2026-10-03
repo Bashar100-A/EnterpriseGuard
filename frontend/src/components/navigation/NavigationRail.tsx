@@ -30,6 +30,7 @@ export type NavigationItemKey =
   | 'audit'
   | 'usersAccess'
   | 'configuration'
+  | 'documentation'
 
 export interface NavigationItem {
   key: NavigationItemKey
@@ -83,6 +84,7 @@ const ITEMS: NavigationItem[] = [
 
   { key: 'usersAccess', group: 'administration', to: '/access' },
   { key: 'configuration', group: 'administration', to: '/settings' },
+  { key: 'documentation', group: 'administration', to: '/docs' },
 ]
 
 export function NavigationRail({

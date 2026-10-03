@@ -1,0 +1,24 @@
+{
+  "title": "Documentation",
+  "description": "Living design system reference for the EnterpriseGuard UI.",
+  "sections": {
+    "playground": {
+      "title": "Component Playground",
+      "description": "Interactive previews of every UI primitive, grouped by domain."
+    },
+    "tokens": {
+      "title": "Design Tokens",
+      "description": "Semantic colors, spacing, typography, and motion values."
+    },
+    "icons": {
+      "title": "Icon Catalog",
+      "description": "The curated set of Lucide icons used across the interface."
+    },
+    "semantics": {
+      "title": "Semantic Guide",
+      "description": "How the five tones and the ADIE separation are applied."
+    }
+  },
+  "comingSoon": "Details coming in a later step.",
+  "backendNote": "This page is a static reference. No data is fetched. Backend integration comes in a later phase."
+}
