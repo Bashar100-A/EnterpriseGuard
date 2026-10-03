@@ -7,6 +7,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { useTranslation } from 'react-i18next'
 import type { SemanticTone } from '../security/tone'
 
@@ -113,8 +114,10 @@ export function DangerousActionDialog({
       ? (t('blocked.phrase') as string)
       : ''
 
+  const { handleTabKey } = useFocusTrap({ active: true })
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
+      handleTabKey(e)
       if (e.key === 'Escape') {
         e.preventDefault()
         onClose()

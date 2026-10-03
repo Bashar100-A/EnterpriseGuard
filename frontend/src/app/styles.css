@@ -4618,3 +4618,14 @@ body {
   white-space: nowrap;
   border: 0;
 }
+
+
+/* ===== UI-01.L.2 — global focus-visible fallback =====
+ * Every focusable element gets a visible outline even if no per-element
+ * rule exists. Specific rules (e.g. .eg-nav__item:focus-visible) override
+ * this base declaration thanks to higher selector specificity.
+ */
+:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: 2px;
+}

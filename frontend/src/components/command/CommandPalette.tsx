@@ -8,6 +8,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { useTranslation } from 'react-i18next'
 import Fuse from 'fuse.js'
 
@@ -122,8 +123,10 @@ export function CommandPalette({
     [onClose],
   )
 
+  const { handleTabKey } = useFocusTrap({ active: true })
   const handleKeyDown = useCallback(
     (e: ReactKeyboardEvent<HTMLInputElement>) => {
+      handleTabKey(e)
       if (e.key === 'Escape') {
         e.preventDefault()
         onClose()

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, type ReactElement } from 'react'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { useTranslation } from 'react-i18next'
 
 export interface ShortcutEntry {
@@ -49,8 +50,10 @@ export function ShortcutsDialog({
 
   const groups = useMemo(() => groupByGroup(shortcuts), [shortcuts])
 
+  const { handleTabKey } = useFocusTrap({ active: true })
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
+      handleTabKey(e)
       if (e.key === 'Escape') {
         e.preventDefault()
         onClose()
