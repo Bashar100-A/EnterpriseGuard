@@ -1,0 +1,21 @@
+{
+  "title": "Keyboard Shortcuts",
+  "subtitle": "Quick actions available from anywhere",
+  "group": {
+    "navigation": "Navigation",
+    "interface": "Interface",
+    "help": "Help"
+  },
+  "shortcuts": {
+    "commandPalette": "Open command palette",
+    "toggleNavRail": "Toggle navigation rail",
+    "toggleAssurance": "Toggle assurance panel",
+    "toggleTheme": "Cycle theme",
+    "openShortcuts": "Show this dialog",
+    "closeOverlay": "Close any open dialog"
+  },
+  "keyHint": {
+    "or": "or"
+  },
+  "close": "Close"
+}

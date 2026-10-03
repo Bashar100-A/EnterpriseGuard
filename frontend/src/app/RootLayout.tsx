@@ -5,12 +5,16 @@ import { NavigationRail, useRailExpanded } from '../components/navigation'
 import { Topbar } from '../components/topbar'
 import { AssuranceRail, useAssuranceOpen } from '../components/assurance'
 import { CommandPalette, useCommandPalette } from '../components/command'
+import { ShortcutsDialog } from '../components/shortcuts'
 import { useCommands } from '../hooks/useCommands'
+import { useGlobalShortcuts } from '../hooks/useGlobalShortcuts'
 import type { NavigationItem } from '../components/navigation'
 
 /**
  * RootLayout — the router-aware top-level component.
- * Provides AppShell + Topbar + NavigationRail + AssuranceRail + CommandPalette.
+ *
+ * Wires: AppShell, Topbar, NavigationRail, AssuranceRail,
+ *        CommandPalette (Ctrl+K), ShortcutsDialog (?), global shortcuts.
  */
 export function RootLayout(): ReactElement {
   const location = useLocation()
@@ -22,6 +26,11 @@ export function RootLayout(): ReactElement {
   const commands = useCommands({
     onToggleAssurance: () => setAssuranceOpen(!assuranceOpen),
     onToggleRail: () => setNavExpanded(!navExpanded),
+  })
+
+  const { helpOpen, closeHelp, entries } = useGlobalShortcuts({
+    onToggleRail: () => setNavExpanded(!navExpanded),
+    onToggleAssurance: () => setAssuranceOpen(!assuranceOpen),
   })
 
   const handleNavigate = (item: NavigationItem): void => {
@@ -56,6 +65,12 @@ export function RootLayout(): ReactElement {
         open={cmdOpen}
         onClose={() => setCmdOpen(false)}
         commands={commands}
+      />
+
+      <ShortcutsDialog
+        open={helpOpen}
+        onClose={closeHelp}
+        shortcuts={entries}
       />
     </>
   )

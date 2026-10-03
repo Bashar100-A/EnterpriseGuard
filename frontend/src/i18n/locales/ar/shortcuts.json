@@ -1,0 +1,21 @@
+{
+  "title": "اختصارات لوحة المفاتيح",
+  "subtitle": "إجراءات سريعة متاحة من أي مكان",
+  "group": {
+    "navigation": "التنقل",
+    "interface": "الواجهة",
+    "help": "المساعدة"
+  },
+  "shortcuts": {
+    "commandPalette": "فتح لوحة الأوامر",
+    "toggleNavRail": "إظهار/إخفاء شريط التنقل",
+    "toggleAssurance": "إظهار/إخفاء لوحة الضمان",
+    "toggleTheme": "تبديل المظهر",
+    "openShortcuts": "عرض هذا الحوار",
+    "closeOverlay": "إغلاق أي حوار مفتوح"
+  },
+  "keyHint": {
+    "or": "أو"
+  },
+  "close": "إغلاق"
+}
