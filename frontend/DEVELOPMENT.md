@@ -652,3 +652,35 @@ Hooks at Phase H close:
 - `npm run build` — clean
 - All interactions work in EN + AR, LTR + RTL, dark + light
 - Zero fabricated data anywhere in the UI
+
+
+---
+
+## Phase K — Living Design System
+
+The `/docs` route exposes a living design system inside the application.
+
+| Step | Route | Purpose |
+|------|-------|---------|
+| K.1 | `/docs` | Documentation home (index of sections) |
+| K.2 | `/docs/playground` | Primitives gallery (badges, indicators, table, states, chart) |
+| K.3 | `/docs/tokens` | CSS variable catalog (colors, spacing, radius, typography) |
+| K.4 | `/docs/icons` | Icon adoption registry (currently empty by design) |
+| K.5 | `/docs/semantics` | Semantic guide (5 tones + ADIE separation) |
+
+**Principles:**
+
+- The `/docs` pages are **design references only**. They never mock live
+  data for product pages, and they never call adapters.
+- The single fixture used (`evidenceListFixture` in K.2) is marked with
+  the non-enumerable `__egFixture` flag; the marker is asserted at module
+  load, so a fixture cannot silently leak into a production path.
+- Token previews (K.3) use `var(--eg-*)` so they reflect the live theme
+  in both light and dark modes.
+- The icon registry (K.4) is empty. That is an intentional design decision
+  for an operator UI under pressure, not an oversight.
+- The semantics page (K.5) is the canonical reference for the five tones
+  and the ADIE separation. When `SEMANTIC_TONES` grows, that page fails
+  to compile until it is updated.
+
+**Baseline:** `UI-01_K_BASELINE_<ts>.txt` (Desktop).
