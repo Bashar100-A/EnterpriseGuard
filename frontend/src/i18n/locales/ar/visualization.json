@@ -1,0 +1,17 @@
+{
+  "graph": {
+    "label": "رسم العلاقات",
+    "empty": "لا توجد علاقات للعرض",
+    "nodesAriaLabel": "{{count}} عقدة",
+    "edgesAriaLabel": "{{count}} اتصال",
+    "nodeCount": "العُقد",
+    "edgeCount": "الاتصالات"
+  },
+  "legend": {
+    "label": "الوسيلة",
+    "unknown": "غير معروف",
+    "verified": "موثّق",
+    "warning": "تنبيه",
+    "critical": "حرج"
+  }
+}

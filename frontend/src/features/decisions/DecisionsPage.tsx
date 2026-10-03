@@ -8,6 +8,8 @@ import { EnterpriseTable } from '../../components/data-display'
 import type { EnterpriseColumn } from '../../components/data-display'
 import { StatusBadge, TechnicalIdentifier } from '../../components/security'
 import type { StatusKey } from '../../components/security'
+import { RelationshipGraph } from '../../components/visualization'
+import type { GraphNode, GraphEdge } from '../../components/visualization'
 
 interface DecisionRow {
   id: string
@@ -25,24 +27,50 @@ function resolveEnvironment(): string {
 }
 
 /**
- * DecisionsPage — UI-01.E.3.
+ * Positions for the 8-stage ADIE pipeline rendered as a graph.
+ * Three tiers stacked vertically:
+ *   y=20  Observed   — Evidence, State, Prediction
+ *   y=50  Decided    — Policy, Decision, Authority
+ *   y=80  Executed   — Manifest, Outcome
+ */
+const GRAPH_NODES: GraphNode[] = [
+  { id: 'evidence',   label: 'Evidence',   tone: 'unknown', count: null, x: 17, y: 20 },
+  { id: 'state',      label: 'State',      tone: 'unknown', count: null, x: 50, y: 20 },
+  { id: 'prediction', label: 'Prediction', tone: 'unknown', count: null, x: 83, y: 20 },
+
+  { id: 'policy',     label: 'Policy',     tone: 'unknown', count: null, x: 17, y: 50 },
+  { id: 'decision',   label: 'Decision',   tone: 'unknown', count: null, x: 50, y: 50 },
+  { id: 'authority',  label: 'Authority',  tone: 'unknown', count: null, x: 83, y: 50 },
+
+  { id: 'manifest',   label: 'Manifest',   tone: 'unknown', count: null, x: 33, y: 80 },
+  { id: 'outcome',    label: 'Outcome',    tone: 'unknown', count: null, x: 67, y: 80 },
+]
+
+const GRAPH_EDGES: GraphEdge[] = [
+  { from: 'evidence',   to: 'state' },
+  { from: 'state',      to: 'prediction' },
+  { from: 'prediction', to: 'policy' },
+  { from: 'policy',     to: 'decision' },
+  { from: 'decision',   to: 'authority' },
+  { from: 'authority',  to: 'manifest' },
+  { from: 'manifest',   to: 'outcome' },
+]
+
+/**
+ * DecisionsPage — UI-01.E.3 (+ I.1).
  *
- * The full ADIE pipeline visualized end-to-end:
- *   Evidence → State → Prediction → Policy → Decision → Authority → Manifest → Outcome
+ * Shows the full ADIE pipeline in two complementary views:
+ *   1. DecisionChain — linear, tier-based (Observed / Decided / Executed)
+ *   2. RelationshipGraph — spatial, node/edge-based
  *
- * In UI-01 there is no backend, so all stages are unknown with null counts.
- * The chain is rendered completely — proving that the STRUCTURE works — but
- * no stage is filled with fabricated data.
- *
- * When the backend arrives, this page becomes the live audit surface for
- * every decision ever made.
+ * Both views render placeholder data (all nodes unknown, no counts).
+ * No fake hashes. No fake decisions. No fake authority.
  */
 export function DecisionsPage(): ReactElement {
   const { t } = useTranslation('decisions')
   const { t: tW } = useTranslation('workspace')
   const { t: tN } = useTranslation('navigation')
 
-  // No backend in UI-01. All stages default to unknown.
   const stages: Partial<Record<ChainStageKey, ChainStage>> = {
     evidence: { status: 'unknown', count: null },
     state: { status: 'unknown', count: null },
@@ -100,6 +128,10 @@ export function DecisionsPage(): ReactElement {
 
       <section className="eg-decisions__chain" aria-label={t('chain.label')}>
         <DecisionChain stages={stages} />
+      </section>
+
+      <section className="eg-decisions__graph">
+        <RelationshipGraph nodes={GRAPH_NODES} edges={GRAPH_EDGES} />
       </section>
 
       <section className="eg-decisions__table">

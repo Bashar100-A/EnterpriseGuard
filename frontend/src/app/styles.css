@@ -3538,3 +3538,102 @@ body {
   border-block-start: 1px solid var(--eg-border-subtle);
   background: var(--eg-bg-surface-2);
 }
+
+/* ------------------------------------------------------------
+   RelationshipGraph (I.1)
+   SVG-based node/edge graph. Positions come from props; the
+   component is layout-agnostic.
+   ------------------------------------------------------------ */
+
+.eg-relgraph {
+  position: relative;
+  width: 100%;
+  background: var(--eg-bg-surface-1);
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  padding: var(--eg-space-3);
+}
+
+.eg-relgraph--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+}
+
+.eg-relgraph__empty {
+  margin: 0;
+  color: var(--eg-text-muted);
+  font-size: 13px;
+}
+
+.eg-relgraph__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.eg-relgraph__edge {
+  transition: stroke-opacity 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eg-relgraph__edge { transition: none; }
+}
+
+.eg-relgraph__node circle {
+  transition: fill 120ms ease;
+}
+
+.eg-relgraph__node:hover circle {
+  fill: var(--eg-bg-surface-2);
+}
+
+.eg-relgraph__node-label {
+  font-family: var(--eg-font-sans);
+  font-size: 3px;
+  font-weight: 600;
+  fill: var(--eg-text-primary);
+  pointer-events: none;
+}
+
+.eg-relgraph__node-count {
+  font-family: var(--eg-font-mono);
+  font-size: 2.2px;
+  fill: var(--eg-text-muted);
+  pointer-events: none;
+}
+
+.eg-relgraph__stats {
+  position: absolute;
+  inset-block-end: var(--eg-space-2);
+  inset-inline-end: var(--eg-space-3);
+  display: flex;
+  gap: var(--eg-space-3);
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.eg-relgraph__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--eg-text-muted);
+}
+
+.eg-relgraph__stat-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+}
+
+.eg-relgraph__stat-value {
+  font-family: var(--eg-font-mono);
+  color: var(--eg-text-primary);
+  font-weight: 600;
+}
+
+.eg-decisions__graph {
+  margin-block-end: var(--eg-space-4);
+}

@@ -11,7 +11,7 @@ afterEach(() => {
 })
 
 describe('DecisionsPage', () => {
-  it('renders the page title as h1', () => {
+  it('renders the title as h1', () => {
     renderWithThemeOnly(<DecisionsPage />)
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
       'Decision Intelligence',
@@ -37,14 +37,29 @@ describe('DecisionsPage', () => {
 
   it('chain shows all 8 stage labels', () => {
     renderWithThemeOnly(<DecisionsPage />)
-    expect(screen.getByText('Evidence')).toBeTruthy()
-    expect(screen.getByText('State')).toBeTruthy()
-    expect(screen.getByText('Prediction')).toBeTruthy()
-    expect(screen.getByText('Policy')).toBeTruthy()
-    expect(screen.getByText('Decision')).toBeTruthy()
-    expect(screen.getByText('Authority')).toBeTruthy()
-    expect(screen.getByText('Manifest')).toBeTruthy()
-    expect(screen.getByText('Outcome')).toBeTruthy()
+    expect(screen.getAllByText('Evidence').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('State').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Prediction').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Policy').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Decision').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Authority').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Manifest').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Outcome').length).toBeGreaterThan(0)
+  })
+
+  it('renders the RelationshipGraph', () => {
+    const { container } = renderWithThemeOnly(<DecisionsPage />)
+    expect(container.querySelector('[data-testid="eg-relgraph"]')).not.toBeNull()
+  })
+
+  it('graph contains 8 nodes', () => {
+    const { container } = renderWithThemeOnly(<DecisionsPage />)
+    expect(container.querySelectorAll('.eg-relgraph__node')).toHaveLength(8)
+  })
+
+  it('graph contains 7 edges', () => {
+    const { container } = renderWithThemeOnly(<DecisionsPage />)
+    expect(container.querySelectorAll('.eg-relgraph__edge')).toHaveLength(7)
   })
 
   it('renders the decisions table', () => {

@@ -1,0 +1,17 @@
+{
+  "graph": {
+    "label": "Relationship graph",
+    "empty": "No relationships to display",
+    "nodesAriaLabel": "{{count}} nodes",
+    "edgesAriaLabel": "{{count}} connections",
+    "nodeCount": "Nodes",
+    "edgeCount": "Connections"
+  },
+  "legend": {
+    "label": "Legend",
+    "unknown": "Unknown",
+    "verified": "Verified",
+    "warning": "Attention",
+    "critical": "Critical"
+  }
+}
