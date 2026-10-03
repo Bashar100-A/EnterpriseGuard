@@ -4466,3 +4466,46 @@ body {
   overflow-wrap: anywhere;
 }
 .eg-tokens__backend-note { font-size: 0.75rem; opacity: 0.7; }
+
+/* ===== UI-01.K.4 IconCatalogPage ===== */
+.eg-icons {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+.eg-icons__header { display: flex; flex-direction: column; gap: 0.35rem; }
+.eg-icons__heading { font-size: 1.125rem; font-weight: 600; }
+.eg-icons__description { font-size: 0.875rem; opacity: 0.85; }
+.eg-icons__section { display: flex; flex-direction: column; gap: 0.65rem; }
+.eg-icons__section-title { font-size: 0.95rem; font-weight: 600; }
+.eg-icons__count { font-weight: 400; opacity: 0.6; }
+.eg-icons__grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
+}
+.eg-icons__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid currentColor;
+  border-radius: 0.4rem;
+}
+.eg-icons__name { font-family: var(--eg-font-mono); font-size: 0.8rem; }
+.eg-icons__purpose { font-size: 0.75rem; opacity: 0.85; }
+.eg-icons__where { font-size: 0.7rem; opacity: 0.6; }
+.eg-icons__empty {
+  padding: 0.9rem 1rem;
+  border: 1px dashed currentColor;
+  border-radius: 0.4rem;
+  opacity: 0.85;
+}
+.eg-icons__empty-title { font-size: 0.85rem; font-weight: 500; margin: 0 0 0.25rem; }
+.eg-icons__empty-body { font-size: 0.75rem; opacity: 0.75; margin: 0; }
+.eg-icons__philosophy { font-size: 0.8rem; opacity: 0.8; font-style: italic; }
+.eg-icons__backend-note { font-size: 0.75rem; opacity: 0.7; }

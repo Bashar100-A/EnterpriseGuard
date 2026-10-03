@@ -11,8 +11,8 @@ afterEach(() => {
 })
 
 describe('router', () => {
-  it('declares 22 routes', () => {
-    expect(ROUTE_SPECS).toHaveLength(22)
+  it('declares 23 routes', () => {
+    expect(ROUTE_SPECS).toHaveLength(23)
   })
 
   it('every route has a unique path', () => {

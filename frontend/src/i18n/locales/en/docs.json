@@ -61,5 +61,19 @@
       "typography": "Typography"
     },
     "backendNote": "This page is a static reference. No data is fetched. Backend integration comes in a later phase."
+  },
+  "iconCatalogPage": {
+    "title": "Icon Catalog",
+    "description": "Every Lucide icon adopted by the interface, with its purpose and location.",
+    "sections": {
+      "adopted": "Adopted Icons",
+      "candidates": "Candidates"
+    },
+    "emptyAdoptedTitle": "No icons have been adopted yet.",
+    "emptyAdoptedBody": "The current UI expresses state through text and semantic dots. Icons will appear here once they are used in a real page.",
+    "emptyCandidatesTitle": "No icons are currently under consideration.",
+    "emptyCandidatesBody": "Candidates are listed only when a concrete need is identified.",
+    "philosophy": "The interface is deliberately icon-light. State is communicated through semantic tones and text — not decorative glyphs. This keeps the UI unambiguous for operators under pressure.",
+    "backendNote": "This page is a static reference. No data is fetched. Backend integration comes in a later phase."
   }
 }
