@@ -1,0 +1,36 @@
+{
+  "title": "Maintenance",
+  "description": "Planned changes, verification, rollback, and history",
+  "metrics": {
+    "label": "Maintenance indicators",
+    "scheduled": "Scheduled",
+    "inProgress": "In Progress",
+    "completed24h": "Completed (24h)",
+    "rollbackReady": "Rollback Ready"
+  },
+  "windows": {
+    "label": "Maintenance Windows",
+    "planned": "Planned Changes",
+    "verification": "Verification",
+    "rollback": "Rollback",
+    "history": "History"
+  },
+  "schedule": {
+    "caption": "Scheduled Maintenance",
+    "id": "Window ID",
+    "title": "Title",
+    "state": "State",
+    "scheduledFor": "Scheduled For",
+    "window": "Window",
+    "empty": "No maintenance scheduled in this scope"
+  },
+  "history": {
+    "caption": "Maintenance History",
+    "id": "Window ID",
+    "change": "Change",
+    "state": "State",
+    "completedAt": "Completed",
+    "empty": "No maintenance history in this scope"
+  },
+  "backendNote": "Backend integration comes in a later phase. No maintenance operations are fabricated. Rollback and repair require backend authority and are not performed by the UI."
+}

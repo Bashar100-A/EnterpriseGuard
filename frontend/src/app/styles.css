@@ -2776,3 +2776,55 @@ body {
 .eg-inspection__history {
   margin-block-end: var(--eg-space-3);
 }
+
+/* ------------------------------------------------------------
+   MaintenancePage (G.7)
+   ------------------------------------------------------------ */
+
+.eg-maintenance__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--eg-space-3);
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-maintenance__capabilities {
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-bg-surface-1);
+  margin-block-end: var(--eg-space-4);
+  overflow: hidden;
+}
+
+.eg-maintenance__capabilities-header {
+  padding: var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--eg-text-secondary);
+}
+
+.eg-maintenance__capabilities-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: var(--eg-space-3);
+  gap: var(--eg-space-2);
+}
+
+.eg-maintenance__capability-item {
+  padding: var(--eg-space-2) var(--eg-space-3);
+  background: var(--eg-bg-surface-2);
+  border-radius: var(--eg-radius-sm);
+  font-size: 13px;
+  color: var(--eg-text-primary);
+  border-inline-start: 2px solid var(--eg-border-strong);
+}
+
+.eg-maintenance__schedule,
+.eg-maintenance__history {
+  margin-block-end: var(--eg-space-3);
+}
