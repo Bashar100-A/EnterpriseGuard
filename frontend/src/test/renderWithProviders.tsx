@@ -3,6 +3,7 @@ import type { ReactElement, ReactNode } from 'react'
 import { render, type RenderResult } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { ThemeProvider } from '../theme'
+import { ToastProvider } from '../components/toast'
 import { createTestRouter } from '../app/router'
 import '../i18n'
 
@@ -10,16 +11,16 @@ interface ThemeOnlyProps {
   children: ReactNode
 }
 
-function ThemeOnly({ children }: ThemeOnlyProps): ReactElement {
-  return <ThemeProvider>{children}</ThemeProvider>
+function ThemeAndToast({ children }: ThemeOnlyProps): ReactElement {
+  return (
+    <ThemeProvider>
+      <ToastProvider>{children}</ToastProvider>
+    </ThemeProvider>
+  )
 }
 
 /**
- * Render a single component wrapped in ThemeProvider + MemoryRouter.
- *
- * The MemoryRouter provides router context (useNavigate, useLocation)
- * without rendering the app's route tree. Use this for component tests
- * that need router context but should mount only the component under test.
+ * Render a single component wrapped in ThemeProvider + MemoryRouter + ToastProvider.
  */
 export function renderWithProviders(
   ui: ReactElement,
@@ -31,28 +32,30 @@ export function renderWithProviders(
   )
   return render(
     <ThemeProvider>
-      <RouterProvider router={router} />
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </ThemeProvider>,
   )
 }
 
 /**
- * Render a bare component wrapped only in ThemeProvider (no router).
- * Use this for components that do not require router context.
+ * Render a bare component wrapped only in ThemeProvider + ToastProvider (no router).
  */
 export function renderWithThemeOnly(ui: ReactElement): RenderResult {
-  return render(<ThemeOnly>{ui}</ThemeOnly>)
+  return render(<ThemeAndToast>{ui}</ThemeAndToast>)
 }
 
 /**
  * Mount the full app route tree (RootLayout + AppShell + all routes).
- * Use this for router-level and integration tests.
  */
 export function renderApp(initialEntries: string[] = ['/']): RenderResult {
   const router = createTestRouter(initialEntries)
   return render(
     <ThemeProvider>
-      <RouterProvider router={router} />
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </ThemeProvider>,
   )
 }

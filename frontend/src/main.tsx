@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom'
 
 import './i18n'
 import { ThemeProvider } from './theme'
+import { ToastProvider } from './components/toast'
 import { router } from './app/router'
 import './app/styles.css'
 
@@ -15,7 +16,9 @@ if (!rootEl) {
 createRoot(rootEl).render(
   <StrictMode>
     <ThemeProvider>
-      <RouterProvider router={router} />
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </ThemeProvider>
   </StrictMode>,
 )

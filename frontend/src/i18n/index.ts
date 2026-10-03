@@ -33,6 +33,7 @@ import enAudit from './locales/en/audit.json'
 import enAccess from './locales/en/access.json'
 import enConfig from './locales/en/config.json'
 import enShortcuts from './locales/en/shortcuts.json'
+import enToast from './locales/en/toast.json'
 
 import arCommon from './locales/ar/common.json'
 import arNavigation from './locales/ar/navigation.json'
@@ -66,6 +67,7 @@ import arAudit from './locales/ar/audit.json'
 import arAccess from './locales/ar/access.json'
 import arConfig from './locales/ar/config.json'
 import arShortcuts from './locales/ar/shortcuts.json'
+import arToast from './locales/ar/toast.json'
 
 export const SUPPORTED_LANGUAGES = ['en', 'ar'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
@@ -106,6 +108,7 @@ export const NAMESPACES = [
   'access',
   'config',
   'shortcuts',
+  'toast',
 ] as const
 
 function isSupported(value: string | null | undefined): value is SupportedLanguage {
@@ -152,6 +155,7 @@ const resources = {
     access: enAccess,
     config: enConfig,
     shortcuts: enShortcuts,
+    toast: enToast,
   },
   ar: {
     common: arCommon,
@@ -186,6 +190,7 @@ const resources = {
     access: arAccess,
     config: arConfig,
     shortcuts: arShortcuts,
+    toast: arToast,
   },
 }
 

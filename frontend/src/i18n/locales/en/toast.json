@@ -1,0 +1,23 @@
+{
+  "region": {
+    "label": "Notifications"
+  },
+  "type": {
+    "info": "Information",
+    "success": "Success",
+    "warning": "Warning",
+    "error": "Error"
+  },
+  "action": {
+    "dismiss": "Dismiss notification",
+    "undo": "Undo",
+    "view": "View",
+    "retry": "Retry"
+  },
+  "defaults": {
+    "info": "Information",
+    "success": "Success",
+    "warning": "Attention required",
+    "error": "Something went wrong"
+  }
+}
