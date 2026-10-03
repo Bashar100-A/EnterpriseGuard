@@ -14,5 +14,29 @@
     "notConnected": "Not Connected",
     "foundationNote": "This workspace is a placeholder. Backend integration comes in a later phase.",
     "unknown": "Unknown"
+  },
+  "api": {
+    "network": "Network error",
+    "timeout": "Request timed out",
+    "auth": "Authentication required",
+    "validation": "Validation error",
+    "notFound": "Not found",
+    "server": "Server error"
+  },
+  "connection": {
+    "notConnected": "Backend not connected"
+  },
+  "unknown": {
+    "generic": "Unexpected error"
+  },
+  "action": {
+    "retry": "Try again",
+    "reauthenticate": "Sign in again",
+    "fixInput": "Fix input and retry",
+    "navigateBack": "Go back",
+    "waitAndRetry": "Wait and retry",
+    "connectBackend": "Connect backend",
+    "contactAdmin": "Contact administrator",
+    "none": "No action available"
   }
 }

@@ -14,5 +14,29 @@
     "notConnected": "غير متصل",
     "foundationNote": "مساحة العمل هذه عنصر نائب. تكامل الخادم في مرحلة لاحقة.",
     "unknown": "غير معروف"
+  },
+  "api": {
+    "network": "خطأ في الشبكة",
+    "timeout": "انتهت مهلة الطلب",
+    "auth": "المصادقة مطلوبة",
+    "validation": "خطأ في التحقق",
+    "notFound": "غير موجود",
+    "server": "خطأ في الخادم"
+  },
+  "connection": {
+    "notConnected": "الخادم غير متصل"
+  },
+  "unknown": {
+    "generic": "خطأ غير متوقع"
+  },
+  "action": {
+    "retry": "حاول مرة أخرى",
+    "reauthenticate": "سجّل الدخول مجددًا",
+    "fixInput": "صحّح المدخلات وأعد المحاولة",
+    "navigateBack": "العودة",
+    "waitAndRetry": "انتظر ثم أعد المحاولة",
+    "connectBackend": "اربط الخادم",
+    "contactAdmin": "تواصل مع المسؤول",
+    "none": "لا يوجد إجراء متاح"
   }
 }
