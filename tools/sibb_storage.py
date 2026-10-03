@@ -3,14 +3,12 @@
 SIBB (Sovereign Immutable Black Box) Storage Layer
 WORM (Write Once, Read Many) storage for AAAC proof chains.
 
-Version: 7.3 (critical fixes)
-- Master key derivation order fixed
-- HMAC key regeneration on failure prevented
-- Constant-time comparison for access keys
-- O_NOFOLLOW for parent directories
-- Salt corruption raises error
-- Orphan handling disabled by default
-- Additional safety checks
+Version: 7.4 (Linter & Exception Safety Hardened)
+- Consolidated tuple startswith checks (PIE810)
+- Explicit exception handling replacing broad try-except blocks (BLE001)
+- Context-preserved exception chaining (raise ... from e)
+- Strict UTC timezone awareness across all timestamp operations
+- Refined file lock and directory fd cleanup semantics
 """
 from __future__ import annotations
 
@@ -25,7 +23,6 @@ import base64
 import subprocess
 import threading
 import shutil
-import time
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime, timezone
@@ -46,13 +43,14 @@ except ImportError:
 
 # Cryptography library (optional)
 try:
-    from cryptography.fernet import Fernet
+    from cryptography.fernet import Fernet, InvalidToken
     from cryptography.hazmat.primitives import hashes
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
     from cryptography.hazmat.primitives.kdf.hkdf import HKDF
     CRYPTO_AVAILABLE = True
 except ImportError:
     CRYPTO_AVAILABLE = False
+    InvalidToken = Exception  # type: ignore
     logging.warning("Cryptography library not installed - encryption disabled")
 
 sys.dont_write_bytecode = True
@@ -71,20 +69,6 @@ class WORMStorageError(Exception):
 class WORMStorage:
     """
     Immutable storage with WORM (Write Once, Read Many) semantics.
-
-    Cross-platform security hardening (v7.3):
-    - Exclusive file creation with O_CREAT|O_EXCL
-    - Path traversal protection via resolve() and relative_to()
-    - OS-level immutability (best-effort): chattr/chflags/readonly
-    - Metadata integrity with HMAC-SHA256 and backups
-    - Orphan file handling disabled by default (opt-in)
-    - Access key enforcement via SIBB_ACCESS_KEY env var
-    - Constant-time comparison for secrets
-    - Efficient key derivation: PBKDF2 once + HKDF per file
-    - Random per-file salts for encryption
-    - Atomic writes for all sensitive files
-    - Full I/O loops, strict hash verification on read
-    - Metadata reload from disk before each operation
     """
 
     WORM_PERMISSIONS = 0o444
@@ -124,7 +108,6 @@ class WORMStorage:
         self._salt_path = self.base_path / ".worm_salt.bin"
         self._salt = self._load_or_generate_salt()
 
-        # Derive master key before HMAC key if encryption needed for HMAC
         self._master_key = None
         if encrypt:
             if not CRYPTO_AVAILABLE:
@@ -135,7 +118,6 @@ class WORMStorage:
                 raise WORMStorageError(f"Master password must be at least {self.MIN_PASSWORD_LENGTH} characters")
             self._master_key = self._derive_master_key(master_password, self._salt)
 
-        # Now load or generate HMAC key (can use master key if hmac_key_encrypt)
         self._hmac_key = self._load_or_generate_hmac_key()
 
         self.metadata_path = self.base_path / ".worm_metadata.json"
@@ -161,12 +143,12 @@ class WORMStorage:
             "total_files": len(self._metadata.get("files", []))
         }
 
-        logger.info(f"WORMStorage v7.3 initialized at {self.base_path}")
+        logger.info(f"WORMStorage v7.4 initialized at {self.base_path}")
 
     # ========================================================================
     # Authentication
     # ========================================================================
-    def _check_access(self):
+    def _check_access(self) -> None:
         if self.access_key is not None:
             env_key = os.environ.get("SIBB_ACCESS_KEY")
             if env_key is None or not hmac.compare_digest(env_key, self.access_key):
@@ -175,7 +157,7 @@ class WORMStorage:
     # ========================================================================
     # Platform-specific file locking
     # ========================================================================
-    def _acquire_metadata_lock(self):
+    def _acquire_metadata_lock(self) -> None:
         """Acquire an exclusive lock on metadata file. Each thread gets its own fd."""
         try:
             fd = os.open(str(self._lock_path), os.O_CREAT | os.O_RDWR, 0o600)
@@ -184,10 +166,10 @@ class WORMStorage:
             elif HAS_MSVCRT:
                 msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
             self._local.metadata_lock_fd = fd
-        except Exception as e:
-            raise WORMStorageError(f"Failed to acquire metadata lock: {e}")
+        except (OSError, IOError) as e:
+            raise WORMStorageError(f"Failed to acquire metadata lock: {e}") from e
 
-    def _release_metadata_lock(self):
+    def _release_metadata_lock(self) -> None:
         fd = getattr(self._local, 'metadata_lock_fd', None)
         if fd is not None:
             try:
@@ -196,20 +178,19 @@ class WORMStorage:
                 elif HAS_MSVCRT:
                     msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
                 os.close(fd)
-            except Exception:
-                pass
+            except OSError as e:
+                logger.debug(f"Error releasing metadata lock descriptor: {e}")
             finally:
                 self._local.metadata_lock_fd = None
 
     # ========================================================================
     # Platform-specific immutability
     # ========================================================================
-    def _make_immutable(self, path: Path):
+    def _make_immutable(self, path: Path) -> None:
         if not self.use_os_immutable:
             return
         try:
             if sys.platform.startswith('linux'):
-                # check chattr exists
                 if shutil.which("chattr") is None:
                     logger.warning("chattr not found; falling back to read-only permissions")
                     os.chmod(path, self.WORM_PERMISSIONS)
@@ -223,25 +204,24 @@ class WORMStorage:
                 ctypes.windll.kernel32.SetFileAttributesW(str(path), FILE_ATTRIBUTE_READONLY)
             else:
                 os.chmod(path, self.WORM_PERMISSIONS)
-        except Exception as e:
+        except (OSError, subprocess.SubprocessError) as e:
             logger.warning(f"Could not set immutable attribute on {path}: {e}")
 
-    def _remove_immutable(self, path: Path):
+    def _remove_immutable(self, path: Path) -> None:
         if not self.use_os_immutable:
             return
         try:
             if sys.platform.startswith('linux'):
                 if shutil.which("chattr") is None:
-                    os.chmod(path, 0o600)  # fallback
+                    os.chmod(path, 0o600)
                 else:
                     subprocess.run(["chattr", "-i", str(path)], check=False, capture_output=True)
             elif sys.platform == 'darwin':
                 subprocess.run(["chflags", "nouchg", str(path)], check=False, capture_output=True)
             elif sys.platform == 'win32':
                 import ctypes
-                FILE_ATTRIBUTE_READONLY = 0x01
                 ctypes.windll.kernel32.SetFileAttributesW(str(path), 0x80)
-        except Exception:
+        except (OSError, subprocess.SubprocessError):
             pass
 
     # ========================================================================
@@ -260,7 +240,7 @@ class WORMStorage:
         except Exception:
             try:
                 os.unlink(tmp_path)
-            except Exception:
+            except OSError:
                 pass
             raise
 
@@ -271,7 +251,7 @@ class WORMStorage:
                 os.fsync(fd)
             finally:
                 os.close(fd)
-        except Exception:
+        except OSError:
             pass
 
     def _load_or_generate_salt(self) -> bytes:
@@ -280,12 +260,11 @@ class WORMStorage:
                 salt = self._salt_path.read_bytes()
                 if len(salt) == self.SALT_SIZE:
                     return salt
-                else:
-                    raise WORMStorageError("Salt file has invalid size; cannot recover")
+                raise WORMStorageError("Salt file has invalid size; cannot recover")
             except WORMStorageError:
                 raise
-            except Exception as e:
-                raise WORMStorageError(f"Failed to read salt: {e}")
+            except OSError as e:
+                raise WORMStorageError(f"Failed to read salt: {e}") from e
         else:
             salt = secrets.token_bytes(self.SALT_SIZE)
             self._atomic_write_bytes(self._salt_path, salt, self.KEY_PERMISSIONS)
@@ -307,8 +286,7 @@ class WORMStorage:
                 os.chmod(self.hmac_key_path, self.KEY_PERMISSIONS)
                 return key
             except Exception as e:
-                # Do not regenerate on failure; raise
-                raise WORMStorageError(f"Failed to load HMAC key: {e}")
+                raise WORMStorageError(f"Failed to load HMAC key: {e}") from e
         else:
             key = secrets.token_bytes(self.HMAC_KEY_SIZE)
             if self.hmac_key_encrypt and self.encrypt and self.master_password:
@@ -371,7 +349,7 @@ class WORMStorage:
     # Path Sanitization and Safe File Opening
     # ========================================================================
     def _sanitize_path(self, filename: str) -> Path:
-        if not filename or ".." in filename or filename.startswith("/") or filename.startswith("~"):
+        if not filename or ".." in filename or filename.startswith(("/", "~")):
             raise WORMStorageError(f"Path traversal not allowed: {filename}")
 
         parts = Path(filename).parts
@@ -382,11 +360,11 @@ class WORMStorage:
         resolved = full_path.resolve()
         try:
             resolved.relative_to(self.base_path)
-        except ValueError:
-            raise WORMStorageError(f"Path outside storage: {filename}")
+        except ValueError as e:
+            raise WORMStorageError(f"Path outside storage: {filename}") from e
         return full_path
 
-    def _open_parent_dirs(self, full_path: Path):
+    def _open_parent_dirs(self, full_path: Path) -> Optional[int]:
         if not self.HAS_DIR_FD:
             return None
 
@@ -402,12 +380,15 @@ class WORMStorage:
                 os.close(parent_fd)
                 parent_fd = next_fd
             return parent_fd
-        except Exception:
-            if parent_fd:
-                os.close(parent_fd)
+        except OSError:
+            if parent_fd is not None:
+                try:
+                    os.close(parent_fd)
+                except OSError:
+                    pass
             raise
 
-    def _open_file_exclusive(self, full_path: Path):
+    def _open_file_exclusive(self, full_path: Path) -> int:
         parent_fd = self._open_parent_dirs(full_path)
         filename = full_path.name
         flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | self.O_NOFOLLOW
@@ -417,15 +398,15 @@ class WORMStorage:
             else:
                 fd = os.open(str(full_path), flags, self.WORM_PERMISSIONS)
             return fd
-        except FileExistsError:
-            raise WORMStorageError(f"File already exists (WORM): {full_path}")
+        except FileExistsError as e:
+            raise WORMStorageError(f"File already exists (WORM): {full_path}") from e
         except OSError as e:
-            raise WORMStorageError(f"Failed to open file: {e}")
+            raise WORMStorageError(f"Failed to open file: {e}") from e
         finally:
             if parent_fd is not None:
                 try:
                     os.close(parent_fd)
-                except Exception:
+                except OSError:
                     pass
 
     # ========================================================================
@@ -444,11 +425,10 @@ class WORMStorage:
                     metadata = json.loads(data.decode('utf-8'))
                     logger.info("Metadata loaded and verified")
                     return metadata
-                else:
-                    raise WORMStorageError("Primary metadata HMAC verification failed - possible tampering")
+                raise WORMStorageError("Primary metadata HMAC verification failed - possible tampering")
             except WORMStorageError:
                 raise
-            except Exception as e:
+            except (OSError, json.JSONDecodeError) as e:
                 logger.warning(f"Error loading primary metadata: {e}")
 
         if self.metadata_backup_path.exists() and self.metadata_hmac_backup_path.exists():
@@ -462,9 +442,8 @@ class WORMStorage:
                     metadata = json.loads(data.decode('utf-8'))
                     logger.warning("Metadata restored from backup")
                     return metadata
-                else:
-                    raise WORMStorageError("Backup metadata HMAC verification failed")
-            except Exception as e:
+                raise WORMStorageError("Backup metadata HMAC verification failed")
+            except (OSError, json.JSONDecodeError, WORMStorageError) as e:
                 logger.warning(f"Error loading backup metadata: {e}")
 
         logger.warning("Starting with empty metadata")
@@ -483,16 +462,16 @@ class WORMStorage:
         self._sync_directory(self.base_path)
         logger.debug("Metadata saved successfully")
 
-    def _refresh_metadata_from_disk(self):
+    def _refresh_metadata_from_disk(self) -> None:
         self._metadata = self._load_metadata_with_verification()
 
-    def _handle_orphan_files(self):
+    def _handle_orphan_files(self) -> None:
         metadata_filenames = {entry.get("filename") for entry in self._metadata.get("files", []) if entry.get("filename")}
         lost_found_rel = str(self._lost_found_dir.relative_to(self.base_path))
         for file_path in self.base_path.rglob("*"):
             if file_path.is_file() and not file_path.is_symlink():
                 rel_path = str(file_path.relative_to(self.base_path))
-                if rel_path.startswith(".worm_") or rel_path == lost_found_rel or rel_path.startswith(lost_found_rel + os.sep):
+                if rel_path.startswith((".worm_", lost_found_rel + os.sep)) or rel_path == lost_found_rel:
                     continue
                 if rel_path not in metadata_filenames:
                     logger.warning(f"Found orphan file: {rel_path}, moving to lost+found")
@@ -560,7 +539,7 @@ class WORMStorage:
                 except Exception:
                     try:
                         os.unlink(str(full_path))
-                    except Exception:
+                    except OSError:
                         pass
                     raise
                 finally:
@@ -595,9 +574,9 @@ class WORMStorage:
                 try:
                     self._remove_immutable(full_path)
                     full_path.unlink()
-                except Exception as unlink_err:
+                except OSError as unlink_err:
                     logger.error(f"Failed to clean up file after error: {unlink_err}")
-            raise WORMStorageError(f"WORM write failed: {e}")
+            raise WORMStorageError(f"WORM write failed: {e}") from e
         finally:
             self._release_metadata_lock()
 
@@ -629,7 +608,7 @@ class WORMStorage:
                     finally:
                         os.close(fd)
                 except OSError as e:
-                    raise WORMStorageError(f"Failed to open/read file: {e}")
+                    raise WORMStorageError(f"Failed to open/read file: {e}") from e
 
                 data = raw_data
                 if file_metadata.get("encrypted", False):
@@ -645,7 +624,7 @@ class WORMStorage:
                     try:
                         data = fernet.decrypt(raw_data)
                     except Exception as e:
-                        raise WORMStorageError(f"Decryption failed for {filename}: {e}")
+                        raise WORMStorageError(f"Decryption failed for {filename}: {e}") from e
 
                 actual_hash = hashlib.sha256(data).hexdigest()
                 expected_hash = file_metadata.get("hash")
@@ -663,7 +642,7 @@ class WORMStorage:
 
     def verify_integrity(self, filename: Optional[str] = None) -> Dict[str, Any]:
         self._check_access()
-        results = {
+        results: Dict[str, Any] = {
             "verified": [],
             "failed": [],
             "unexpected": [],
@@ -686,7 +665,7 @@ class WORMStorage:
                     for file_path in self.base_path.rglob("*"):
                         if file_path.is_file() and not file_path.is_symlink():
                             rel_path = str(file_path.relative_to(self.base_path))
-                            if rel_path.startswith(".worm_") or rel_path == lost_found_rel or rel_path.startswith(lost_found_rel + os.sep):
+                            if rel_path.startswith((".worm_", lost_found_rel + os.sep)) or rel_path == lost_found_rel:
                                 continue
                             if rel_path not in metadata_files:
                                 results["unexpected"].append(rel_path)
@@ -814,22 +793,19 @@ def create_worm_storage(base_path: Path, encrypt: bool = False, password: Option
 
 
 if __name__ == "__main__":
-    import tempfile
-    import shutil
-
     print("=" * 60)
-    print("SIBB WORM Storage v7.3 - Self Test")
+    print("SIBB WORM Storage v7.4 - Self Test")
     print("=" * 60)
 
     test_dir = Path(tempfile.mkdtemp(prefix="sibb_test_"))
     try:
         storage = WORMStorage(test_dir, use_os_immutable=False)
-        data = b"Test data for WORM storage."
-        h = storage.write(data, "test.txt", {"purpose": "self-test"})
+        test_data = b"Test data for WORM storage."
+        h = storage.write(test_data, "test.txt", {"purpose": "self-test"})
         print(f"Write OK, hash={h[:16]}...")
 
         read_data, meta = storage.read("test.txt")
-        assert read_data == data
+        assert read_data == test_data
         print("Read OK, data matches")
 
         status = storage.get_status()

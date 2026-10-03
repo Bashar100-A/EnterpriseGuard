@@ -47,6 +47,14 @@
     "expand": "Expand {{label}}",
     "collapse": "Collapse {{label}}"
   },
+  "radar": {
+    "label": "Multidimensional view",
+    "empty": "No dimension data to display",
+    "dimensionCount": "Dimensions",
+    "avgScore": "Average",
+    "axisAriaLabel": "{{label}}: {{score}} of {{max}}",
+    "unavailable": "Unavailable"
+  },
   "legend": {
     "label": "Legend",
     "unknown": "Unknown",

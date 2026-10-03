@@ -47,6 +47,14 @@
     "expand": "توسيع {{label}}",
     "collapse": "طي {{label}}"
   },
+  "radar": {
+    "label": "عرض متعدد الأبعاد",
+    "empty": "لا توجد بيانات أبعاد للعرض",
+    "dimensionCount": "الأبعاد",
+    "avgScore": "المتوسط",
+    "axisAriaLabel": "{{label}}: {{score}} من {{max}}",
+    "unavailable": "غير متاح"
+  },
   "legend": {
     "label": "الوسيلة",
     "unknown": "غير معروف",

@@ -4203,3 +4203,120 @@ body {
 .eg-governance__tree {
   margin-block-end: var(--eg-space-4);
 }
+
+/* ------------------------------------------------------------
+   RadarDimensions (I.6)
+   Polygon radar chart. Guide rings + axes + data polygon.
+   ------------------------------------------------------------ */
+
+.eg-radar {
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-bg-surface-1);
+  overflow: hidden;
+}
+
+.eg-radar--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+}
+
+.eg-radar__empty {
+  margin: 0;
+  color: var(--eg-text-muted);
+  font-size: 13px;
+}
+
+.eg-radar__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--eg-space-3);
+  padding: var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+}
+
+.eg-radar__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--eg-text-primary);
+}
+
+.eg-radar__stats {
+  display: flex;
+  gap: var(--eg-space-3);
+}
+
+.eg-radar__stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--eg-text-muted);
+}
+
+.eg-radar__stat-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+}
+
+.eg-radar__stat-value {
+  font-family: var(--eg-font-mono);
+  color: var(--eg-text-primary);
+  font-weight: 600;
+}
+
+.eg-radar__svg-wrap {
+  padding: var(--eg-space-3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.eg-radar__svg {
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  display: block;
+}
+
+.eg-radar__ring {
+  transition: stroke 120ms ease;
+}
+
+.eg-radar__axis {
+  transition: stroke 120ms ease;
+}
+
+.eg-radar__polygon {
+  transition: fill-opacity 180ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eg-radar__ring,
+  .eg-radar__axis,
+  .eg-radar__polygon { transition: none; }
+}
+
+.eg-radar__label {
+  font-family: var(--eg-font-sans);
+  font-size: 5px;
+  font-weight: 600;
+  fill: var(--eg-text-primary);
+  pointer-events: none;
+}
+
+.eg-radar__score {
+  font-family: var(--eg-font-mono);
+  font-size: 4px;
+  fill: var(--eg-text-muted);
+  pointer-events: none;
+}
+
+.eg-health__radar {
+  margin-block-end: var(--eg-space-4);
+}

@@ -16,3 +16,6 @@ export type { SankeyFlowProps, SankeyNode, SankeyLink } from './SankeyFlow'
 
 export { HierarchyTree } from './HierarchyTree'
 export type { HierarchyTreeProps, TreeNode } from './HierarchyTree'
+
+export { RadarDimensions } from './RadarDimensions'
+export type { RadarDimensionsProps, RadarDimension } from './RadarDimensions'

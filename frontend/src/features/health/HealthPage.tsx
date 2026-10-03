@@ -10,6 +10,8 @@ import {
 import type { EnterpriseColumn, MetricValue } from '../../components/data-display'
 import { StatusBadge } from '../../components/security'
 import type { StatusKey } from '../../components/security'
+import { RadarDimensions } from '../../components/visualization'
+import type { RadarDimension } from '../../components/visualization'
 
 interface ServiceRow {
   name: string
@@ -27,15 +29,24 @@ function resolveEnvironment(): string {
 }
 
 /**
- * HealthPage — UI-01.E.5.
+ * Six dimensions of system health, all with null scores in UI-01.
+ * The radar renders axes and vertices but no data — matching the
+ * honest state of the system until a backend supplies measurements.
+ */
+const HEALTH_DIMENSIONS: RadarDimension[] = [
+  { id: 'uptime',       label: 'Uptime',       score: null, tone: 'unknown' },
+  { id: 'availability', label: 'Availability', score: null, tone: 'unknown' },
+  { id: 'latency',      label: 'Latency',      score: null, tone: 'unknown' },
+  { id: 'errorRate',    label: 'Error Rate',   score: null, tone: 'unknown' },
+  { id: 'throughput',   label: 'Throughput',   score: null, tone: 'unknown' },
+  { id: 'saturation',   label: 'Saturation',   score: null, tone: 'unknown' },
+]
+
+/**
+ * HealthPage — UI-01.E.5 (+ I.6).
  *
- * Shows operational state of services and resources. Uses the full
- * primitive set: MetricCard, ChartFrame, EnterpriseTable, StatusBadge.
- *
- * In UI-01 there is no backend, so all metrics show '—' with
- * 'Not Connected', charts render empty, and the services table is empty.
- *
- * No fake CPU percentages. No fake latency numbers. No fake uptime.
+ * Shows operational state of services and resources, plus a
+ * six-dimension radar summary at the top.
  */
 export function HealthPage(): ReactElement {
   const { t } = useTranslation('health')
@@ -106,6 +117,10 @@ export function HealthPage(): ReactElement {
           value={emptyValue}
           dataState={backendConnected ? 'live' : 'notConnected'}
         />
+      </section>
+
+      <section className="eg-health__radar">
+        <RadarDimensions dimensions={HEALTH_DIMENSIONS} max={100} />
       </section>
 
       <section className="eg-health__charts" aria-label={t('resources.cpu')}>

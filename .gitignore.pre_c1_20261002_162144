@@ -1,0 +1,185 @@
+# ============================================================
+# EnterpriseGuard — .gitignore
+# ============================================================
+# Last revised: 2026-09-12
+# Structure:
+#   1. Secrets & keys
+#   2. Virtual environments
+#   3. Python tooling & caches
+#   4. Backups & temporary files
+#   5. Runtime / dynamic state (data)
+#   6. Per-machine state
+#   7. Large generated artifacts at root
+#   8. Temporary one-shot scripts at root
+#   9. Temporary shell test scripts at root
+#  10. Auto-generated reports under tools/
+#  11. Legacy backup directories
+#  12. OS & editors
+# ============================================================
+
+
+# --- 1. Secrets & keys (NEVER commit) ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.cer
+*.asc
+!deploy/keys/release_key_public.asc
+
+
+# --- 2. Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+
+
+# --- 3. Python tooling & caches ---
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.eggs/
+build/
+dist/
+
+
+# --- 4. Backups & temporary files ---
+*.bak
+*.bak_*
+*.bak.*
+*.save
+*.save.*
+*.orig
+*.swp
+*.tmp
+*~
+backups/
+backup/
+archive/
+quarantine/
+
+
+# --- 5. Runtime / dynamic state (data) ---
+tools/activity_log.json
+tools/errors.log
+tools/errors.log.st_tree.archive.*
+tools/latest_context.txt
+tools/audit_fallback.jsonl
+tools/realtime_events.jsonl
+tools/ring_storage.jsonl
+tools/events.sqlite
+tools/dimensional_history.jsonl
+tools/dimensional_state.json
+tools/.document_bandit.lock
+tools/sibb_store/
+src/logs/audit.jsonl
+logs/
+permissions.db
+
+
+# --- 6. Per-machine state (must NOT be in git) ---
+tools/hardware_identity.json
+tools/hardware_identity.enc
+tools/genesis_baseline.json
+tools/genesis_public_key.pem
+tools/genesis_public_ecdsa.pem
+tools/innocence_chain.json
+tools/relational_memory.json
+tools/TRUSTED_BASELINE.json
+TRUSTED_BASELINE_SENTINEL.json
+tools/integrity_baseline.json
+integrity_baseline_sentinel.json
+
+
+# --- 7. Large generated artifacts at root ---
+/all_project_files.md
+/project_files.txt
+/sample_*.txt
+/genesis_seed.txt
+/all.sh
+
+
+# --- 8. Temporary one-shot scripts at root ---
+/add_*.py
+/fix_*.py
+/update_memory_*.py
+/update_decision*.py
+/update_docs*.py
+/improve_*.py
+/make_*.py
+/refactor_*.py
+/restore_*.py
+/modify_*.py
+/create_*.py
+/merge.py
+/all.py
+
+
+# --- 9. Temporary shell test scripts at root ---
+/*_test.sh
+/test_*.sh
+/chain_*.sh
+/ddos_test.sh
+/fuzz_test.sh
+/hardfork_test.sh
+/time_spoof_test.sh
+/live_demo.sh
+/collision_test.sh
+/resource_starvation_test.sh
+
+
+# --- 10. Auto-generated reports under tools/ ---
+tools/bandit_report*.json
+tools/integrity_report_*.json
+tools/memory_snapshot_*.json
+tools/governance_proposals_*.json
+
+
+# --- 11. Legacy backup directories from prior sessions ---
+tools/backups_fix_datetime_*/
+tools/backups_fix_interface_*/
+tools/backups/
+
+
+# --- 12. OS & editors ---
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+.idea/
+
+---
+
+# END OF GITIGNORE-CONTENT-v1
+*.tar.gz*
+*_report.json
+.bandit
+
+# ADIE v2.0: allow public key for third-party verification
+!keys/adie_public.pem
+!keys/README.md
+
+# ADIE generated reports (regenerate per release)
+adie_validation_report.html
+adie_validation_report.json
+
+# Security: Ignore Private Keys & Backups
+*.pem
+keys/*_private*
+backups/
+ls-files keys/ backups/ EnterpriseGuard/config/ EnterpriseGuard/tests/config/*/tests/**/*.pem
+
+# Security: Ignore Private Keys & Backups
+*.pem
+!keys/adie_public.pem
+keys/*_private*
+backups/

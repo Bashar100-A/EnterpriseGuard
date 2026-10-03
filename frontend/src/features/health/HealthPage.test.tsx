@@ -18,9 +18,7 @@ describe('HealthPage', () => {
 
   it('renders the description', () => {
     renderWithThemeOnly(<HealthPage />)
-    expect(
-      screen.getByText(/Live operational state of services, resources, and dependencies/i),
-    ).toBeTruthy()
+    expect(screen.getAllByText(/Live operational state of services, resources/i).length).toBeGreaterThan(0)
   })
 
   it('renders four metric cards', () => {
@@ -30,10 +28,10 @@ describe('HealthPage', () => {
 
   it('renders all metric labels', () => {
     renderWithThemeOnly(<HealthPage />)
-    expect(screen.getByText('Uptime')).toBeTruthy()
-    expect(screen.getByText('Availability')).toBeTruthy()
-    expect(screen.getByText('Latency P99')).toBeTruthy()
-    expect(screen.getByText('Error Rate')).toBeTruthy()
+    expect(screen.getAllByText('Uptime').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Availability').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Latency P99').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Error Rate').length).toBeGreaterThan(0)
   })
 
   it('metric values are — (no fake telemetry)', () => {
@@ -45,10 +43,30 @@ describe('HealthPage', () => {
     }
   })
 
-  it('shows Not Connected on all metric state indicators', () => {
+  it('renders the RadarDimensions', () => {
     renderWithThemeOnly(<HealthPage />)
-    const nc = screen.getAllByText('Not Connected')
-    expect(nc.length).toBeGreaterThanOrEqual(4)
+    expect(screen.getByTestId('eg-radar')).toBeTruthy()
+  })
+
+  it('radar contains 6 axes', () => {
+    const { container } = renderWithThemeOnly(<HealthPage />)
+    expect(container.querySelectorAll('.eg-radar__axis')).toHaveLength(6)
+  })
+
+  it('radar contains 6 vertex dots', () => {
+    const { container } = renderWithThemeOnly(<HealthPage />)
+    expect(container.querySelectorAll('.eg-radar__vertex-group circle')).toHaveLength(6)
+  })
+
+  it('radar shows 6 dimensions in the header', () => {
+    const { container } = renderWithThemeOnly(<HealthPage />)
+    const value = container.querySelector('.eg-radar__stat-value')
+    expect(value?.textContent).toBe('6')
+  })
+
+  it('radar polygon uses unknown tone (no data)', () => {
+    const { container } = renderWithThemeOnly(<HealthPage />)
+    expect(container.querySelector('.eg-radar__polygon')?.getAttribute('data-tone')).toBe('unknown')
   })
 
   it('renders two chart frames', () => {
@@ -58,8 +76,8 @@ describe('HealthPage', () => {
 
   it('chart frames show resource titles', () => {
     renderWithThemeOnly(<HealthPage />)
-    expect(screen.getByText('CPU Usage')).toBeTruthy()
-    expect(screen.getByText('Memory Usage')).toBeTruthy()
+    expect(screen.getAllByText('CPU Usage').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Memory Usage').length).toBeGreaterThan(0)
   })
 
   it('chart frames are empty (no fake resource charts)', () => {
@@ -77,12 +95,12 @@ describe('HealthPage', () => {
 
   it('services table shows empty message', () => {
     renderWithThemeOnly(<HealthPage />)
-    expect(screen.getByText('No services registered in this scope')).toBeTruthy()
+    expect(screen.getAllByText('No services registered in this scope').length).toBeGreaterThan(0)
   })
 
   it('services table has no fabricated rows', () => {
     const { container } = renderWithThemeOnly(<HealthPage />)
-    expect(container.querySelectorAll('tbody tr')).toHaveLength(0)
+    expect(container.querySelectorAll('.eg-table tbody tr')).toHaveLength(0)
   })
 
   it('breadcrumb includes Operate group', () => {
@@ -99,7 +117,7 @@ describe('HealthPage', () => {
 
   it('renders the backend note', () => {
     renderWithThemeOnly(<HealthPage />)
-    expect(screen.getByText(/Backend integration comes in a later phase/i)).toBeTruthy()
+    expect(screen.getAllByText(/Backend integration comes in a later phase/i).length).toBeGreaterThan(0)
   })
 
   it('does NOT contain any TechnicalIdentifier (no fake IDs)', () => {

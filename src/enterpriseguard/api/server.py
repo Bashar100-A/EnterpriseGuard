@@ -434,7 +434,7 @@ class _Handler(BaseHTTPRequestHandler):
         try:
             self._route_post()
         except Exception:
-            _security_event("request_failure", method="POST", path=self._path())
+            import traceback; traceback.print_exc(); _security_event("request_failure", method="POST", path=self._path())
             try:
                 self._send_json(500, {"error": "internal"})
             except Exception:
