@@ -2657,3 +2657,19 @@ body {
 .eg-policies__versions {
   margin-block-end: var(--eg-space-3);
 }
+
+/* ------------------------------------------------------------
+   ApprovalsPage (G.4)
+   ------------------------------------------------------------ */
+
+.eg-approvals__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--eg-space-3);
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-approvals__queue,
+.eg-approvals__history {
+  margin-block-end: var(--eg-space-3);
+}

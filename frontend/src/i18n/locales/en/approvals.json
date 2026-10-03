@@ -1,0 +1,31 @@
+{
+  "title": "Approvals",
+  "description": "Human-in-the-loop review — pending requests, decisions, and authority",
+  "metrics": {
+    "label": "Approval indicators",
+    "pending": "Pending Approvals",
+    "awaitingAuthority": "Awaiting Authority",
+    "approved24h": "Approved (24h)",
+    "rejected24h": "Rejected (24h)"
+  },
+  "queue": {
+    "caption": "Approval Queue",
+    "id": "Approval ID",
+    "request": "Request",
+    "requester": "Requester",
+    "severity": "Severity",
+    "state": "State",
+    "submittedAt": "Submitted",
+    "empty": "No pending approvals in this scope"
+  },
+  "history": {
+    "caption": "Recent Decisions",
+    "id": "Approval ID",
+    "decision": "Decision",
+    "authority": "Authority",
+    "state": "State",
+    "decidedAt": "Decided",
+    "empty": "No approval history in this scope"
+  },
+  "backendNote": "Backend integration comes in a later phase. No approvals are fabricated. Only the backend can authorize or reject."
+}
