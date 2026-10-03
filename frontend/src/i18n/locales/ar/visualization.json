@@ -30,6 +30,15 @@
       "sat": "سبت"
     }
   },
+  "sankey": {
+    "label": "تدفق القرار",
+    "empty": "لا توجد بيانات تدفق للعرض",
+    "nodeCount": "المراحل",
+    "linkCount": "التدفقات",
+    "totalFlow": "الإجمالي",
+    "linkAriaLabel": "{{from}} إلى {{to}}: {{value}}",
+    "nodeAriaLabel": "{{label}}: {{value}}"
+  },
   "legend": {
     "label": "الوسيلة",
     "unknown": "غير معروف",

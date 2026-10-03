@@ -8,8 +8,13 @@ import { EnterpriseTable } from '../../components/data-display'
 import type { EnterpriseColumn } from '../../components/data-display'
 import { StatusBadge, TechnicalIdentifier } from '../../components/security'
 import type { StatusKey } from '../../components/security'
-import { RelationshipGraph } from '../../components/visualization'
-import type { GraphNode, GraphEdge } from '../../components/visualization'
+import { RelationshipGraph, SankeyFlow } from '../../components/visualization'
+import type {
+  GraphNode,
+  GraphEdge,
+  SankeyNode,
+  SankeyLink,
+} from '../../components/visualization'
 
 interface DecisionRow {
   id: string
@@ -26,13 +31,6 @@ function resolveEnvironment(): string {
   return 'Unknown'
 }
 
-/**
- * Positions for the 8-stage ADIE pipeline rendered as a graph.
- * Three tiers stacked vertically:
- *   y=20  Observed   — Evidence, State, Prediction
- *   y=50  Decided    — Policy, Decision, Authority
- *   y=80  Executed   — Manifest, Outcome
- */
 const GRAPH_NODES: GraphNode[] = [
   { id: 'evidence',   label: 'Evidence',   tone: 'unknown', count: null, x: 17, y: 20 },
   { id: 'state',      label: 'State',      tone: 'unknown', count: null, x: 50, y: 20 },
@@ -57,14 +55,40 @@ const GRAPH_EDGES: GraphEdge[] = [
 ]
 
 /**
- * DecisionsPage — UI-01.E.3 (+ I.1).
+ * Sankey nodes for the ADIE pipeline.
  *
- * Shows the full ADIE pipeline in two complementary views:
+ * Layout: 5 columns representing the coarse pipeline:
+ *   Evidence (col 0) → State (col 1) → Decision (col 2)
+ *     → Authority (col 3) → Outcome (col 4)
+ *
+ * All node.values are 0 in UI-01 — the Sankey renderer handles the
+ * degenerate case (equal heights) gracefully.
+ */
+const SANKEY_NODES: SankeyNode[] = [
+  { id: 'evidence',  label: 'Evidence',  tone: 'unknown', column: 0, value: 0 },
+  { id: 'state',     label: 'State',     tone: 'unknown', column: 1, value: 0 },
+  { id: 'decision',  label: 'Decision',  tone: 'unknown', column: 2, value: 0 },
+  { id: 'authority', label: 'Authority', tone: 'unknown', column: 3, value: 0 },
+  { id: 'outcome',   label: 'Outcome',   tone: 'unknown', column: 4, value: 0 },
+]
+
+const SANKEY_LINKS: SankeyLink[] = [
+  { from: 'evidence',  to: 'state' },
+  { from: 'state',     to: 'decision' },
+  { from: 'decision',  to: 'authority' },
+  { from: 'authority', to: 'outcome' },
+].map((l) => ({ ...l, value: 0 }))
+
+/**
+ * DecisionsPage — UI-01.E.3 (+ I.1 + I.4).
+ *
+ * Three complementary views of the ADIE decision pipeline:
  *   1. DecisionChain — linear, tier-based (Observed / Decided / Executed)
  *   2. RelationshipGraph — spatial, node/edge-based
+ *   3. SankeyFlow — flow-based, volume between stages
  *
- * Both views render placeholder data (all nodes unknown, no counts).
- * No fake hashes. No fake decisions. No fake authority.
+ * All three render placeholder data (all nodes unknown, no counts, no
+ * values). The page never fabricates decisions, hashes, or authority.
  */
 export function DecisionsPage(): ReactElement {
   const { t } = useTranslation('decisions')
@@ -132,6 +156,10 @@ export function DecisionsPage(): ReactElement {
 
       <section className="eg-decisions__graph">
         <RelationshipGraph nodes={GRAPH_NODES} edges={GRAPH_EDGES} />
+      </section>
+
+      <section className="eg-decisions__sankey">
+        <SankeyFlow nodes={SANKEY_NODES} links={SANKEY_LINKS} />
       </section>
 
       <section className="eg-decisions__table">

@@ -35,7 +35,7 @@ describe('DecisionsPage', () => {
     expect(container.querySelector('[data-tier="executed"]')).not.toBeNull()
   })
 
-  it('chain shows all 8 stage labels', () => {
+  it('chain shows all 8 stage labels (using getAllByText)', () => {
     renderWithThemeOnly(<DecisionsPage />)
     expect(screen.getAllByText('Evidence').length).toBeGreaterThan(0)
     expect(screen.getAllByText('State').length).toBeGreaterThan(0)
@@ -62,6 +62,21 @@ describe('DecisionsPage', () => {
     expect(container.querySelectorAll('.eg-relgraph__edge')).toHaveLength(7)
   })
 
+  it('renders the SankeyFlow', () => {
+    const { container } = renderWithThemeOnly(<DecisionsPage />)
+    expect(container.querySelector('[data-testid="eg-sankey"]')).not.toBeNull()
+  })
+
+  it('SankeyFlow contains 5 nodes', () => {
+    const { container } = renderWithThemeOnly(<DecisionsPage />)
+    expect(container.querySelectorAll('.eg-sankey__node rect')).toHaveLength(5)
+  })
+
+  it('SankeyFlow contains 4 links', () => {
+    const { container } = renderWithThemeOnly(<DecisionsPage />)
+    expect(container.querySelectorAll('.eg-sankey__link')).toHaveLength(4)
+  })
+
   it('renders the decisions table', () => {
     const { container } = renderWithThemeOnly(<DecisionsPage />)
     expect(container.querySelector('.eg-table')).not.toBeNull()
@@ -74,7 +89,7 @@ describe('DecisionsPage', () => {
 
   it('table has no fabricated rows', () => {
     const { container } = renderWithThemeOnly(<DecisionsPage />)
-    expect(container.querySelectorAll('tbody tr')).toHaveLength(0)
+    expect(container.querySelectorAll('.eg-table tbody tr')).toHaveLength(0)
   })
 
   it('renders the context strip', () => {

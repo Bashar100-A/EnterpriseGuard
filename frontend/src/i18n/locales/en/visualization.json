@@ -30,6 +30,15 @@
       "sat": "Sat"
     }
   },
+  "sankey": {
+    "label": "Decision flow",
+    "empty": "No flow data to display",
+    "nodeCount": "Stages",
+    "linkCount": "Flows",
+    "totalFlow": "Total",
+    "linkAriaLabel": "{{from}} to {{to}}: {{value}}",
+    "nodeAriaLabel": "{{label}}: {{value}}"
+  },
   "legend": {
     "label": "Legend",
     "unknown": "Unknown",

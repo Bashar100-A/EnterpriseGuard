@@ -10,3 +10,6 @@ export type { TimelineProps, TimelineEvent } from './Timeline'
 
 export { Heatmap } from './Heatmap'
 export type { HeatmapProps, HeatmapCell, HeatmapIntensity } from './Heatmap'
+
+export { SankeyFlow } from './SankeyFlow'
+export type { SankeyFlowProps, SankeyNode, SankeyLink } from './SankeyFlow'

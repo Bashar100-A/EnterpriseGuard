@@ -3945,3 +3945,104 @@ body {
 .eg-analytics__heatmap {
   margin-block-end: var(--eg-space-4);
 }
+
+/* ------------------------------------------------------------
+   SankeyFlow (I.4)
+   Flow diagram with variable-thickness bezier links.
+   ------------------------------------------------------------ */
+
+.eg-sankey {
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-bg-surface-1);
+  overflow: hidden;
+}
+
+.eg-sankey--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+}
+
+.eg-sankey__empty {
+  margin: 0;
+  color: var(--eg-text-muted);
+  font-size: 13px;
+}
+
+.eg-sankey__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--eg-space-3);
+  padding: var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+}
+
+.eg-sankey__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--eg-text-primary);
+}
+
+.eg-sankey__stats {
+  display: flex;
+  gap: var(--eg-space-3);
+}
+
+.eg-sankey__stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--eg-text-muted);
+}
+
+.eg-sankey__stat-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+}
+
+.eg-sankey__stat-value {
+  font-family: var(--eg-font-mono);
+  color: var(--eg-text-primary);
+  font-weight: 600;
+}
+
+.eg-sankey__svg-wrap {
+  padding: var(--eg-space-3);
+  aspect-ratio: 16 / 9;
+}
+
+.eg-sankey__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.eg-sankey__link {
+  transition: stroke-opacity 150ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eg-sankey__link { transition: none; }
+}
+
+.eg-sankey__link:hover {
+  stroke-opacity: 0.85;
+}
+
+.eg-sankey__node-label {
+  font-family: var(--eg-font-sans);
+  font-size: 3px;
+  font-weight: 600;
+  fill: var(--eg-text-primary);
+  pointer-events: none;
+}
+
+.eg-decisions__sankey {
+  margin-block-end: var(--eg-space-4);
+}
