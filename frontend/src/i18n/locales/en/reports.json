@@ -1,0 +1,30 @@
+{
+  "title": "Reports",
+  "description": "Report catalog, scheduled deliveries, and exported artifacts",
+  "metrics": {
+    "label": "Report indicators",
+    "available": "Available Reports",
+    "scheduled": "Scheduled",
+    "generated24h": "Generated (24h)",
+    "failed24h": "Failed (24h)"
+  },
+  "catalog": {
+    "caption": "Report Catalog",
+    "id": "Report ID",
+    "title": "Title",
+    "state": "State",
+    "format": "Format",
+    "updatedAt": "Updated",
+    "empty": "No reports in this scope"
+  },
+  "deliveries": {
+    "caption": "Scheduled Deliveries",
+    "id": "Delivery ID",
+    "report": "Report",
+    "schedule": "Schedule",
+    "state": "State",
+    "nextRun": "Next Run",
+    "empty": "No scheduled deliveries in this scope"
+  },
+  "backendNote": "Backend integration comes in a later phase. Reports are not fabricated. Export and delivery require the backend report service."
+}
