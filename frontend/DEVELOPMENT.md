@@ -309,3 +309,151 @@ const element =
 
 Never replace with a switch or a map — the ternary form is greppable
 and unambiguous.
+
+---
+
+## Phase G Additions
+
+### The 19-page invariant
+
+As of Phase G, ALL 19 routes under `ROUTE_SPECS` in `src/app/router.tsx`
+have real page components. `PageShell` remains only as the fallback for
+routes added in later phases.
+
+Full inventory:
+
+| Path | Feature directory |
+|---|---|
+| `/` | `features/overview` |
+| `/operations` | `features/operations` |
+| `/intelligence` | `features/threat` |
+| `/decisions` | `features/decisions` |
+| `/evidence` | `features/evidence` |
+| `/provenance` | `features/provenance` |
+| `/sibb` | `features/sibb` |
+| `/policies` | `features/policies` |
+| `/governance` | `features/governance` |
+| `/approvals` | `features/approvals` |
+| `/manifests` | `features/manifests` |
+| `/health` | `features/health` |
+| `/inspection` | `features/inspection` |
+| `/maintenance` | `features/maintenance` |
+| `/analytics` | `features/analytics` |
+| `/reports` | `features/reports` |
+| `/audit` | `features/audit` |
+| `/access` | `features/access` |
+| `/settings` | `features/config` |
+
+### The 7-step page pattern (canonical)
+
+Every Phase G page follows this exact order:
+
+1. `src/i18n/locales/en/<name>.json`
+2. `src/i18n/locales/ar/<name>.json`
+3. Patch `src/i18n/index.ts` — add imports, NAMESPACES entry, and resources
+4. Create `src/features/<name>/<Name>Page.tsx`
+5. Create `src/features/<name>/index.ts` (barrel export)
+6. Patch `src/app/router.tsx` — add one ternary branch
+7. Create `src/features/<name>/<Name>Page.test.tsx`
+8. Append CSS to `src/app/styles.css`
+
+(Steps 6 and 7 can be swapped; step 8 is always last.)
+
+### Idempotent i18n patching
+
+The single-shot conditional `if "enAccess" not in s:` fails on partial
+prior application. Use per-line checks instead:
+
+```python
+if "import enConfig from" not in s:
+    s = s.replace(...)
+if "\x27config\x27," not in s:
+    s = s.replace(...)
+if "config: enConfig," not in s:
+    s = s.replace(...)
+```
+
+Each line is independently checkable and idempotent. Rerun safely.
+
+### i18n label collision — always use getAllByText for shared labels
+
+In Phase G we saw the same collision repeat several times. Any label that
+appears in BOTH a MetricCard and a Table caption must use `getAllByText`:
+
+```ts
+// Bad — fails when label appears twice
+expect(screen.getByText("Roles")).toBeTruthy()
+
+// Good — always safe
+expect(screen.getAllByText("Roles").length).toBeGreaterThan(0)
+```
+
+Rule: when in doubt, use getAllByText for any label that could appear
+in more than one place. The list of known collisions includes:
+- "Roles", "Active Policies", "Pending Approvals"
+- "Settings", "Feature Flags", "Verified", "Unknown"
+
+### Three-part page structure
+
+Every Phase G page follows the same structural rhythm:
+
+1. **Metrics row** — 4 MetricCards in a responsive grid
+2. **Optional feature block** — chips, panels, or charts depending on the
+   page (scopes, capability chips, dimensions, filters, matrix note)
+3. **Tables** — one or two EnterpriseTables
+4. **Backend note** — a `.eg-note` paragraph explaining the honest state
+
+Not every page needs step 2. Overview, Evidence, and Health skip it.
+
+### The disabled-action pattern
+
+When a page offers an action that the backend does not yet support,
+the button is rendered disabled with a descriptive title:
+
+```tsx
+<button disabled title={t("run.unavailable")} data-testid="...run">
+  {t("run.label")}
+</button>
+```
+
+Examples: Inspection (Run Inspection), Audit (Apply / Clear filters).
+The UI never pretends a disabled action has fired.
+
+### Backend note wording — non-negotiable
+
+Each page ends with `.eg-note` that describes, in one sentence, what the
+backend must eventually provide. The pattern is:
+
+> "Backend integration comes in a later phase. [what is not fabricated].
+>  [what the UI does not do]."
+
+Examples:
+- Policies: "No policies are fabricated. This page reflects the honest current state."
+- Manifests: "A manifest is a plan — only the backend can execute it."
+- Access: "Accounts, roles, and permissions are managed by the backend identity service."
+- Config: "The UI never writes configuration."
+- Audit: "The UI never writes to the audit trail."
+
+This is a design contract, not decoration. It documents the boundary.
+
+### Total inventory at end of Phase G
+
+| Category | Count |
+|---|---|
+| Real pages | 19 |
+| Primitives (security) | 9 |
+| Primitives (data-display) | 3 |
+| Primitives (states) | 1 |
+| Layout components | 5 |
+| Overlay components | 2 |
+| Hooks | 5 |
+| i18n namespaces | 27 (en + ar each) |
+
+### Quality bars (all met at Phase G close)
+
+- `npm run typecheck` — clean
+- `npm run lint` — 0 warnings
+- `npm run test` — 708 tests passing across 47 files
+- `npm run build` — clean
+- All pages render in EN + AR, LTR + RTL, dark + light
+- Zero fabricated data anywhere in the UI
