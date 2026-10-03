@@ -3038,3 +3038,45 @@ body {
 .eg-audit__trail {
   margin-block-end: var(--eg-space-3);
 }
+
+/* ------------------------------------------------------------
+   AccessPage (G.11)
+   ------------------------------------------------------------ */
+
+.eg-access__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--eg-space-3);
+  margin-block-end: var(--eg-space-4);
+}
+
+.eg-access__matrix {
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-bg-surface-1);
+  margin-block-end: var(--eg-space-4);
+  overflow: hidden;
+}
+
+.eg-access__matrix-header {
+  padding: var(--eg-space-2) var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--eg-text-secondary);
+}
+
+.eg-access__matrix-note {
+  margin: 0;
+  padding: var(--eg-space-3);
+  font-size: 13px;
+  color: var(--eg-text-primary);
+  border-inline-start: 3px solid var(--eg-signal-blue);
+}
+
+.eg-access__users,
+.eg-access__roles {
+  margin-block-end: var(--eg-space-3);
+}

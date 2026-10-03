@@ -1,0 +1,33 @@
+{
+  "title": "Users & Access",
+  "description": "Accounts, roles, and the permissions matrix",
+  "metrics": {
+    "label": "Access indicators",
+    "users": "Active Users",
+    "roles": "Roles",
+    "sessions": "Active Sessions",
+    "pendingInvites": "Pending Invites"
+  },
+  "users": {
+    "caption": "Users",
+    "id": "User ID",
+    "name": "Name",
+    "role": "Role",
+    "state": "State",
+    "lastSeen": "Last Seen",
+    "empty": "No users in this scope"
+  },
+  "roles": {
+    "caption": "Roles",
+    "id": "Role ID",
+    "name": "Name",
+    "scope": "Scope",
+    "members": "Members",
+    "empty": "No roles in this scope"
+  },
+  "matrix": {
+    "label": "Permissions Matrix",
+    "note": "The UI does not grant permissions. All authorization is evaluated by the backend."
+  },
+  "backendNote": "Backend integration comes in a later phase. Accounts, roles, and permissions are managed by the backend identity service. No users are fabricated."
+}
