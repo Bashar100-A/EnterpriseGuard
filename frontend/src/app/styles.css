@@ -4046,3 +4046,160 @@ body {
 .eg-decisions__sankey {
   margin-block-end: var(--eg-space-4);
 }
+
+/* ------------------------------------------------------------
+   HierarchyTree (I.5)
+   Collapsible tree. Indentation uses logical padding-inline-start.
+   ------------------------------------------------------------ */
+
+.eg-tree {
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-bg-surface-1);
+  overflow: hidden;
+}
+
+.eg-tree--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+}
+
+.eg-tree__empty {
+  margin: 0;
+  color: var(--eg-text-muted);
+  font-size: 13px;
+}
+
+.eg-tree__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--eg-space-3);
+  padding: var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+}
+
+.eg-tree__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--eg-text-primary);
+}
+
+.eg-tree__stats {
+  display: flex;
+  gap: var(--eg-space-3);
+}
+
+.eg-tree__stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--eg-text-muted);
+}
+
+.eg-tree__stat-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+}
+
+.eg-tree__stat-value {
+  font-family: var(--eg-font-mono);
+  color: var(--eg-text-primary);
+  font-weight: 600;
+}
+
+.eg-tree__root,
+.eg-tree__children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.eg-tree__root {
+  padding: var(--eg-space-3);
+}
+
+.eg-tree__node {
+  padding: 0;
+}
+
+.eg-tree__row {
+  display: flex;
+  align-items: center;
+  gap: var(--eg-space-2);
+  padding-block: 4px;
+  min-height: 24px;
+}
+
+.eg-tree__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  color: var(--eg-text-secondary);
+  border: 1px solid transparent;
+  border-radius: var(--eg-radius-sm);
+  font-size: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.eg-tree__toggle:hover {
+  background: var(--eg-bg-surface-2);
+  color: var(--eg-text-primary);
+}
+
+.eg-tree__toggle:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: 1px;
+}
+
+.eg-tree__toggle--leaf {
+  cursor: default;
+}
+
+.eg-tree__bullet {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--eg-unknown-gray);
+}
+
+.eg-tree__bullet[data-tone="trust"]    { background: var(--eg-trust-emerald); }
+.eg-tree__bullet[data-tone="info"]     { background: var(--eg-signal-blue); }
+.eg-tree__bullet[data-tone="warning"]  { background: var(--eg-warning-amber); }
+.eg-tree__bullet[data-tone="critical"] { background: var(--eg-critical-red); }
+.eg-tree__bullet[data-tone="unknown"]  { background: var(--eg-unknown-gray); }
+
+.eg-tree__label {
+  font-size: 13px;
+  color: var(--eg-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eg-tree__count {
+  font-family: var(--eg-font-mono);
+  font-size: 11px;
+  color: var(--eg-text-muted);
+  padding: 0 6px;
+  min-width: 20px;
+  text-align: center;
+  background: var(--eg-bg-surface-2);
+  border-radius: var(--eg-radius-sm);
+}
+
+.eg-governance__tree {
+  margin-block-end: var(--eg-space-4);
+}

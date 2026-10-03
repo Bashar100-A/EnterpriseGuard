@@ -39,6 +39,14 @@
     "linkAriaLabel": "{{from}} to {{to}}: {{value}}",
     "nodeAriaLabel": "{{label}}: {{value}}"
   },
+  "tree": {
+    "label": "Hierarchy",
+    "empty": "No hierarchy to display",
+    "nodeCount": "Nodes",
+    "rootCount": "Roots",
+    "expand": "Expand {{label}}",
+    "collapse": "Collapse {{label}}"
+  },
   "legend": {
     "label": "Legend",
     "unknown": "Unknown",

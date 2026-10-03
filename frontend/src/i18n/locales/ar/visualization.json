@@ -39,6 +39,14 @@
     "linkAriaLabel": "{{from}} إلى {{to}}: {{value}}",
     "nodeAriaLabel": "{{label}}: {{value}}"
   },
+  "tree": {
+    "label": "التسلسل الهرمي",
+    "empty": "لا يوجد تسلسل للعرض",
+    "nodeCount": "العُقد",
+    "rootCount": "الجذور",
+    "expand": "توسيع {{label}}",
+    "collapse": "طي {{label}}"
+  },
   "legend": {
     "label": "الوسيلة",
     "unknown": "غير معروف",

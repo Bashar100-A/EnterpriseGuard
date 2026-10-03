@@ -2,17 +2,13 @@ import { useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { WorkspaceHeader, ContextStrip } from '../../components/workspace'
-import {
-  MetricCard,
-  EnterpriseTable,
-} from '../../components/data-display'
+import { MetricCard, EnterpriseTable } from '../../components/data-display'
 import type { EnterpriseColumn, MetricValue } from '../../components/data-display'
-import {
-  StatusBadge,
-  TechnicalIdentifier,
-} from '../../components/security'
+import { StatusBadge, TechnicalIdentifier } from '../../components/security'
 import type { StatusKey } from '../../components/security'
 import { DangerousActionDialog } from '../../components/dangerous'
+import { HierarchyTree } from '../../components/visualization'
+import type { TreeNode } from '../../components/visualization'
 
 interface PolicyRow {
   id: string
@@ -37,14 +33,33 @@ function resolveEnvironment(): string {
 }
 
 /**
- * GovernancePage — UI-01.E.4.
+ * Policy tree structure — placeholder.
  *
- * Shows policies and pending approvals, plus the authority boundary in
- * action through the "Propose Policy" flow (DangerousActionDialog).
+ * Renders the shape of the ADIE policy hierarchy (a single root with
+ * three scopes and three example policies). All nodes are unknown tone,
+ * no counts. When the backend arrives, real policy data replaces this
+ * constant — no component changes needed.
+ */
+const POLICY_TREE: TreeNode[] = [
+  { id: 'root',   label: 'Policies',     parentId: null },
+  { id: 'gov',    label: 'Governance',   parentId: 'root' },
+  { id: 'sec',    label: 'Security',     parentId: 'root' },
+  { id: 'ops',    label: 'Operations',   parentId: 'root' },
+  { id: 'gov-1',  label: 'POL-GOV-001',  parentId: 'gov' },
+  { id: 'gov-2',  label: 'POL-GOV-002',  parentId: 'gov' },
+  { id: 'sec-1',  label: 'POL-SEC-001',  parentId: 'sec' },
+  { id: 'ops-1',  label: 'POL-OPS-001',  parentId: 'ops' },
+]
+
+/**
+ * GovernancePage — UI-01.E.4 (+ I.5).
  *
- * The page never fabricates authorization. The dialog is real:
- * acknowledging intent does NOT execute anything; it emits a signal to
- * a backend that does not exist yet.
+ * Shows policies and approvals, plus the policy hierarchy as an
+ * expandable tree.
+ *
+ * The page never fabricates authorization. The dangerous-action dialog
+ * is real: acknowledging intent does NOT execute anything; it emits a
+ * signal to a backend that does not exist yet.
  */
 export function GovernancePage(): ReactElement {
   const { t } = useTranslation('governance')
@@ -148,6 +163,10 @@ export function GovernancePage(): ReactElement {
         />
       </section>
 
+      <section className="eg-governance__tree">
+        <HierarchyTree nodes={POLICY_TREE} ariaLabel={t('policies.caption')} />
+      </section>
+
       <section className="eg-governance__policies">
         <EnterpriseTable<PolicyRow>
           columns={policyColumns}
@@ -183,9 +202,6 @@ export function GovernancePage(): ReactElement {
         severity="high"
         requireAcknowledgment
         onConfirm={() => {
-          // In UI-01 this does nothing real. The backend would receive this
-          // request in a later phase. We close the dialog to prevent any
-          // illusion that an action was taken.
           setProposeOpen(false)
         }}
       />

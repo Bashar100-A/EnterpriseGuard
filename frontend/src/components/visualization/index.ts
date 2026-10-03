@@ -13,3 +13,6 @@ export type { HeatmapProps, HeatmapCell, HeatmapIntensity } from './Heatmap'
 
 export { SankeyFlow } from './SankeyFlow'
 export type { SankeyFlowProps, SankeyNode, SankeyLink } from './SankeyFlow'
+
+export { HierarchyTree } from './HierarchyTree'
+export type { HierarchyTreeProps, TreeNode } from './HierarchyTree'

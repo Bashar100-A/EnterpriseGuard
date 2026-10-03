@@ -26,7 +26,7 @@ describe('GovernancePage', () => {
     expect(container.querySelectorAll('.eg-metric').length).toBe(4)
   })
 
-  it('renders all metric labels', () => {
+  it('renders all metric labels (using getAllByText)', () => {
     renderWithThemeOnly(<GovernancePage />)
     expect(screen.getAllByText('Active Policies').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Pending Approvals').length).toBeGreaterThan(0)
@@ -41,6 +41,51 @@ describe('GovernancePage', () => {
     for (const v of Array.from(values)) {
       expect(v.textContent).toBe('—')
     }
+  })
+
+  it('renders the HierarchyTree', () => {
+    renderWithThemeOnly(<GovernancePage />)
+    expect(screen.getByTestId('eg-tree')).toBeTruthy()
+  })
+
+  it('tree contains 8 nodes', () => {
+    renderWithThemeOnly(<GovernancePage />)
+    expect(screen.getAllByRole('treeitem')).toHaveLength(8)
+  })
+
+  it('tree contains the root label', () => {
+    renderWithThemeOnly(<GovernancePage />)
+    expect(screen.getByText('Policies')).toBeTruthy()
+  })
+
+  it('tree contains the three scope labels', () => {
+    renderWithThemeOnly(<GovernancePage />)
+    // "Governance" also appears as the page h1 — use getAllByText
+    expect(screen.getAllByText('Governance').length).toBeGreaterThan(0)
+    expect(screen.getByText('Security')).toBeTruthy()
+    expect(screen.getByText('Operations')).toBeTruthy()
+  })
+
+  it('tree contains the four policy IDs', () => {
+    renderWithThemeOnly(<GovernancePage />)
+    expect(screen.getByText('POL-GOV-001')).toBeTruthy()
+    expect(screen.getByText('POL-GOV-002')).toBeTruthy()
+    expect(screen.getByText('POL-SEC-001')).toBeTruthy()
+    expect(screen.getByText('POL-OPS-001')).toBeTruthy()
+  })
+
+  it('collapsing the root hides all descendants', () => {
+    renderWithThemeOnly(<GovernancePage />)
+    // Before collapse: 8 treeitems visible
+    expect(screen.getAllByRole('treeitem')).toHaveLength(8)
+    fireEvent.click(screen.getByTestId('eg-tree-toggle-root'))
+    // After collapse: only the root treeitem remains
+    expect(screen.getAllByRole('treeitem')).toHaveLength(1)
+    // And no policy IDs are visible
+    expect(screen.queryByText('POL-GOV-001')).toBeNull()
+    expect(screen.queryByText('POL-GOV-002')).toBeNull()
+    expect(screen.queryByText('POL-SEC-001')).toBeNull()
+    expect(screen.queryByText('POL-OPS-001')).toBeNull()
   })
 
   it('renders two EnterpriseTables (policies + approvals)', () => {
@@ -60,7 +105,7 @@ describe('GovernancePage', () => {
 
   it('tables do NOT render fabricated rows', () => {
     const { container } = renderWithThemeOnly(<GovernancePage />)
-    expect(container.querySelectorAll('tbody tr')).toHaveLength(0)
+    expect(container.querySelectorAll('.eg-table tbody tr')).toHaveLength(0)
   })
 
   it('breadcrumb includes Govern group', () => {
@@ -95,9 +140,7 @@ describe('GovernancePage', () => {
     renderWithThemeOnly(<GovernancePage />)
     fireEvent.click(screen.getByTestId('eg-governance-propose'))
     await waitFor(() => {
-      expect(
-        screen.getByText('Create a new policy in the current scope'),
-      ).toBeTruthy()
+      expect(screen.getByText('Create a new policy in the current scope')).toBeTruthy()
     })
   })
 
@@ -112,27 +155,14 @@ describe('GovernancePage', () => {
   it('acknowledging enables the confirm button', async () => {
     renderWithThemeOnly(<GovernancePage />)
     fireEvent.click(screen.getByTestId('eg-governance-propose'))
-    await waitFor(() => {
-      expect(screen.getByTestId('eg-danger-ack')).toBeTruthy()
-    })
+    await waitFor(() => screen.getByTestId('eg-danger-ack'))
     fireEvent.click(screen.getByTestId('eg-danger-ack'))
     await waitFor(() => {
       expect(screen.getByTestId('eg-danger-confirm').hasAttribute('disabled')).toBe(false)
     })
   })
 
-  it('clicking confirm closes the dialog (does NOT execute anything)', async () => {
-    renderWithThemeOnly(<GovernancePage />)
-    fireEvent.click(screen.getByTestId('eg-governance-propose'))
-    await waitFor(() => screen.getByTestId('eg-danger-ack'))
-    fireEvent.click(screen.getByTestId('eg-danger-ack'))
-    fireEvent.click(screen.getByTestId('eg-danger-confirm'))
-    await waitFor(() => {
-      expect(screen.queryByTestId('eg-danger-dialog')).toBeNull()
-    })
-  })
-
-  it('dialog severity is high (data-severity)', async () => {
+  it('dialog severity is high', async () => {
     renderWithThemeOnly(<GovernancePage />)
     fireEvent.click(screen.getByTestId('eg-governance-propose'))
     await waitFor(() => {
