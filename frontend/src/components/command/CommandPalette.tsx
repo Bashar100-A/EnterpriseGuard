@@ -9,67 +9,53 @@ import {
   type ReactNode,
 } from 'react'
 import { useTranslation } from 'react-i18next'
+import Fuse from 'fuse.js'
 
 export interface Command {
-  /** Stable unique identifier. */
   id: string
-  /** Localized label shown in the list. */
   label: string
-  /** Group key for visual grouping. Matches command.group.<key> if present. */
   group?: string
-  /** Extra search terms (in addition to label). */
   keywords?: string[]
-  /** Right-aligned hint, e.g. keyboard shortcut. */
   shortcut?: string
-  /** Disable selection. */
   disabled?: boolean
-  /** Invoked when the command is chosen. */
   onRun: () => void
 }
 
 export interface CommandPaletteProps {
-  /** Whether the palette is currently open. */
   open: boolean
-  /** Called when the user requests to close (Escape, backdrop, X). */
   onClose: () => void
-  /** Commands available to the user. */
   commands: Command[]
-  /** Optional title override. */
   title?: ReactNode
-  /** Optional placeholder override. */
   placeholder?: string
 }
 
 interface IndexedCommand extends Command {
-  /** Index in the full commands array for stable ordering. */
   index: number
 }
 
-function matches(cmd: IndexedCommand, q: string): boolean {
-  if (q === '') return true
-  const query = q.toLowerCase()
-  if (cmd.label.toLowerCase().includes(query)) return true
-  if (cmd.keywords !== undefined) {
-    for (const kw of cmd.keywords) {
-      if (kw.toLowerCase().includes(query)) return true
-    }
-  }
-  return false
+/**
+ * Fuse.js options tuned for the command palette:
+ *   - labels weighted higher than keywords
+ *   - 0.4 threshold = typo-tolerant but not too loose
+ *   - ignoreLocation so the match can be anywhere in the string
+ */
+const FUSE_OPTIONS = {
+  keys: [
+    { name: 'label', weight: 0.7 },
+    { name: 'keywords', weight: 0.3 },
+  ],
+  threshold: 0.4,
+  ignoreLocation: true,
+  minMatchCharLength: 2,
 }
 
 /**
  * CommandPalette — Ctrl+K / Cmd+K global command surface.
  *
- * Spec §16. Fully generic: the palette does NOT decide what commands exist.
- * Commands are supplied by the host application; the palette handles:
- *   - Open/close state (controlled)
- *   - Query filtering
- *   - Keyboard navigation (↑/↓/Enter/Escape)
- *   - Accessibility (role=dialog, aria-modal, focus trap on input)
- *   - Group rendering
- *
- * It does NOT fetch data, does NOT know about routing, and does NOT
- * invent commands.
+ * Filtering uses Fuse.js fuzzy matching, so queries tolerate typos
+ * ("evidance" matches "Evidence") and partial words. Page descriptions
+ * are included as keywords, so content-level queries ("verify evidence")
+ * still surface the right navigation command.
  */
 export function CommandPalette({
   open,
@@ -84,7 +70,6 @@ export function CommandPalette({
   const inputRef = useRef<HTMLInputElement | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
 
-  // Reset query when opening.
   useEffect(() => {
     if (open) {
       setQuery('')
@@ -92,32 +77,32 @@ export function CommandPalette({
     }
   }, [open])
 
-  // Autofocus input when opening.
   useEffect(() => {
     if (!open) return
     const el = inputRef.current
-    if (el !== null) {
-      // Use requestAnimationFrame to ensure the dialog is mounted.
-      const id = window.requestAnimationFrame(() => {
-        el.focus()
-        el.select()
-      })
-      return () => window.cancelAnimationFrame(id)
-    }
-    return undefined
+    if (el === null) return
+    const id = window.requestAnimationFrame(() => {
+      el.focus()
+      el.select()
+    })
+    return () => window.cancelAnimationFrame(id)
   }, [open])
 
-  // Filtered + indexed commands.
   const indexed: IndexedCommand[] = useMemo(
     () => commands.map((c, i) => ({ ...c, index: i })),
     [commands],
   )
-  const filtered = useMemo(
-    () => indexed.filter((c) => matches(c, query)),
-    [indexed, query],
+
+  const fuse = useMemo(
+    () => new Fuse<IndexedCommand>(indexed, FUSE_OPTIONS),
+    [indexed],
   )
 
-  // Clamp active index when filtered set changes.
+  const filtered = useMemo<IndexedCommand[]>(() => {
+    if (query === '') return indexed
+    return fuse.search(query).map((r) => r.item)
+  }, [fuse, query, indexed])
+
   useEffect(() => {
     if (filtered.length === 0) {
       setActive(0)
@@ -181,7 +166,6 @@ export function CommandPalette({
     [active, filtered, onClose, runCommand],
   )
 
-  // Scroll active item into view.
   useEffect(() => {
     if (!open) return
     const list = listRef.current

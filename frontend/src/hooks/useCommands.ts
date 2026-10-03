@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { changeLanguage, type SupportedLanguage } from '../i18n'
 import { useTheme, type ThemeMode } from '../theme'
+import { usePageDescriptions } from './usePageDescriptions'
 import type { Command } from '../components/command'
 
 interface RouteEntry {
@@ -11,10 +12,6 @@ interface RouteEntry {
   key: string
 }
 
-/**
- * All navigable routes. Kept in sync with ROUTE_SPECS but decoupled
- * from it — the command palette cares only about user-facing labels.
- */
 const ROUTES: RouteEntry[] = [
   { path: '/', key: 'overview' },
   { path: '/operations', key: 'operations' },
@@ -49,44 +46,45 @@ const THEMES: Array<{ mode: ThemeMode; key: 'themeDark' | 'themeLight' | 'themeS
 ]
 
 export interface UseCommandsOptions {
-  /** Optional callback to toggle the assurance rail. */
   onToggleAssurance?: (() => void) | undefined
-  /** Optional callback to toggle the navigation rail. */
   onToggleRail?: (() => void) | undefined
 }
 
 /**
  * useCommands — assembles the full list of commands available to the
- * command palette. Commands come from three sources:
+ * command palette.
  *
- *   1. Navigation — one command per route
- *   2. Language   — one command per supported language
- *   3. Theme      — one command per theme mode
- *   4. UI toggles — assurance panel, navigation rail
+ * Each navigation command carries:
+ *   - its localized label
+ *   - the route path (for direct-path searches)
+ *   - the localized page description (for content searches)
  *
- * The hook is pure: it computes commands from context (router, theme,
- * i18n) and optional callbacks, and returns them. It does NOT execute
- * them — that is the palette's job.
+ * Fuse.js in the palette can then match queries against labels,
+ * keywords, and descriptions, giving fuzzy, typo-tolerant search.
  */
 export function useCommands(options: UseCommandsOptions = {}): Command[] {
   const { t } = useTranslation('command')
   const navigate = useNavigate()
   const location = useLocation()
   const { mode, setMode } = useTheme()
+  const descriptions = usePageDescriptions()
 
   const { onToggleAssurance, onToggleRail } = options
 
   return useMemo<Command[]>(() => {
     const commands: Command[] = []
 
-    // Navigation commands
     for (const route of ROUTES) {
       const isCurrent = route.path === location.pathname
+      const description = descriptions[route.path] ?? ''
+      const keywords: string[] = [route.path, route.key]
+      if (description.length > 0) keywords.push(description)
+
       commands.push({
         id: `nav-${route.key}`,
         label: t(`commands.${route.key}`) as string,
         group: 'navigate',
-        keywords: [route.path, route.key],
+        keywords,
         disabled: isCurrent,
         onRun: () => {
           navigate(route.path)
@@ -94,7 +92,6 @@ export function useCommands(options: UseCommandsOptions = {}): Command[] {
       })
     }
 
-    // Language commands
     for (const lang of LANGUAGES) {
       commands.push({
         id: `lang-${lang.code}`,
@@ -107,7 +104,6 @@ export function useCommands(options: UseCommandsOptions = {}): Command[] {
       })
     }
 
-    // Theme commands
     for (const theme of THEMES) {
       commands.push({
         id: `theme-${theme.mode}`,
@@ -121,7 +117,6 @@ export function useCommands(options: UseCommandsOptions = {}): Command[] {
       })
     }
 
-    // UI toggles
     if (onToggleAssurance !== undefined) {
       commands.push({
         id: 'ui-toggle-assurance',
@@ -143,5 +138,5 @@ export function useCommands(options: UseCommandsOptions = {}): Command[] {
     }
 
     return commands
-  }, [t, navigate, location.pathname, mode, setMode, onToggleAssurance, onToggleRail])
+  }, [t, navigate, location.pathname, mode, setMode, descriptions, onToggleAssurance, onToggleRail])
 }
