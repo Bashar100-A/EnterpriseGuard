@@ -1,0 +1,37 @@
+{
+  "title": "Configuration",
+  "description": "System settings, feature flags, and environment parameters",
+  "metrics": {
+    "label": "Configuration indicators",
+    "settings": "Settings",
+    "flags": "Feature Flags",
+    "overrides": "Overrides",
+    "lastChange": "Last Change"
+  },
+  "groups": {
+    "label": "Configuration Groups",
+    "general": "General",
+    "security": "Security",
+    "integrations": "Integrations",
+    "performance": "Performance",
+    "notifications": "Notifications"
+  },
+  "settings": {
+    "caption": "System Settings",
+    "key": "Key",
+    "value": "Value",
+    "scope": "Scope",
+    "state": "State",
+    "updatedAt": "Updated",
+    "empty": "No settings configured in this scope"
+  },
+  "flags": {
+    "caption": "Feature Flags",
+    "id": "Flag ID",
+    "name": "Name",
+    "state": "State",
+    "enabled": "Enabled",
+    "empty": "No feature flags in this scope"
+  },
+  "backendNote": "Backend integration comes in a later phase. Configuration is sourced from the backend config service. No settings are fabricated and the UI never writes configuration."
+}

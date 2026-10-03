@@ -31,6 +31,7 @@ import enAnalytics from './locales/en/analytics.json'
 import enReports from './locales/en/reports.json'
 import enAudit from './locales/en/audit.json'
 import enAccess from './locales/en/access.json'
+import enConfig from './locales/en/config.json'
 
 import arCommon from './locales/ar/common.json'
 import arNavigation from './locales/ar/navigation.json'
@@ -62,6 +63,7 @@ import arAnalytics from './locales/ar/analytics.json'
 import arReports from './locales/ar/reports.json'
 import arAudit from './locales/ar/audit.json'
 import arAccess from './locales/ar/access.json'
+import arConfig from './locales/ar/config.json'
 
 export const SUPPORTED_LANGUAGES = ['en', 'ar'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
@@ -100,6 +102,7 @@ export const NAMESPACES = [
   'reports',
   'audit',
   'access',
+  'config',
 ] as const
 
 function isSupported(value: string | null | undefined): value is SupportedLanguage {
@@ -144,6 +147,7 @@ const resources = {
     reports: enReports,
     audit: enAudit,
     access: enAccess,
+    config: enConfig,
   },
   ar: {
     common: arCommon,
@@ -176,6 +180,7 @@ const resources = {
     reports: arReports,
     audit: arAudit,
     access: arAccess,
+    config: arConfig,
   },
 }
 
