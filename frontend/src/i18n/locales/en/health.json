@@ -27,5 +27,8 @@
     "memory": "Memory Usage",
     "memorySub": "Resident memory as share of capacity"
   },
-  "backendNote": "Backend integration comes in a later phase. Health values are not fabricated; they remain unknown until the backend reports actual state."
+  "backendNote": "Backend integration comes in a later phase. Health values are not fabricated; they remain unknown until the backend reports actual state.",
+  "charts": {
+    "sectionLabel": "Charts"
+  }
 }

@@ -17,7 +17,8 @@
     "decisionVolume": "Decision Volume",
     "decisionVolumeSub": "Decisions across the selected window",
     "evidenceFreshness": "Evidence Freshness",
-    "evidenceFreshnessSub": "Distribution of evidence by verification age"
+    "evidenceFreshnessSub": "Distribution of evidence by verification age",
+    "sectionLabel": "Charts"
   },
   "activity": {
     "caption": "Recent Activity",

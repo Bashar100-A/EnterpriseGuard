@@ -110,8 +110,7 @@ export function EvidencePage(): ReactElement {
 
       <section
         className="eg-evidence-page__metrics"
-        aria-label={t('table.caption')}
-      >
+        >
         <MetricCard
           label={t('metrics.total')}
           value={totalValue}

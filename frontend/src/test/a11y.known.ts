@@ -36,8 +36,4 @@
 
 export const KNOWN_A11Y_VIOLATIONS: Readonly<
   Record<string, readonly string[]>
-> = Object.freeze({
-  OverviewPage: ['heading-order', 'landmark-unique'],
-  HealthPage: ['heading-order', 'landmark-unique'],
-  EvidencePage: ['landmark-unique'],
-})
+> = Object.freeze({})

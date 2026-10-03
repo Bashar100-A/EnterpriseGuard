@@ -119,11 +119,13 @@ export function HealthPage(): ReactElement {
         />
       </section>
 
+      <h2 className="eg-visually-hidden">{t('charts.sectionLabel')}</h2>
       <section className="eg-health__radar">
         <RadarDimensions dimensions={HEALTH_DIMENSIONS} max={100} />
       </section>
 
-      <section className="eg-health__charts" aria-label={t('resources.cpu')}>
+      <section className="eg-health__charts">
+        <h2 className="eg-visually-hidden">{t('charts.sectionLabel')}</h2>
         <ChartFrame
           title={t('resources.cpu')}
           subtitle={t('resources.cpuSub')}

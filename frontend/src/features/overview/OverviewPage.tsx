@@ -120,7 +120,8 @@ export function OverviewPage(): ReactElement {
       </section>
 
       {/* Trends */}
-      <section className="eg-overview__charts" aria-label={t('charts.decisionVolume')}>
+      <section className="eg-overview__charts">
+        <h2 className="eg-visually-hidden">{t('charts.sectionLabel')}</h2>
         <ChartFrame
           title={t('charts.decisionVolume')}
           subtitle={t('charts.decisionVolumeSub')}
