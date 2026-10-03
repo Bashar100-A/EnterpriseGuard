@@ -3777,3 +3777,171 @@ body {
 .eg-audit__timeline {
   margin-block-end: var(--eg-space-4);
 }
+
+/* ------------------------------------------------------------
+   Heatmap (I.3)
+   7×24 activity density grid. Intensity is discrete (4 tiers),
+   never an interpolated gradient.
+   ------------------------------------------------------------ */
+
+.eg-heatmap {
+  border: 1px solid var(--eg-border-subtle);
+  border-radius: var(--eg-radius-md);
+  background: var(--eg-bg-surface-1);
+  overflow: hidden;
+}
+
+.eg-heatmap__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--eg-space-3);
+  padding: var(--eg-space-3);
+  border-block-end: 1px solid var(--eg-border-subtle);
+}
+
+.eg-heatmap__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--eg-text-primary);
+}
+
+.eg-heatmap__empty-hint {
+  font-size: 11px;
+  color: var(--eg-text-muted);
+  font-style: italic;
+}
+
+.eg-heatmap__scroll {
+  overflow-x: auto;
+  padding: var(--eg-space-3);
+}
+
+.eg-heatmap__grid {
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-family: var(--eg-font-mono);
+  font-size: 10px;
+}
+
+.eg-heatmap__caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.eg-heatmap__corner {
+  width: 36px;
+  background: transparent;
+}
+
+.eg-heatmap__hour {
+  text-align: center;
+  color: var(--eg-text-muted);
+  font-weight: 400;
+  padding-block-end: 4px;
+  min-width: 18px;
+}
+
+.eg-heatmap__day {
+  text-align: end;
+  padding-inline-end: 6px;
+  color: var(--eg-text-muted);
+  font-weight: 400;
+  white-space: nowrap;
+  font-family: var(--eg-font-sans);
+}
+
+.eg-heatmap__cell {
+  width: 18px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--eg-bg-surface-2);
+  border: 1px solid var(--eg-border-subtle);
+  transition: filter 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eg-heatmap__cell { transition: none; }
+}
+
+.eg-heatmap__cell[data-intensity="none"] {
+  background: var(--eg-bg-surface-2);
+}
+
+.eg-heatmap__cell[data-intensity="low"] {
+  background: color-mix(in srgb, var(--eg-signal-blue) 30%, transparent);
+  border-color: color-mix(in srgb, var(--eg-signal-blue) 50%, transparent);
+}
+
+.eg-heatmap__cell[data-intensity="medium"] {
+  background: color-mix(in srgb, var(--eg-signal-blue) 60%, transparent);
+  border-color: var(--eg-signal-blue);
+}
+
+.eg-heatmap__cell[data-intensity="high"] {
+  background: color-mix(in srgb, var(--eg-signal-blue) 90%, transparent);
+  border-color: var(--eg-signal-blue);
+}
+
+.eg-heatmap__cell:hover {
+  filter: brightness(1.3);
+}
+
+.eg-heatmap__legend {
+  display: flex;
+  align-items: center;
+  gap: var(--eg-space-3);
+  padding: var(--eg-space-2) var(--eg-space-3);
+  border-block-start: 1px solid var(--eg-border-subtle);
+  font-size: 11px;
+  color: var(--eg-text-muted);
+}
+
+.eg-heatmap__legend-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+}
+
+.eg-heatmap__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eg-heatmap__legend-item::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1px solid var(--eg-border-subtle);
+}
+
+.eg-heatmap__legend-item[data-intensity="none"]::before {
+  background: var(--eg-bg-surface-2);
+}
+
+.eg-heatmap__legend-item[data-intensity="low"]::before {
+  background: color-mix(in srgb, var(--eg-signal-blue) 30%, transparent);
+}
+
+.eg-heatmap__legend-item[data-intensity="medium"]::before {
+  background: color-mix(in srgb, var(--eg-signal-blue) 60%, transparent);
+}
+
+.eg-heatmap__legend-item[data-intensity="high"]::before {
+  background: color-mix(in srgb, var(--eg-signal-blue) 90%, transparent);
+}
+
+.eg-analytics__heatmap {
+  margin-block-end: var(--eg-space-4);
+}

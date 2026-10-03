@@ -13,11 +13,34 @@
     "eventCount": "{{count}} events",
     "unknownTime": "Time unknown"
   },
+  "heatmap": {
+    "label": "Activity density",
+    "empty": "No activity data to display",
+    "day": "Day",
+    "hour": "Hour",
+    "cellAriaLabel": "{{day}} at {{hour}}: {{count}} events",
+    "cellAriaEmpty": "{{day}} at {{hour}}: no data",
+    "days": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    }
+  },
   "legend": {
     "label": "Legend",
     "unknown": "Unknown",
     "verified": "Verified",
     "warning": "Attention",
-    "critical": "Critical"
+    "critical": "Critical",
+    "intensity": {
+      "none": "None",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    }
   }
 }

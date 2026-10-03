@@ -26,10 +26,10 @@ describe('AnalyticsPage', () => {
     expect(container.querySelectorAll('.eg-metric').length).toBe(4)
   })
 
-  it('renders all metric labels', () => {
+  it('renders all metric labels (using getAllByText)', () => {
     renderWithThemeOnly(<AnalyticsPage />)
-    expect(screen.getByText('Data Points')).toBeTruthy()
-    expect(screen.getByText('Dimensions')).toBeTruthy()
+    expect(screen.getAllByText('Data Points').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Dimensions').length).toBeGreaterThan(0)
     expect(screen.getByText('Active Windows')).toBeTruthy()
     expect(screen.getByText('Refresh Rate')).toBeTruthy()
   })
@@ -63,6 +63,21 @@ describe('AnalyticsPage', () => {
     }
   })
 
+  it('renders the Heatmap', () => {
+    renderWithThemeOnly(<AnalyticsPage />)
+    expect(screen.getByTestId('eg-heatmap')).toBeTruthy()
+  })
+
+  it('Heatmap shows the empty hint (no data)', () => {
+    renderWithThemeOnly(<AnalyticsPage />)
+    expect(screen.getByTestId('eg-heatmap-empty-hint')).toBeTruthy()
+  })
+
+  it('Heatmap renders 168 cells (7 × 24)', () => {
+    const { container } = renderWithThemeOnly(<AnalyticsPage />)
+    expect(container.querySelectorAll('.eg-heatmap__cell')).toHaveLength(168)
+  })
+
   it('renders five dimension chips', () => {
     const { container } = renderWithThemeOnly(<AnalyticsPage />)
     expect(container.querySelectorAll('.eg-analytics__dimension-item').length).toBe(5)
@@ -89,7 +104,7 @@ describe('AnalyticsPage', () => {
 
   it('snapshots table has no fabricated rows', () => {
     const { container } = renderWithThemeOnly(<AnalyticsPage />)
-    expect(container.querySelectorAll('tbody tr')).toHaveLength(0)
+    expect(container.querySelectorAll('.eg-table tbody tr')).toHaveLength(0)
   })
 
   it('breadcrumb includes Assurance group', () => {

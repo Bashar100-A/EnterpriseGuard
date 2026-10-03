@@ -13,11 +13,34 @@
     "eventCount": "{{count}} حدث",
     "unknownTime": "الوقت غير معروف"
   },
+  "heatmap": {
+    "label": "كثافة النشاط",
+    "empty": "لا توجد بيانات نشاط للعرض",
+    "day": "اليوم",
+    "hour": "الساعة",
+    "cellAriaLabel": "{{day}} الساعة {{hour}}: {{count}} حدث",
+    "cellAriaEmpty": "{{day}} الساعة {{hour}}: لا بيانات",
+    "days": {
+      "sun": "أحد",
+      "mon": "إثنين",
+      "tue": "ثلاثاء",
+      "wed": "أربعاء",
+      "thu": "خميس",
+      "fri": "جمعة",
+      "sat": "سبت"
+    }
+  },
   "legend": {
     "label": "الوسيلة",
     "unknown": "غير معروف",
     "verified": "موثّق",
     "warning": "تنبيه",
-    "critical": "حرج"
+    "critical": "حرج",
+    "intensity": {
+      "none": "لا شيء",
+      "low": "منخفض",
+      "medium": "متوسط",
+      "high": "مرتفع"
+    }
   }
 }

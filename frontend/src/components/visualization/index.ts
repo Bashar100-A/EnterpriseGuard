@@ -7,3 +7,6 @@ export type {
 
 export { Timeline } from './Timeline'
 export type { TimelineProps, TimelineEvent } from './Timeline'
+
+export { Heatmap } from './Heatmap'
+export type { HeatmapProps, HeatmapCell, HeatmapIntensity } from './Heatmap'

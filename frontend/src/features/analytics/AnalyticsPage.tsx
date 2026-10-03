@@ -9,6 +9,8 @@ import {
 } from '../../components/data-display'
 import type { EnterpriseColumn, MetricValue } from '../../components/data-display'
 import { TechnicalIdentifier } from '../../components/security'
+import { Heatmap } from '../../components/visualization'
+import type { HeatmapCell } from '../../components/visualization'
 
 interface SnapshotRow {
   id: string
@@ -28,13 +30,12 @@ function resolveEnvironment(): string {
 const DIMENSION_KEYS = ['time', 'source', 'severity', 'scope', 'authority'] as const
 
 /**
- * AnalyticsPage — UI-01.G.8.
+ * AnalyticsPage — UI-01.G.8 (+ I.3).
  *
- * Metric grid + time series + dimensions panel + snapshot table.
+ * Metric grid + time series + heatmap + dimensions + snapshot table.
  *
- * Three ChartFrames render in the empty state until a real analytics
- * backend is connected. The five dimension chips describe the axes
- * across which metrics can be sliced — they are structure, not data.
+ * The heatmap renders the full 7×24 grid structure but every cell is in
+ * the 'none' intensity state — no activity data has arrived yet.
  */
 export function AnalyticsPage(): ReactElement {
   const { t } = useTranslation('analytics')
@@ -44,6 +45,7 @@ export function AnalyticsPage(): ReactElement {
   const backendConnected = false
   const emptyValue: MetricValue = { value: null }
   const snapshots: SnapshotRow[] = []
+  const heatmapCells: HeatmapCell[] = []
 
   const columns: EnterpriseColumn<SnapshotRow>[] = [
     {
@@ -129,6 +131,10 @@ export function AnalyticsPage(): ReactElement {
           state="empty"
           height={220}
         />
+      </section>
+
+      <section className="eg-analytics__heatmap">
+        <Heatmap cells={heatmapCells} />
       </section>
 
       <section className="eg-analytics__dimensions" aria-label={t('dimensions.label')}>
