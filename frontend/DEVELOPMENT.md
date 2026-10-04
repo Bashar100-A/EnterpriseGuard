@@ -684,3 +684,56 @@ The `/docs` route exposes a living design system inside the application.
   to compile until it is updated.
 
 **Baseline:** `UI-01_K_BASELINE_<ts>.txt` (Desktop).
+
+
+---
+
+## Focus Policy (Phase L)
+
+### Two focus pseudo-classes, two jobs
+
+- **`:focus-visible`** — the default for every interactive element.
+  Browsers apply it when the focus arrives via keyboard, not mouse.
+  Use this for **all** new interactive controls. Outline: `2px solid
+  var(--eg-signal-blue)`, offset `2px` (or `-2px` for full-width rows).
+
+- **`:focus`** — reserved for programmatic focus targets that must
+  ALWAYS show an outline, regardless of input method:
+  - `.eg-shell__skip-link` (visible on Tab from page top)
+  - `.eg-shell__workspace` (main landmark after a skip-link jump)
+  - `.eg-danger__phrase-input` (auto-focused on modal open)
+
+  If you find yourself reaching for `:focus` on a button or a link,
+  stop — you want `:focus-visible`.
+
+### Global fallback
+
+A base rule at the bottom of `styles.css` gives **every** focusable
+element an outline when `:focus-visible` matches:
+
+```css
+:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: 2px;
+}
+```
+
+Per-element rules only exist to override the offset (e.g. `-2px` on
+full-width rows so the outline does not overflow the container).
+
+### Adding a new interactive component
+
+1. Prefer a real `<button>` or `<a href>` — native focusability.
+2. If you must build a custom control (`role="option"` etc.), give it
+   `tabIndex={0}` (or manage focus with arrow keys) and add a
+   `.your-class:focus-visible` rule **only if** the global fallback's
+   offset would visually overflow the container.
+3. Register the selector in `src/test/focus.audit.test.ts` — the test
+   reads `styles.css` and fails if the rule goes missing.
+
+### Regression test
+
+`src/test/focus.audit.test.ts` reads `styles.css` at test time and
+asserts that every critical selector still carries a `:focus-visible`
+rule. Adding a new interactive primitive? Add its class to the array
+at the top of that file.

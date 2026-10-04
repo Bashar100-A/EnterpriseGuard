@@ -4629,3 +4629,18 @@ body {
   outline: 2px solid var(--eg-signal-blue);
   outline-offset: 2px;
 }
+
+.eg-cmd__item:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: -2px;
+}
+
+.eg-tree__node:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: -2px;
+}
+
+.eg-tree__row:focus-visible {
+  outline: 2px solid var(--eg-signal-blue);
+  outline-offset: -2px;
+}
