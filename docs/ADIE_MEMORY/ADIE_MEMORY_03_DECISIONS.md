@@ -1027,3 +1027,68 @@ Deferred until after Gate 3 confirms auditors actually use it.
 ---
 
 **End of DECISIONS.**
+
+
+---
+
+## DEC-045 — Charter Adopted
+
+**Phase:** V5.1 Era (governance founding)
+**Date:** 2026-10-05
+**Status:** ✅ Adopted.
+**Related:** File 15 (Charter), DEC-001 through DEC-044.
+
+### Decision
+
+The `ADIE_MEMORY_15_CHARTER.md` document is adopted as the founding
+governance charter of the ADIE project. It becomes the highest-ranked
+source of truth in the canonical hierarchy, superseding interpretation
+conflicts between memory files, decision logs, and any AI-generated
+output.
+
+### Key Claims Elevated to Charter Status
+
+1. **Authority Order (non-negotiable):**
+   `Protocol Semantics > Conformance Tests > Security Model > Reference Implementation > Commercial Product > UI`
+
+2. **Ten Governing Principles** (previously in `05_OPEN.md` §7):
+   Truth before convenience; Alignment ≠ Fitness; Unknown ≠ Pass ≠ Refuted;
+   No code until design closes; Every claim testable; Reframe, don't
+   destroy; Causation ≠ Correlation; Fail-closed on ambiguity;
+   Signature ≠ Authority; Assertion ≠ Authority.
+
+3. **Canonical Sources of Truth (Charter §5):**
+   Charter → Memory files → Decision log → POC Definition → Overview →
+   Scope Paper → Legacy continuity.
+
+4. **Boundary with EnterpriseGuard (Charter §6):**
+   ADIE scope = `poc/`, `docs/ADIE_MEMORY/`, overview + scope paper.
+   EnterpriseGuard scope = `src/enterpriseguard/`, `frontend/`, legacy
+   `tools/`, uppercase `EnterpriseGuard/`.
+   Legacy `continuity/DC-XXX` is frozen; new entries use `DEC-XXX`.
+
+5. **Amendment Process (Charter §7):**
+   Amendments require a new DEC referencing the amended section.
+
+### What This Decision Does NOT Do
+
+- Does not authorize any code change.
+- Does not resolve AQ-12, AQ-16, or pending SDK migration questions
+  (each requires its own DEC).
+- Does not activate V5.1, ZK, HW, or BFT work.
+- Does not amend any DEC-001 through DEC-044.
+
+### Consequences
+
+1. Any action contradicting Charter §3 or §4 is blocked.
+2. New documents must declare their source from Charter §5.
+3. Work on `src/enterpriseguard/` or `frontend/` requires justification
+   as legacy maintenance or an explicit DEC.
+4. The `continuity/DC-XXX` folder is frozen.
+
+**Approved by:** Owner.
+**Effective:** 2026-10-05.
+
+---
+
+**End of DEC-045.**

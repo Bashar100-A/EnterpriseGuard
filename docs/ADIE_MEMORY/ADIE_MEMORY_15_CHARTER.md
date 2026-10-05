@@ -2,7 +2,7 @@
 
 **File:** ADIE_MEMORY_15_CHARTER.md
 **Version:** 1.0
-**Status:** PROPOSED
+**Status:** ADOPTED
 **Date:** 2026-10-05
 **Authority:** Owner sign-off (Section 8 below)
 **Supersedes:** None (this is the founding charter)
@@ -166,11 +166,11 @@ This Charter may be amended only by:
 
 This Charter enters effect upon:
 
-- [ ] Owner reads it fully.
-- [ ] Owner approves (reply "Charter approved").
-- [ ] An explicit `DEC-045 — Charter Adopted` is written to
+- [x] Owner reads it fully.
+- [x] Owner approves (DEC-045 recorded).
+- [x] An explicit `DEC-045 — Charter Adopted` written to
       `03_DECISIONS.md`.
-- [ ] This file is committed to git (currently untracked).
+- [x] This file is committed to git.
 
 Until all four conditions are met, this file is **PROPOSED**, not
 ADOPTED.
