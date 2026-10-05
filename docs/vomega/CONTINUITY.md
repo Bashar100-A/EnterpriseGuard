@@ -292,3 +292,16 @@ cat docs/vomega/CONTINUITY.md
 - Offline: verify_offline (M09, M22, M34, M40)
 
 **Total tests: 51 (frozen) + 12 (vΩ Phase 1) + 40 (vΩ Phase 1.6) = 103**
+
+---
+
+## 12. Phase 1.7 مغلق (ACL-0.1)
+
+- commit: d39fb02 (ACL) + 2a2a71a (DEFECTS-LOG)
+- suites: 51/51 + 12/12 + 40/40 + 40/40 = 143/143
+- spec/ACL-0.1.md (119 سطر)
+- protocol/acl/{__init__,ast,eval,normalize}.py
+- tests/vomega/acl/run_all.py (40 vector)
+- عيبان مُصحَّحان: DEFECT-001 (M19), DEFECT-002 (A25)
+- القاعدة الجديدة: كل عيب اختبار → DEFECTS-LOG.md
+- التالي: Phase 1.8 Authoring Compiler
