@@ -60,6 +60,12 @@ and MUST be rejected at CI.
 | E-META-20 | Authoring closure incomplete | YES | NO |
 | E-META-21 | ACL impurity detected | YES | NO |
 | E-META-22 | Offline verification lacks freshness | NO | YES |
+| E-META-23 | Malformed id (namespace:local_id rule) | YES | NO |
+| E-META-24 | Invalid status value | YES | NO |
+| E-META-25 | Entry not yet effective or expired | YES | NO |
+| E-META-26 | Compatibility record expired | YES | NO |
+| E-META-27 | Compatibility scope mismatch | YES | NO |
+| E-META-28 | Registry snapshot replay detected | YES | NO |
 | E-META-34 | Historical identifier redefined | YES | NO |
 
 ### §4.2 E-CORE-*
