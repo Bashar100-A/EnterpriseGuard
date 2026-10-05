@@ -697,3 +697,69 @@ No in-place edits. No aliasing. No exceptions.
 ---
 
 **End of ADIE-META-CONTRACT-0.1**
+
+---
+
+## §13. Addendum 1 — Invariant I34 and Error Registry coupling
+
+**Date added:** 2026-10-06
+**Authority:** DECISIONS-0.1
+**Effect:** Extends the invariant set. Does not modify I13–I22.
+
+### §13.1 I34 — No historical identifier redefinition
+
+**Claim:** No identifier in the historical record is ever redefined.
+
+**Scope (normative):**
+- test vector IDs (M01..M40, and future families)
+- error codes
+- registry IDs
+- versioned semantic object IDs
+- META-CONTRACT invariant IDs (I1..I34)
+- attack vector IDs
+- compatibility relation IDs
+
+**Formal:**
+```
+∀ id ∈ HistoricalIDs:
+  Meaning(id, t1) = Meaning(id, t2)  for all t2 > t1
+```
+
+**Normative:** Deprecation is permitted (status change).
+Redefinition is forbidden. Extensions MUST use new identifiers.
+
+**Failure mode:** `E-META-34`.
+
+**Test vectors:** META-M34a (rename attempt), META-M34b (alias reintroduction).
+
+### §13.2 Error registry coupling
+
+Effective immediately, no implementation MAY raise an error code not
+registered in `ERROR-REGISTRY-0.1.md`. The registry is normative as an
+**index**; individual error semantics remain defined by their layer spec.
+
+### §13.3 Terminal Architecture relationship
+
+`docs/vomega/ADIE-TERMINAL-ARCHITECTURE-0.1.md` is a **non-normative**
+North Star document. It:
+- does NOT cancel any invariant in this contract;
+- does NOT cancel any test vector;
+- does NOT redefine any error code;
+- describes future layers whose implementation is deferred to later phases.
+
+### §13.4 Attack-ID families
+
+Existing M01–M40 are frozen under aliases `META-M01..META-M40`.
+New attack families use distinct namespaces:
+`CORE-C`, `SEM-S`, `BIND-B`, `TIME-T`, `EVID-E`, `PRIV-P`,
+`FHE-F`, `ZK-Z`, `TEE-H`, `RECUR-R`, `LOG-L`.
+
+### §13.5 Wire format
+
+Wire format (§2 of Terminal Architecture) is **design-only**.
+Implementation is deferred to Phase 2, at which point wire content becomes
+`ADIE-WIRE-0.1` with independent conformance vectors.
+
+---
+
+**End of Addendum 1**
