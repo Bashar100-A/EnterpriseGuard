@@ -1,56 +1,422 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8">
-<title>Verify ADIE Report</title>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADIE — Decision Certificate Verifier</title>
 <style>
-body{font-family:system-ui,sans-serif;max-width:720px;margin:3rem auto;padding:0 1rem;color:#1a1a2e;line-height:1.6}
-h1{color:#0f3460;border-bottom:3px solid #0f3460;padding-bottom:.5rem}
-.box{padding:1rem;border-radius:8px;margin:1rem 0;font-family:monospace;font-size:.85rem;word-break:break-all}
-.ok{background:#e8f5e9;border-left:4px solid #2e7d32}
-.err{background:#ffebee;border-left:4px solid #c62828}
-.info{background:#e3f2fd;border-left:4px solid #1976d2}
-textarea{width:100%;padding:.6rem;border:1px solid #ccc;border-radius:4px;font-family:monospace;font-size:.85rem;box-sizing:border-box;margin-bottom:1rem}
-button{background:#0f3460;color:#fff;border:0;padding:.7rem 1.4rem;border-radius:4px;cursor:pointer;font-size:1rem}
-button:hover{background:#16213e}
-label{font-weight:600;display:block;margin:.5rem 0 .3rem}
-</style></head><body>
-<h1>Verify ADIE Report</h1>
-<p>Paste the report JSON and public key PEM below, then click Verify.</p>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d;
+    --text: #e6edf3; --dim: #8b949e; --ok: #3fb950;
+    --err: #f85149; --warn: #d29922; --mono: ui-monospace,
+    SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5; max-width: 900px; margin: 0 auto;
+  }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 24px 0 8px; color: var(--dim);
+       text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .tag { color: var(--dim); font-size: 14px; margin-bottom: 24px; }
+  .drop {
+    border: 2px dashed var(--border); border-radius: 8px;
+    padding: 32px; text-align: center; cursor: pointer;
+    transition: all 0.15s; background: var(--panel);
+  }
+  .drop:hover, .drop.over { border-color: var(--warn); background: #1c2128; }
+  .drop-title { font-size: 16px; margin-bottom: 8px; }
+  .drop-hint { font-size: 13px; color: var(--dim); }
+  .slot {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 6px;
+    margin-bottom: 8px; font-size: 14px;
+  }
+  .slot-name { color: var(--dim); }
+  .slot-val { font-family: var(--mono); font-size: 13px; }
+  .slot-val.empty { color: var(--dim); }
+  .slot-val.filled { color: var(--ok); }
+  .fp-box {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px; margin: 16px 0;
+    font-family: var(--mono); font-size: 12px;
+    word-break: break-all; line-height: 1.6;
+  }
+  .fp-label { color: var(--dim); font-size: 11px;
+              text-transform: uppercase; letter-spacing: 1px;
+              margin-bottom: 6px; font-family: inherit; }
+  .fp-hash { color: var(--warn); }
+  button {
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 10px 20px; cursor: pointer; font-size: 14px;
+    font-weight: 500; transition: all 0.15s;
+  }
+  button:hover:not(:disabled) { border-color: var(--dim); background: #1c2128; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.primary { background: var(--ok); color: #000; border-color: var(--ok); }
+  button.primary:hover:not(:disabled) { background: #4ac162; }
+  .actions { margin: 20px 0; display: flex; gap: 8px; flex-wrap: wrap; }
+  .result { margin-top: 20px; padding: 20px; border-radius: 6px;
+            font-family: var(--mono); font-size: 15px;
+            font-weight: 600; display: none; }
+  .result.show { display: block; }
+  .result.ok { background: #0f2e19; border: 1px solid var(--ok); color: var(--ok); }
+  .result.err { background: #2d0d0d; border: 1px solid var(--err); color: var(--err); }
+  .result .detail { font-weight: 400; font-size: 13px;
+                    color: var(--dim); margin-top: 8px; }
+  .footer { margin-top: 40px; padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: var(--dim); font-size: 13px; }
+  .footer strong { color: var(--warn); }
+  code { background: var(--panel); padding: 2px 6px;
+         border-radius: 3px; font-family: var(--mono); font-size: 12px; }
+</style>
+</head>
+<body>
 
-<label>Report JSON</label>
-<textarea id="report" rows="6"></textarea>
+<h1>ADIE — Decision Certificate Verifier</h1>
+<div class="tag">Verify a signed decision certificate entirely in your browser. No server. No network.</div>
 
-<label>Public Key (PEM)</label>
-<textarea id="pubkey" rows="5"></textarea>
+<h2>1. Load files</h2>
 
-<button onclick="verify()">Verify</button>
-<div id="result"></div>
+<div class="drop" id="drop">
+  <div class="drop-title">Drop files here</div>
+  <div class="drop-hint">certificate.json + public.pem</div>
+</div>
+
+<div style="margin-top:16px">
+  <div class="slot">
+    <span class="slot-name">Certificate</span>
+    <span class="slot-val empty" id="cert-name">not loaded</span>
+  </div>
+  <div class="slot">
+    <span class="slot-name">Public key</span>
+    <span class="slot-val empty" id="key-name">not loaded</span>
+  </div>
+</div>
+
+<div class="actions">
+  <button id="btn-samples">Load samples/</button>
+  <button id="btn-clear">Clear</button>
+  <button id="btn-verify" class="primary" disabled>Verify</button>
+</div>
+
+<div class="fp-box" id="fp-box" style="display:none">
+  <div class="fp-label">Public key fingerprint (SHA-256)</div>
+  <div class="fp-hash" id="fp-value">—</div>
+  <div style="margin-top:8px; color:var(--dim); font-size:12px; font-family:inherit">
+    Compare to published: <span style="color:var(--ok)">5df07c90c4b346277e585d2a8b20283864dfb74b526c23cda6c993fc37b942a4</span>
+  </div>
+</div>
+
+<div class="result" id="result"></div>
+
+<div class="footer">
+  <p><strong>Integrity ≠ Truth.</strong> This verifier proves the certificate was issued by the holder of the matching key and has not been altered. It does not prove the decision was correct.</p>
+  <p>Source: <code>github.com/Bashar100-A/EnterpriseGuard</code></p>
+</div>
 
 <script>
-async function verify() {
-  const out = document.getElementById('result');
-  out.innerHTML = '<div class="box info">Verifying...</div>';
+"use strict";
+
+const state = { cert: null, certName: null, key: null, keyName: null };
+
+const $ = id => document.getElementById(id);
+const drop = $("drop");
+const result = $("result");
+
+// ── File loading ────────────────────────────────────────────────
+function readFile(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(new TextDecoder().decode(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsArrayBuffer(file);
+  });
+}
+
+function classify(name) {
+  const l = name.toLowerCase();
+  if (l.endsWith(".json") || l.includes("cert")) return "cert";
+  if (l.endsWith(".pem") || l.endsWith(".pub") || l.includes("public")) return "key";
+  return null;
+}
+
+async function handleFiles(files) {
+  for (const f of files) {
+    const kind = classify(f.name);
+    if (!kind) continue;
+    const text = await readFile(f);
+    if (kind === "cert") {
+      state.cert = text; state.certName = f.name;
+      $("cert-name").textContent = f.name;
+      $("cert-name").className = "slot-val filled";
+    } else {
+      state.key = text; state.keyName = f.name;
+      $("key-name").textContent = f.name;
+      $("key-name").className = "slot-val filled";
+    }
+  }
+  updateFingerprint();
+  updateVerifyButton();
+}
+
+drop.addEventListener("click", () => {
+  const i = document.createElement("input");
+  i.type = "file"; i.multiple = true;
+  i.onchange = () => handleFiles(i.files);
+  i.click();
+});
+
+drop.addEventListener("dragover", e => {
+  e.preventDefault(); drop.classList.add("over");
+});
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", e => {
+  e.preventDefault(); drop.classList.remove("over");
+  handleFiles(e.dataTransfer.files);
+});
+
+// ── Fingerprint display ─────────────────────────────────────────
+async function fingerprint(pemText) {
+  const key = await importPublicKey(pemText);
+  const spki = await crypto.subtle.exportKey("spki", key);
+  const hash = await crypto.subtle.digest("SHA-256", spki);
+  return [...new Uint8Array(hash)]
+    .map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function updateFingerprint() {
+  if (!state.key) { $("fp-box").style.display = "none"; return; }
   try {
-    const report = JSON.parse(document.getElementById('report').value);
-    const pem = document.getElementById('pubkey').value;
-
-    const pemBody = pem.replace(/-----[^-]+-----/g,'').replace(/\s+/g,'');
-    const der = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0));
-    const key = await crypto.subtle.importKey(
-      'spki', der, { name:'Ed25519' }, false, ['verify']
-    );
-
-    const sig = Uint8Array.from(
-      report.signature.match(/.{1,2}/g).map(b => parseInt(b,16))
-    );
-    const msg = new TextEncoder().encode(report.report_hash);
-    const ok = await crypto.subtle.verify('Ed25519', key, sig, msg);
-
-    out.innerHTML = ok
-      ? '<div class="box ok">[OK] Ed25519 signature VALID<br>Tests: '+report.passed+'/'+report.total+'<br>Hash: '+report.report_hash+'</div>'
-      : '<div class="box err">[FAIL] Signature INVALID</div>';
-  } catch(e) {
-    out.innerHTML = '<div class="box err">Error: '+e.message+'</div>';
+    const fp = await fingerprint(state.key);
+    $("fp-value").textContent = fp;
+    $("fp-box").style.display = "block";
+  } catch (e) {
+    $("fp-value").textContent = "ERROR: " + e.message;
+    $("fp-box").style.display = "block";
   }
 }
+
+// ── Public key import (PEM → CryptoKey) ─────────────────────────
+function pemToDer(pem) {
+  const b64 = pem
+    .replace(/-----BEGIN PUBLIC KEY-----/, "")
+    .replace(/-----END PUBLIC KEY-----/, "")
+    .replace(/-----BEGIN RSA PUBLIC KEY-----/, "")
+    .replace(/-----END RSA PUBLIC KEY-----/, "")
+    .replace(/\s+/g, "");
+  const bin = atob(b64);
+  const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return buf.buffer;
+}
+
+async function importPublicKey(pem) {
+  const der = pemToDer(pem);
+  return await crypto.subtle.importKey(
+    "spki", der,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    true, ["verify"]
+  );
+}
+
+// ── RFC 8785 canonicalization (JCS subset) ──────────────────────
+// Sort keys recursively; JSON.stringify with no whitespace;
+// reject non-finite numbers.
+function canonicalize(obj) {
+  if (obj === null || typeof obj !== "object") {
+    if (typeof obj === "number" && !Number.isFinite(obj)) {
+      throw new Error("non-finite number");
+    }
+    return JSON.stringify(obj);
+  }
+  if (Array.isArray(obj)) {
+    return "[" + obj.map(canonicalize).join(",") + "]";
+  }
+  const keys = Object.keys(obj).sort();
+  return "{" + keys.map(k =>
+    JSON.stringify(k) + ":" + canonicalize(obj[k])
+  ).join(",") + "}";
+}
+
+function utf8(str) { return new TextEncoder().encode(str); }
+
+// ── Error codes (match Python CLI) ──────────────────────────────
+function fail(code, detail) {
+  result.className = "result err show";
+  result.innerHTML = "INVALID: " + code +
+    (detail ? '<div class="detail">' + detail + "</div>" : "");
+}
+
+function pass() {
+  result.className = "result ok show";
+  result.innerHTML = "VALID" +
+    '<div class="detail">Certificate issued by matching key. No field altered. Not expired.</div>';
+}
+
+const REQUIRED = [
+  "version", "issuer", "issuer_fingerprint", "issued_at", "expires_at",
+  "nonce", "decision_hash", "policy_version", "evidence_ref", "signature"
+];
+
+// ── Verification ────────────────────────────────────────────────
+async function verify() {
+  result.className = "result";
+  result.textContent = "";
+
+  let cert;
+  try {
+    cert = JSON.parse(state.cert);
+  } catch (e) {
+    return fail("E004_MALFORMED_JSON", e.message);
+  }
+
+  if (typeof cert !== "object" || cert === null || Array.isArray(cert)) {
+    return fail("E011_SCHEMA_VIOLATION", "certificate must be a JSON object");
+  }
+
+  for (const f of REQUIRED) {
+    if (!(f in cert)) return fail("E005_MISSING_FIELD", f);
+  }
+
+  if (cert.version !== "1.0") {
+    return fail("E009_VERSION_MISMATCH", "got " + JSON.stringify(cert.version));
+  }
+
+  // Fingerprint format
+  const fp = cert.issuer_fingerprint;
+  if (typeof fp !== "string" || !/^sha256:[0-9a-f]{64}$/.test(fp)) {
+    return fail("E007_INVALID_FINGERPRINT_FORMAT",
+                "expected sha256: + 64 lowercase hex");
+  }
+
+  // Timestamps
+  const now = Date.now();
+  const issued = Date.parse(cert.issued_at);
+  const expires = Date.parse(cert.expires_at);
+  if (isNaN(issued) || isNaN(expires)) {
+    return fail("E008_INVALID_TIMESTAMP", "cannot parse issued_at or expires_at");
+  }
+  if (issued > expires) {
+    return fail("E008_INVALID_TIMESTAMP", "issued_at > expires_at");
+  }
+  if (now > expires) {
+    return fail("E001_EXPIRED", "expired at " + cert.expires_at);
+  }
+
+  // Load key
+  let key;
+  try {
+    key = await importPublicKey(state.key);
+  } catch (e) {
+    return fail("E020_CANNOT_LOAD_PUBLIC_KEY", e.message);
+  }
+
+  // Compute fingerprint of loaded key
+  const spki = await crypto.subtle.exportKey("spki", key);
+  const hash = await crypto.subtle.digest("SHA-256", spki);
+  const keyFp = "sha256:" + [...new Uint8Array(hash)]
+    .map(b => b.toString(16).padStart(2, "0")).join("");
+
+  if (keyFp !== fp) {
+    return fail("E003_KEY_SUBSTITUTION",
+      "cert says " + fp.slice(0, 20) + "…, key is " + keyFp.slice(0, 20) + "…");
+  }
+
+  // Signature
+  const sigField = cert.signature;
+  if (typeof sigField !== "string" || !sigField.startsWith("base64:")) {
+    return fail("E006_INVALID_SIGNATURE_FORMAT");
+  }
+  let sig;
+  try {
+    const b64 = sigField.slice(7);
+    const bin = atob(b64);
+    sig = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) sig[i] = bin.charCodeAt(i);
+  } catch (e) {
+    return fail("E006_INVALID_SIGNATURE_FORMAT", e.message);
+  }
+  if (sig.length === 0) {
+    return fail("E006_INVALID_SIGNATURE_FORMAT", "empty signature");
+  }
+
+  // Canonicalize payload (all fields except signature)
+  const payload = { ...cert };
+  delete payload.signature;
+  let canonical;
+  try {
+    canonical = canonicalize(payload);
+  } catch (e) {
+    return fail("E011_SCHEMA_VIOLATION", "cannot canonicalize: " + e.message);
+  }
+
+  // RSA verify
+  try {
+    const ok = await crypto.subtle.verify(
+      "RSASSA-PKCS1-v1_5",
+      key,
+      sig,
+      utf8(canonical)
+    );
+    if (ok) return pass();
+    return fail("E002_HASH_MISMATCH");
+  } catch (e) {
+    return fail("E002_HASH_MISMATCH", e.message);
+  }
+}
+
+function updateVerifyButton() {
+  $("btn-verify").disabled = !(state.cert && state.key);
+}
+
+$("btn-verify").onclick = verify;
+
+$("btn-clear").onclick = () => {
+  state.cert = state.key = null;
+  state.certName = state.keyName = null;
+  $("cert-name").textContent = "not loaded";
+  $("cert-name").className = "slot-val empty";
+  $("key-name").textContent = "not loaded";
+  $("key-name").className = "slot-val empty";
+  $("fp-box").style.display = "none";
+  result.className = "result";
+  result.textContent = "";
+  updateVerifyButton();
+};
+
+$("btn-samples").onclick = async () => {
+  try {
+    const [c, k] = await Promise.all([
+      fetch("samples/certificate-001.json").then(r => {
+        if (!r.ok) throw new Error("certificate-001.json not found");
+        return r.text();
+      }),
+      fetch("samples/public.pem").then(r => {
+        if (!r.ok) throw new Error("public.pem not found");
+        return r.text();
+      })
+    ]);
+    state.cert = c; state.certName = "samples/certificate-001.json";
+    state.key = k;  state.keyName = "samples/public.pem";
+    $("cert-name").textContent = state.certName;
+    $("cert-name").className = "slot-val filled";
+    $("key-name").textContent = state.keyName;
+    $("key-name").className = "slot-val filled";
+    updateFingerprint();
+    updateVerifyButton();
+  } catch (e) {
+    result.className = "result err show";
+    result.innerHTML = "Cannot load samples<div class='detail'>" + e.message +
+      "</div><div class='detail'>If opening from file://, use the drag-and-drop zone instead.</div>";
+  }
+};
 </script>
-</body></html>
+</body>
+</html>
