@@ -246,3 +246,48 @@ cat docs/vomega/CONTINUITY.md
 ```
 
 **ثم ابدأ من §5 (Phase 1.5 — META-CONTRACT-0.1).**
+
+---
+
+## 10. تحديث — Phase 1.5 مكتمل
+
+**التاريخ:** 2026-10-06
+**Commit:** `3c27aa8`
+**الملف:** `docs/vomega/META-CONTRACT-0.1.md` (699 سطر)
+
+**المُعتمَد:**
+- 10 invariants I13–I22
+- 40 attack vector M01–M40
+- TV triple provenance (SPEC/FORMAL/ATTACK)
+- K_ACL = consistency oracle (لا مصدر حقيقة)
+- تقسيم spec: CORE / ACL / META / WIRE / PROOF / OPS
+- ترتيب تنفيذ 25 خطوة
+
+**الخطوة التالية:** Phase 1.6 — بناء meta-layer تنفيذي + اختبارات M01–M40.
+
+**ملاحظة صدق:** META-CONTRACT لا يدّعي formal verification. يدّعي pinning + finiteness + determinism + honesty. هذا الادعاء الأقصى المسموح.
+
+---
+
+## 11. تحديث — Phase 1.6 مكتمل
+
+**التاريخ:** 2026-10-06
+**الملفات الجديدة:**
+- `protocol/meta/core.py`
+- `tests/vomega/meta/run_all.py`
+
+**النتيجة:** 40/40 M-vector يمر. **جميعها `real` — لا stubs.**
+
+**التغطية الفعلية:**
+- MetaObject + type registry (M07, M11, M21)
+- Registry مع digest pinning (M01, M05, M06, M13, M19, M20, M26)
+- StateMachine مع epoch/determinism/freeze (M08, M25, M28, M37, M39)
+- Manifest مع threshold (M10)
+- KeyState مع role+state (M14, M15)
+- Compiler مع declared params + env isolation (M02, M03, M12, M16, M24, M30, M32, M36, M38)
+- Universe contains_* (M17, M18, M31)
+- Compatibility: no inference (M04, M23, M29, M35)
+- Purity: check_purity with forbidden imports (M27, M33)
+- Offline: verify_offline (M09, M22, M34, M40)
+
+**Total tests: 51 (frozen) + 12 (vΩ Phase 1) + 40 (vΩ Phase 1.6) = 103**
