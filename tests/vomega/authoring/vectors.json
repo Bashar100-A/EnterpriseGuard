@@ -1,0 +1,354 @@
+{
+  "version": "AUTHORING-0.1",
+  "manifest_base": {
+    "epoch": 1,
+    "prev_epoch": 0,
+    "universe": {
+      "acl_versions": ["0.1"],
+      "template_ids": ["T1", "T2"],
+      "rewrite_ids": ["R1"],
+      "registry_namespaces": ["main"],
+      "algorithms": ["RS256"],
+      "compat_relations": ["EXACT"]
+    },
+    "threshold_k": 1,
+    "threshold_n": 1,
+    "signatures": ["s1"]
+  },
+  "vectors": [
+    {
+      "id": "V01",
+      "name": "minimal valid",
+      "expected": "OK",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": ["model_id"],
+          "required_params": ["model_id"],
+          "purity": "PURE",
+          "ast": {"op": "EXISTS", "path": "model.id"}
+        },
+        "params": {"model_id": "credit-v7"}
+      }
+    },
+    {
+      "id": "V02",
+      "name": "with forbidden_env",
+      "expected": "OK",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": ["x"],
+          "required_params": ["x"],
+          "forbidden_env": ["SECRET", "PATH"],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {"x": "v"}
+      }
+    },
+    {
+      "id": "V03",
+      "name": "declared but not required, omitted",
+      "expected": "OK",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": ["a", "b"],
+          "required_params": ["a"],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {"a": "1"}
+      }
+    },
+    {
+      "id": "V04",
+      "name": "multiple required params",
+      "expected": "OK",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": ["a", "b", "c"],
+          "required_params": ["a", "b", "c"],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {"a": 1, "b": "two", "c": true}
+      }
+    },
+    {
+      "id": "V05",
+      "name": "undeclared param → E-META-18",
+      "expected": "E-META-18",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": ["a"],
+          "required_params": ["a"],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {"a": 1, "b": 2}
+      }
+    },
+    {
+      "id": "V06",
+      "name": "missing required → E-META-18",
+      "expected": "E-META-18",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": ["a", "b"],
+          "required_params": ["a", "b"],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {"a": 1}
+      }
+    },
+    {
+      "id": "V07",
+      "name": "template acl_version mismatch → E-META-14",
+      "expected": "E-META-14",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.2",
+          "declared_params": ["a"],
+          "required_params": ["a"],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {"a": 1}
+      }
+    },
+    {
+      "id": "V08",
+      "name": "compiler acl_version mismatch → E-META-14",
+      "expected": "E-META-14",
+      "input": {
+        "acl_version": "0.2",
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.2",
+          "declared_params": ["a"],
+          "required_params": ["a"],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {"a": 1}
+      }
+    },
+    {
+      "id": "V09",
+      "name": "impure template → E-META-21",
+      "expected": "E-META-21",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": ["a"],
+          "required_params": ["a"],
+          "purity": "IMPURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {"a": 1}
+      }
+    },
+    {
+      "id": "V10",
+      "name": "NOT(NOT(TRUE)) canonicalizes",
+      "expected": "OK",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": [],
+          "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "NOT", "arg": {"op": "NOT", "arg": {"op": "TRUE"}}}
+        },
+        "params": {}
+      }
+    },
+    {
+      "id": "V11",
+      "name": "AND(TRUE,TRUE) collapses",
+      "expected": "OK",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": [],
+          "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "AND", "args": [{"op": "TRUE"}, {"op": "TRUE"}]}
+        },
+        "params": {}
+      }
+    },
+    {
+      "id": "V12",
+      "name": "ast unknown op → E201",
+      "expected": "E201_UNKNOWN_OPERATOR",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": [],
+          "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "XYZZY"}
+        },
+        "params": {}
+      }
+    },
+    {
+      "id": "V13",
+      "name": "ast missing op → E202",
+      "expected": "E202_MALFORMED_AST",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": [],
+          "required_params": [],
+          "purity": "PURE",
+          "ast": {"foo": "bar"}
+        },
+        "params": {}
+      }
+    },
+    {
+      "id": "V14",
+      "name": "template_id missing → E-META-18",
+      "expected": "E-META-18",
+      "input": {
+        "template": {
+          "acl_version": "0.1",
+          "declared_params": [],
+          "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {}
+      }
+    },
+    {
+      "id": "V15",
+      "name": "params is list → E-META-18",
+      "expected": "E-META-18",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": [],
+          "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": []
+      }
+    },
+    {
+      "id": "V16",
+      "name": "declared_params not list → E-META-18",
+      "expected": "E-META-18",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": "not_a_list",
+          "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {}
+      }
+    },
+    {
+      "id": "V17",
+      "name": "required not subset → E-META-18",
+      "expected": "E-META-18",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": ["a"],
+          "required_params": ["b"],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {"a": 1}
+      }
+    },
+    {
+      "id": "V18",
+      "name": "forbidden_env not list → E-META-18",
+      "expected": "E-META-18",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": [],
+          "required_params": [],
+          "forbidden_env": "not_a_list",
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {}
+      }
+    },
+    {
+      "id": "V19",
+      "name": "ast is string → E-META-18",
+      "expected": "E-META-18",
+      "input": {
+        "template": {
+          "template_id": "T1",
+          "acl_version": "0.1",
+          "declared_params": [],
+          "required_params": [],
+          "purity": "PURE",
+          "ast": "not_a_dict"
+        },
+        "params": {}
+      }
+    },
+    {
+      "id": "V20",
+      "name": "complex nested ast",
+      "expected": "OK",
+      "input": {
+        "template": {
+          "template_id": "T2",
+          "acl_version": "0.1",
+          "declared_params": ["name"],
+          "required_params": ["name"],
+          "purity": "PURE",
+          "ast": {
+            "op": "OR",
+            "args": [
+              {"op": "AND", "args": [
+                {"op": "EXISTS", "path": "model.weights"},
+                {"op": "EQ", "args": [
+                  {"t": "FIELD", "path": "model.id"},
+                  {"t": "STR", "v": "credit-v7"}
+                ]}
+              ]},
+              {"op": "NOT", "arg": {"op": "FALSE"}}
+            ]
+          }
+        },
+        "params": {"name": "test"}
+      }
+    }
+  ]
+}
