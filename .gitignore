@@ -218,3 +218,9 @@ frontend/router
 
 # ADIE backups
 *.bak_*
+
+# ADIE v1 — allow public artifacts
+!keys/adie-v1/
+!keys/adie-v1/public.pem
+!keys/adie-v1/selfsigned.pem
+!keys/adie-v1/fingerprint.txt
