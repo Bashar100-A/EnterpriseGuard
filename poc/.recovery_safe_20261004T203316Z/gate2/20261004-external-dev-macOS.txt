@@ -1,0 +1,29 @@
+--- Gate 2 Evidence — External Developer Test ---
+Date: 2026-10-04
+Environment: MacBook M2 (macOS, ARM64), Python 3.11
+Source: Anonymous external developer (not the project owner)
+
+--- Developer's message (verbatim, translated) ---
+"I tried the script on my machine (MacBook M2 - Python 3.11), and
+everything worked smoothly without problems. It took me 4 minutes.
+Here are the outputs:"
+
+--- Outputs ---
+$ python3 verify.py certificate-001.json public-key-001.pem
+VALID
+
+$ python3 verify.py certificate-001.json wrong-key.pem
+INVALID: E001_SIGNATURE_INVALID
+
+$ python3 test_pstep02.py
+============================================================
+Results: 10/10 passed
+============================================================
+
+--- Analysis per Pre-Audit Blueprint ---
+Scenario: S1.1 (Clean PASS)
+All 6 input items present: YES
+Tests passed: 3/3
+Time: 4 minutes (<= 10 min threshold)
+Confusion: none reported
+Errors: none reported
