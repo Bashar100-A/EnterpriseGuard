@@ -202,3 +202,19 @@ frontend/*.b1bak
 /renders
 /toggle
 .gitignore.pre_*
+
+# ─── Lesson 13 pattern (Chat-paste artifacts) ───
+# Any file whose name appears to come from pasted terminal output.
+# See continuity/LESSONS_LEARNED.md Lesson 13.
+*.className
+*.textContent
+*.innerHTML
+frontend/.eg-*
+frontend/PREFLIGHT
+frontend/VERIFY:*
+frontend/focus.audit
+frontend/renders
+frontend/router
+
+# ADIE backups
+*.bak_*
