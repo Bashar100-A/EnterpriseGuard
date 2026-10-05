@@ -214,11 +214,33 @@ def m18():
 
 
 def m19():
-    """Version alias collision — rewrite with same ID."""
+    """Version alias collision — no implicit aliasing between version strings.
+
+    I14 (No Silent Semantic Upgrade) means: a stringly-different version
+    is treated as a DIFFERENT object, never auto-substituted. This test
+    verifies three properties:
+      (a) distinct version strings are stored as distinct entries
+      (b) lookup does NOT cross-alias
+      (c) re-registering same string with different digest still rejects
+    """
     r = Registry()
-    r.register_rewrite("R01", digest("v1"))
+    d = digest("alpha")
+    r.register_rewrite("R01@1.0.0", d)
+
+    # (a) no aliasing: R01@1.0 must NOT resolve to R01@1.0.0
+    if r.rewrites.get("R01@1.0") is not None:
+        return "ALIASED"
+    if r.rewrites.get("R01@1.0.0") != d:
+        return "LOOKUP_FAILED"
+
+    # (b) register different string — must succeed as distinct entry
+    r.register_rewrite("R01@1.0", d)
+    if r.rewrites.get("R01@1.0") != d or r.rewrites.get("R01@1.0.0") != d:
+        return "DISTINCT_FAILED"
+
+    # (c) same string + different digest → reject
     return expect_error("E-META-14", r.register_rewrite,
-        "R01", digest("v1"))
+        "R01@1.0.0", digest("beta"))
 
 
 def m20():

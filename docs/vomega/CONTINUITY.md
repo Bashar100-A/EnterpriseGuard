@@ -276,7 +276,8 @@ cat docs/vomega/CONTINUITY.md
 - `protocol/meta/core.py`
 - `tests/vomega/meta/run_all.py`
 
-**النتيجة:** 40/40 M-vector يمر. **جميعها `real` — لا stubs.**
+**النتيجة:** 39/40 في الالتزام الأول `99c8376` (M19 كان معطوباً في الاختبار نفسه، ليس في الكود).
+**تصحيح:** M19 أُعيد كتابته ليختبر منع الـaliasing الضمني (I14) — وليس تكرار M06. النتيجة بعد التصحيح: 40/40. **جميعها `real` — لا stubs.**
 
 **التغطية الفعلية:**
 - MetaObject + type registry (M07, M11, M21)
