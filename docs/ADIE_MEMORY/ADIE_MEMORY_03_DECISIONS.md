@@ -1092,3 +1092,61 @@ output.
 ---
 
 **End of DEC-045.**
+
+
+---
+
+## DEC-046 — EXECUTION_PLAN.md Retraction Banner
+
+**Phase:** V5.1 Era (governance housekeeping)
+**Date:** 2026-10-05
+**Status:** ✅ Adopted.
+**Related:** DEC-045 (Charter), DC-145, DC-152a, DC-150i, DC-151.
+
+### Decision
+
+A retraction banner is added at the top of `docs/EXECUTION_PLAN.md`.
+The banner declares the file **non-authoritative** and documents the
+conflict between the file's "Phase C Completed" claim and the
+authoritative record in DC-145.
+
+### Rationale
+
+Per DC-152a:
+
+> "This DC documents the conflict only. `EXECUTION_PLAN.md` is
+> intentionally NOT modified here. Follow-up DC-152b requires
+> owner-authored v3.0 content (Rule 5)."
+
+The banner is not a rewrite of v3.0. It is a **truth marker** that
+prevents readers from being misled by false completion claims while
+a proper owner-authored v3.0 is prepared. It respects Rule 5 by
+not authoring substantive plan content.
+
+### What This Decision Does NOT Do
+
+- Does not author v3.0 content.
+- Does not delete or truncate the existing file.
+- Does not authorize any Phase C task.
+- Does not resolve DC-152b (which remains pending).
+- Does not affect the P0 signals or ADIE v2 scope.
+
+### Consequences
+
+1. Future readers of `EXECUTION_PLAN.md` see the retraction immediately.
+2. The file remains tracked in git for audit purposes.
+3. A future decision (number TBD) will replace this file with
+   owner-authored v3.0 content per Rule 5.
+
+### Precedent
+
+This is the first "truth marker" DEC in the ADIE v2 era. It is a
+template for how to neutralize a false claim without erasing history:
+add a banner, record a DEC, preserve the original text.
+
+**Approved by:** Owner.
+**Effective:** 2026-10-05.
+
+---
+
+**End of DEC-046.**

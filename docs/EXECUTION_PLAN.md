@@ -1,3 +1,26 @@
+> ⚠️ **NON-AUTHORITATIVE — RETRACTED**
+>
+> **Status:** SUPERSEDED
+> **Superseded by:** DC-145 (Execution Plan v3.0, 2026-09-20)
+> **Conflict documented in:** DC-152a (2026-09-27)
+>
+> The claim "Phase C Completed" in this file is **FALSE**.
+> Per DC-145, Phase C is **UNRESOLVED**:
+> - C1 — owner-complete (not fully verified)
+> - C2 — blocked
+> - C3 — report complete, ASVS Level 1 not demonstrated
+> - C4 — blocked
+>
+> This file is retained for historical reference only. It does NOT
+> define executable task scope. For authoritative state, see:
+> - `docs/PLAN_CHANGELOG.md` (DC-144)
+> - `tools/DECISIONS_LOG.md` (DC-145)
+>
+> **Do NOT rely on the "Execution Matrix & Gate Status" table below.**
+> **Do NOT act on any task marked "✅ Passed" in this file.**
+
+---
+
 # EnterpriseGuard Execution Plan v2.6 — Phase C Completed
 
 ## Executive Summary
