@@ -84,3 +84,18 @@ text
 ---
 
 **End of DEFECTS-LOG**
+
+---
+
+## DEFECT-002 — A25: EQ did not enforce type check
+
+date: 2026-10-06
+commit_found: 5589bb2
+commit_fixed: d39fb02
+suite: tests/vomega/acl/run_all.py
+test_id: A25
+test_name: EQ int/str -> E200_TYPE_MISMATCH
+category: code
+root_cause: In protocol/acl/eval.py the EQ/NEQ branch returned PASS/FAIL before the type-check block ran. EQ(INT(5), STR("x")) returned FAIL instead of raising E200_TYPE_MISMATCH, violating ACL-0.1 section 2.2 (fail-closed on type mismatch).
+fix: Moved type check to top of EQ/NEQ/LT branch. LT/LTE/GT/GTE additionally reject Bool and non-(int,str).
+lesson: Fail-closed only holds if the check runs before any return. Order of checks is a security property.
