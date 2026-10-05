@@ -113,10 +113,13 @@ def main():
         ("issued_at", "2026-10-05T00:00:00Z"),
         ("expires_at", "2030-10-05T00:00:00Z"),
         ("nonce", "a" * 32), ("evidence_ref", ZERO),
-        ("issuer", "evil.example"), ("version", "9.9"),
+        ("issuer", "evil.example"),
     ]:
         test(f"B {field} tampered → E002", "E002_HASH_MISMATCH",
              lambda f=field, v=val: verify(mod(ctx, lambda c: c.update({f: v}), f), P))
+
+    test("B version tampered → E009", "E009_VERSION_MISMATCH",
+         lambda: verify(mod(ctx, lambda c: c.update(version="9.9"), "ver"), P))
 
     # ── Group C: Key substitution → E003 (4) ───────────────────────
     test("C01 wrong public key (attacker)", "E003_KEY_SUBSTITUTION",
