@@ -51,16 +51,25 @@ def eval_expr(e, s, depth=0):
         bok, b = _et(e["args"][1], s)
         if not aok or not bok:
             return UNKNOWN
-        if op == "EQ":  return PASS if a==b else FAIL
-        if op == "NEQ": return PASS if a!=b else FAIL
-        if isinstance(a, bool) or isinstance(b, bool) or type(a) is not type(b) or type(a) not in (int, str):
+
+        # Type check FIRST (fail-closed, per ACL-0.1 §2.2)
+        if type(a) is not type(b):
             raise ACLError("E200_TYPE_MISMATCH",
                 f"{op} on {type(a).__name__}/{type(b).__name__}")
+
+        if op == "EQ":  return PASS if a == b else FAIL
+        if op == "NEQ": return PASS if a != b else FAIL
+
+        # LT/LTE/GT/GTE: int or str only
+        if isinstance(a, bool) or type(a) not in (int, str):
+            raise ACLError("E200_TYPE_MISMATCH",
+                f"{op} on {type(a).__name__}")
+
         cmp = (a > b) - (a < b)
-        return {"LT":  PASS if cmp<0 else FAIL,
-                "LTE": PASS if cmp<=0 else FAIL,
-                "GT":  PASS if cmp>0 else FAIL,
-                "GTE": PASS if cmp>=0 else FAIL}[op]
+        return {"LT":  PASS if cmp < 0 else FAIL,
+                "LTE": PASS if cmp <= 0 else FAIL,
+                "GT":  PASS if cmp > 0 else FAIL,
+                "GTE": PASS if cmp >= 0 else FAIL}[op]
     if op == "IN":
         ok, v = _et(e["term"], s)
         if not ok: return UNKNOWN
