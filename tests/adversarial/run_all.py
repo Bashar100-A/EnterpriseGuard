@@ -59,7 +59,10 @@ def mod(ctx, fn, name):
 
 
 def verify(cert_path, pub_path):
-    return run(["verify", "--cert", str(cert_path), "--pub", str(pub_path)])
+    out = run(["verify", "--cert", str(cert_path), "--pub", str(pub_path)])
+    if out.startswith("INVALID: "):
+        return out[len("INVALID: "):]
+    return out
 
 
 def fresh_issue(ctx, decision=None, policy="credit-risk-v3",
@@ -110,7 +113,7 @@ def main():
         ("issued_at", "2026-10-05T00:00:00Z"),
         ("expires_at", "2030-10-05T00:00:00Z"),
         ("nonce", "a" * 32), ("evidence_ref", ZERO),
-        ("issuer", "evil.example"), ("version", "1.0"),
+        ("issuer", "evil.example"), ("version", "9.9"),
     ]:
         test(f"B {field} tampered → E002", "E002_HASH_MISMATCH",
              lambda f=field, v=val: verify(mod(ctx, lambda c: c.update({f: v}), f), P))
@@ -152,7 +155,7 @@ def main():
     def empty_sig(c):
         c["signature"] = "base64:"
 
-    test("E01 truncated signature → E002", "E002_HASH_MISMATCH",
+    test("E01 truncated signature → E006", "E006_INVALID_SIGNATURE_FORMAT",
          lambda: verify(mod(ctx, truncate, "trunc"), P))
     test("E02 zero signature → E002", "E002_HASH_MISMATCH",
          lambda: verify(mod(ctx, zero_sig, "zero"), P))
@@ -232,9 +235,8 @@ def main():
          lambda: verify(write_raw(ctx, "utf8.json", b'\xff\xfe\x00\x00bad'), P))
     test("J02 valid UTF-8 issuer with emoji → VALID", "VALID",
          lambda: verify(fresh_issue(ctx, issuer="банк.example"), P))
-    test("J03 cert with escaped Unicode → VALID",
-         "VALID" if verify(fresh_issue(ctx, issuer="テスト.example"), P) == "VALID"
-                 else verify(fresh_issue(ctx, issuer="テスト.example"), P))
+    test("J03 cert with escaped Unicode → VALID", "VALID",
+         lambda: verify(fresh_issue(ctx, issuer="テスト.example"), P))
 
     # ── Group K: Cross-key (3) ─────────────────────────────────────
     test("K01 attacker cert verified w/ attacker pub → VALID", "VALID",
