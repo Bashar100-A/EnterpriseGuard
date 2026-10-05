@@ -305,3 +305,42 @@ cat docs/vomega/CONTINUITY.md
 - عيبان مُصحَّحان: DEFECT-001 (M19), DEFECT-002 (A25)
 - القاعدة الجديدة: كل عيب اختبار → DEFECTS-LOG.md
 - التالي: Phase 1.8 Authoring Compiler
+
+---
+
+## 13. Phase 1.9 (spec) — REGISTRY-0.1
+
+**commit:** 1d4f1dc
+**suites:** 163/163 (51+12+40+40+20)
+
+**المُثبَّت:**
+- spec/REGISTRY-0.1.md (169 سطر)
+- ERROR-REGISTRY-0.1: E-META-23..28
+
+**الحالة:**
+- registry.py غير مكتوب
+- registry_run.py غير مكتوب
+- ADIE-PHYSICAL-ANCHOR-0.1.md مؤجل حتى اكتمال التنفيذ
+
+---
+
+## 14. تصنيف وثيقة Physical Anchor
+
+**المصدر:** وثيقة القائد — Ontological Anchoring & Layer-2
+**التصنيف:** NON-NORMATIVE — North Star supplement
+**القيد:** لا تلمس META-CONTRACT / ACL / AUTHORING / ERROR-REGISTRY
+
+**القرارات المُعتمَدة من الوثيقة:**
+- Layer-2 = Integrity/Attestation Overlay (لا blockchain)
+- PUF = Physical Identity Evidence (لا "impossible to clone")
+- VDF = Sequential Work Evidence (لا absolute time)
+- TEE = Hardware Execution Evidence (لا trust root)
+- Kalman = AnomalyScore (لا CryptographicTruth)
+- hardware_identity.py الحالي = SoftwareFingerprint (لا PUF)
+- SIBB = Continuity Substrate، ADIE = Semantic Integrity
+- الترتيب: META -> ACL -> Authoring -> Adapter -> TDX -> Temporal -> PUF -> VDF -> GC/SMPC -> ZK -> FHE -> Recursive
+- Ontological Anchoring = Binding + Evidence (لا metaphysics)
+
+**الجملة المحورية:** No physical primitive creates truth.
+
+**التثبيت الرسمي:** بعد 183/183 (Phase 1.9 مكتمل)
