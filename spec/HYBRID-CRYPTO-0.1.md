@@ -367,3 +367,59 @@ After commit, Block C:
 ## §12.3. Downloaded artifact hashes
 
 (To be filled during Block C. Left empty in Block B.)
+
+---
+
+## §12.3. Downloaded artifact hashes
+
+### Python (C.1 — 2026-10-06)
+
+| Package | Wheel filename | SHA-256 |
+|---|---|---|
+| dilithium-py 1.4.0 | `dilithium_py-1.4.0-py3-none-any.whl` | `dda3ae43e6e3d212ae1fe1b30d5b6dffe5e25a1f389d1fea26faad4afdc33ff8` |
+| pqcrypto 1.0.0 | `pqcrypto-1.0.0-cp39-abi3-manylinux_2_34_x86_64.whl` | `7068532dbc1225a9d668d59940bd96dc13f40175a757b2e31c69aa697781f4d0` |
+
+Installed into: `.venv/`
+Python version: 3.12.3
+cryptography in venv: 50.0.1
+
+### Rust (C.2 — pending)
+
+(To be recorded.)
+
+### JavaScript (C.3 — pending)
+
+(To be recorded.)
+
+### Verification notes
+
+- `pqcrypto.sign.ml_dsa_65` imports cleanly
+- `dilithium_py.ml_dsa.ML_DSA_65` imports cleanly
+- Both verified to have identical module path structure for the ML-DSA-65 variant
+
+### GAP-5: Rust ML-DSA deferred to Phase 2.5
+
+**Date:** 2026-10-06
+**Reason:** `ml-dsa 0.1.1` depends on `crypto-common 0.2.2` which
+requires `edition2024`, unsupported by the system's Cargo 1.75.0.
+Upgrading the toolchain failed due to network constraints on
+`static.rust-lang.org`.
+
+**Consequence:**
+- Phase 2 gives Python (pqcrypto + dilithium-py) + JavaScript
+  (@noble/post-quantum) as the two independent ML-DSA verifiers.
+- Rust semantic verifier (Phase 1.12-lite) remains valid but does
+  NOT verify ML-DSA signatures.
+- A hybrid cert with ML-DSA verified only in Python/JS is accepted;
+  the manifest may optionally require a Rust-side signature check
+  once Phase 2.5 lands.
+
+**Not a security claim:** This is a documented gap. The protocol
+does not claim Rust-verified PQ signatures in Phase 2.
+
+**Resolution path (Phase 2.5):**
+- Acquire a newer rustc via rustup mirror OR
+- Replace ml-dsa dependency with a crate whose MSRV ≤ 1.75 OR
+- Build the ml-dsa crate from source with pinned older deps
+
+**Tracked as:** RISK-2.5
