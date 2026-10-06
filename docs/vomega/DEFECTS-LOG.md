@@ -218,3 +218,19 @@ invariant_at_risk: none (not a protocol violation; a testing-scope reduction)
 root_cause: pqcrypto 1.0.0 (C wrapper over PQClean) exposes sign(sk, msg, context=None, hash_algorithm=None) and keygen() with no arguments. There is no way to inject a fixed ξ seed for FIPS 204 KeyGen_internal, nor to force deterministic signing. Cross-language byte-equality tests (spec HYBRID-CRYPTO-0.1 sec 10, sec 11) require both. Measured: sig_a != sig_b for two identical calls with the same sk and msg.
 fix: Reclassified pqcrypto as VERIFY-ONLY for Phase 2. Python production sign path is dilithium-py 1.4.0 (deterministic=True, key_derive(seed)). Python verify path runs BOTH pqcrypto and dilithium-py, and requires agreement. This preserves the independent cross-check where it matters most (verification).
 lesson: A "vetted library" claim must be qualified by its API capabilities, not just its cryptographic primitive. pqcrypto implements ML-DSA correctly for the sign/verify operations it exposes, but does not expose the FIPS 204 deterministic interfaces required for reproducible testing. This is not a cryptographic weakness; it is a testing and reproducibility constraint.
+
+---
+
+## DEFECT-011 — mldsa wrapper assumed ctx=b""
+
+date: 2026-10-06
+commit_found: 157fa3e
+commit_fixed: <TBD>
+suite: n/a (spec-vs-KAT scope)
+category: code
+language_pair: n/a
+failure_mode: structural
+invariant_at_risk: none (discovered while preparing Block D.2 KAT)
+root_cause: The ML-DSA wrapper (mldsa.rs) hard-coded SIGNING_CONTEXT = b"". This was correct for MLDSA-XLANG-001 (which used ctx=b"") but does not cover the ACVP KAT vectors, which carry variable-length context strings (e.g. 17 bytes, 20 bytes). The mismatch was discovered by inspecting the ACVP JSON structure before writing the KAT runner, not by a failing test.
+fix: Extended mldsa.rs to expose sign_deterministic_ctx(seed, msg, ctx) and verify_with_ctx(pk, msg, ctx, sig). Legacy sign_deterministic(tbs) and verify() now delegate with ctx=b"". The CLI adie-mldsa accepts ctx_hex (optional, defaults to empty). MLDSA-XLANG-001 regression check passes with ctx=b"".
+lesson: A wrapper that "works" for one test vector can still be incomplete for the general case. When preparing to add standard test vectors, read their structure first and confirm the wrapper covers every field. This is DEFECT-009 applied to code instead of docs: do not assume the first passing input defines the contract.
