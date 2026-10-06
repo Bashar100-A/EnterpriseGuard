@@ -13,7 +13,7 @@ function hA(t, x) {
     .update(DOMAIN_PREFIX).update(lenBuf).update(tb).update(x).digest();
 }
 
-function stableStringify(x) {
+export function stableStringify(x) {
   if (x === null) return 'null';
   if (typeof x === 'boolean') return x ? 'true' : 'false';
   if (typeof x === 'number') {
@@ -29,7 +29,7 @@ function stableStringify(x) {
   throw new Error('unexpected type');
 }
 
-function canonicalBytes(x) {
+export function canonicalBytes(x) {
   return Buffer.from(stableStringify(x), 'utf-8');
 }
 
