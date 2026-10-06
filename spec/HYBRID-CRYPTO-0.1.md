@@ -452,28 +452,30 @@ advancing state on partial information before re-verification.
 **Not retracted:** RISK-2.1 (ml-dsa 0.1.1 is pre-1.0 and unaudited).
 This risk is independent of whether it builds.
 
-### GAP-6: JavaScript ML-DSA deferred
+### GAP-6-RETRACTED: JavaScript ML-DSA is available
 
 **Date:** 2026-10-06
-**Paths attempted:**
-1. `@noble/post-quantum@0.7.1` — requires Node ≥ 20.19.0;
-   system Node is 18.19.1. **Rejected by engines.**
-2. `@noble/post-quantum@0.6.x` — same engines constraint.
-3. `@noble/post-quantum@0.5.x` — same engines constraint.
-4. `@noble/post-quantum@0.4.1` — no engines declared, but predates
-   FIPS 204 (Aug 2024) and likely tracks a draft. **Rejected as
-   non-conforming to the pinned standard.**
-5. Node upgrade via nvm — attempted as Block C.3.b; outcome recorded
-   in this section once known.
+**Supersedes:** earlier GAP-6 entry (now known incorrect, committed in 56f9bf7)
 
-**Consequence if deferred:**
-- Phase 2 verification of ML-DSA-65 available in:
-  - Python: pqcrypto 1.0.0 + dilithium-py 1.4.0 (two independent)
-  - Rust: ml-dsa 0.1.1
-- JavaScript verifier (verify.mjs) does NOT perform ML-DSA signature
-  verification. It reports `signature: SKIPPED` for ML-DSA, matching
-  the Rust GAP-1 pattern for RSA.
-- The browser demo (verify.html) cannot claim hybrid PQ verification
-  until Phase 2.5.
+**History:**
+- First attempt: `nvm` not installed on this machine.
+  `.bashrc` references it but `~/.nvm/nvm.sh` does not exist.
+- Second attempt: NodeSource apt repo configured successfully:
+  `curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash`
+  followed by `sudo apt install -y nodejs`.
+  Result: `nodejs 20.20.2-1nodesource1` installed.
+  Node 18.19.1 removed (with 133 dependent packages).
+  Bundled npm from NodeSource included.
 
-**Not a security claim:** This is a documented gap.
+**Consequence:**
+- Node 20.20.2 >= 20.19.0, satisfying `@noble/post-quantum@0.7.1` engines.
+- JS ML-DSA is now unblocked. Block C.3 proceeds with installation.
+
+**Note on prior commitment 56f9bf7:**
+An earlier commit recorded GAP-6 as a deferral, based on the nvm
+attempt alone. The NodeSource path was attempted in the same shell
+session and succeeded immediately. DEFECT-008 is logged for the
+repeated pattern: GAP-N recorded before exhausting all paths.
+
+**Not retracted:** RISK-2.3 (pre-1.0, unaudited) is independent of
+whether the install works.

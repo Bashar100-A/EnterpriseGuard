@@ -170,3 +170,19 @@ invariant_at_risk: I34 (identifier immutability), I13 (determinism of records)
 root_cause: After the first cargo fetch failed (Cargo 1.75 + edition2024), GAP-5 was committed as a permanent deferral without first attempting the alternative (rustup official). The second attempt succeeded immediately, invalidating the committed text.
 fix: GAP-5 replaced by GAP-5-CORRECTED. DEFECT-007 logged. The lesson is that "attempt failed" does not equal "attempt impossible" — record the failed attempt as a note, not a permanent gap, until the alternative path is also tried.
 lesson: In protocol documentation, "deferred" is a claim about the future. It requires exhausting known paths first. Partial-information commitments pollute the spec and require a correction cycle. Rule going forward: any GAP-N entry must include a "paths attempted" list.
+
+---
+
+## DEFECT-008 — Repeated GAP-N before exhausting paths
+
+date: 2026-10-06
+commit_found: 56f9bf7 (unpushed)
+commit_fixed: <TBD>
+suite: n/a (process)
+category: process
+language_pair: n/a
+failure_mode: semantic
+invariant_at_risk: I34
+root_cause: Same as DEFECT-007, second occurrence. GAP-6 was written assuming nvm was the only path, while NodeSource was simultaneously attempted and succeeded.
+fix: GAP-6-RETRACTED. DEFECT-008 logged.
+lesson: This is a pattern, not an isolated incident. Going forward, GAP-N entries require a MANDATORY pre-condition: the author must run a "paths-tried" checklist and include raw evidence (commands + exit codes) for EVERY path before committing a "deferred" claim. A GAP-N without such evidence is treated as incomplete.
