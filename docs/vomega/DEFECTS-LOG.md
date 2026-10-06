@@ -298,3 +298,26 @@ invariant_at_risk: none (implementation was always 12 bytes; only doc was wrong)
 root_cause: spec/HYBRID-CRYPTO-0.1.md §5 wrote ""ADIE-SIG-V2\0" is an ASCII domain separation tag (13 bytes + NUL)". The string ""ADIE-SIG-V2"" has 11 characters (A D I E - S I G - V 2), not 13. With NUL, the tag is 12 bytes. Hex "41 44 49 45 2D 53 49 47 2D 56 32 00" (also listed in the same sentence) was always correct.
 fix: spec corrected to "11 ASCII chars + NUL = 12 bytes". Code (protocol/hybrid/tbs.py) has always used 12 bytes with an explicit assertion.
 lesson: Spec docs should not describe byte counts in prose next to hex literals. The hex is the source of truth; the prose is commentary and can drift. This is the second spec-vs-implementation mismatch (DEFECT-009 was placeholder text, this is character count). Both were caught before they affected real byte output.
+
+---
+
+## GAP-9 — ML-DSA-65 key_id uses raw pk bytes, not SPKI DER
+
+date: 2026-10-07
+paths tried:
+  1. Spec §6 originally stated "SPKI DER with OID id-ml-dsa-65 (RFC 9964)".
+  2. SPKI encoding requires SEQUENCE { SEQUENCE { OID id-ml-dsa-65, NULL }, BIT STRING pk }.
+  3. Implementing this requires DER OID encoding, BIT STRING wrapping,
+     and length prefix computation, all of which need independent testing.
+  4. Cross-language byte-equality of SPKI-wrapped ML-DSA-65 pk has not
+     been verified.
+consequence:
+  - ML-DSA-65 key_id = sha256(SHA-256(pk_raw)) where pk_raw is 1952 bytes.
+  - RS256 key_id = sha256(SHA-256(SPKI_DER)).
+  - The two key_id derivations use different encodings.
+  - Fine for internal consistency but blocks cross-algorithm key_id comparison.
+resolution path (Phase 2.5):
+  - Add SPKI wrapper for ML-DSA-65 with OID DER (id-ml-dsa-65 from RFC 9964).
+  - Cross-verify SPKI bytes across Python/JS/Rust.
+  - Bump to key_id scheme v2 (not v1, to avoid identifier redefinition).
+not retracted: RISK-2.1.

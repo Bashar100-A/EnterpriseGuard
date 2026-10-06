@@ -796,3 +796,25 @@ cat docs/vomega/CONTINUITY.md
 **GAP-8 بقي:** Rust sigGen غير مغطّى عبر API. القرار: مقبول، موثّق.
 
 **التالي:** Block D.3 — hybrid combiner (RS256 + ML-DSA-65).
+
+---
+
+## 30. Phase 2 D.3c — Hybrid signer (Python) 16/16
+
+**التاريخ:** 2026-10-07
+
+**الـsigner:**
+- protocol/hybrid/sign.py (93 سطر)
+- tests/vomega/hybrid/test_sign.py (16 test، كلها pass)
+
+**قاعدتان تشغيليتان نافذتان:**
+
+1. كل runner Python يستخدم `.venv/bin/python`، ليس `python3` (Phase 2 deps فقط في .venv).
+2. ML-DSA-65 signature يستهلك `sk` (4032B) الخام، ليس seed.
+
+**GAP-9:** ML-DSA-65 key_id يستخدم raw pk bytes، وليس SPKI DER. موثق.
+
+**الحالة:**
+- TBS: py 12/12، js 11/11، diff 5/5
+- Sign: py 16/16
+- Verify: smoke test ✅ (5/5)

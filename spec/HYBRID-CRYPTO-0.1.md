@@ -137,7 +137,14 @@ produce byte-identical TBS for the same certificate.
 | Algorithm | pubkey_encoding |
 |---|---|
 | RS256 | SPKI DER (RFC 5280) |
-| ML-DSA-65 | SPKI DER with OID id-ml-dsa-65 (RFC 9964) |
+| ML-DSA-65 | raw FIPS 204 pk bytes (1952 bytes), NOT SPKI-wrapped. See GAP-9. |
+
+**GAP-9 (2026-10-07):** ML-DSA-65 `key_id` uses raw public key bytes
+rather than SPKI DER with OID `id-ml-dsa-65` (RFC 9964). Reason:
+SPKI wrapping requires exact OID DER encoding that has not been
+independently verified in this phase. RS256 and ML-DSA-65 `key_id`
+are computed over different encodings. Documented gap; resolved in
+Phase 2.5 by adding SPKI wrapping with OID validation.
 
 **Signature computation:**
 - RS256: `RSASSA-PKCS1-v1_5(sk, SHA-256, TBS)` → 256 bytes
