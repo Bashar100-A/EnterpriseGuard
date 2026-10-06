@@ -534,3 +534,31 @@ cat docs/vomega/CONTINUITY.md
 - النتيجة الفعلية بعد الإصلاح: 435/435
 
 **الدرس:** كل رقم في CONTINUITY يجب أن يُنسخ من مخرجات فعلية. الادعاء قبل التحقق يُلوّث الذاكرة.
+
+---
+
+## 21. Phase 2 Block A — HYBRID-CRYPTO-0.1 spec
+
+**التاريخ:** 2026-10-06
+**الحالة:** spec-only، لا كود
+
+**الملف:** spec/HYBRID-CRYPTO-0.1.md
+
+**القرارات المُعتمَدة:**
+- Option C: primitive from vetted library, protocol owned by ADIE
+- TCB صريح: المكتبة جزء من TCB، مُثبَّتة الإصدار، قابلة للاستبدال، موثقة الحالة
+- DCP 2.1: signatures (array) بدل signature (singular)
+- TBS = "ADIE-SIG-V2\0" || JCS(cert_without_signatures)
+- key_id = sha256:hex(SHA-256(SPKI-DER(pubkey)))
+- Hybrid default = AND، OR للمهاجرة فقط بقرار manifest صريح
+- Downgrade = E_SIGNATURE_DOWNGRADE
+- 7 أكواد فشل جديدة (E_SIGNATURE_*)
+- 100 متجه اختبار Phase 2 كحد أدنى
+- 435/435 يبقى أخضر
+
+**قيود:**
+- لا SLH-DSA، لا ML-KEM، لا aggregation، لا ZK للـsignatures
+- لا ادعاءات side-channel immunity
+- لا ادعاءات library صحيحة بلا تدقيق مستقل
+
+**التالي:** Block B — اختيار المكتبات + pinned versions
