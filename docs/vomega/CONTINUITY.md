@@ -344,3 +344,27 @@ cat docs/vomega/CONTINUITY.md
 **الجملة المحورية:** No physical primitive creates truth.
 
 **التثبيت الرسمي:** بعد 183/183 (Phase 1.9 مكتمل)
+
+---
+
+## 15. Phase 1.9 مغلق + Physical Anchor مُثبَّت (NON-NORMATIVE)
+
+**commits:** 5fe41ab (registry) + f0f3bf0 (Physical Anchor)
+**suites:** 183/183 (51+12+40+20+40+20)
+
+**Phase 1.9 مُكتمل:**
+- spec/REGISTRY-0.1.md (169 سطر)
+- protocol/meta/registry.py (342 سطر)
+- tests/vomega/meta/registry_run.py (20 vector)
+- ERROR-REGISTRY: E-META-23..28
+
+**Physical Anchor:**
+- docs/vomega/ADIE-PHYSICAL-ANCHOR-0.1.md (456 سطر، NON-NORMATIVE)
+- docs/vomega/decisions/DECISIONS-0.2.md (173 سطر، Binding)
+- الجملة المحورية: No physical primitive creates truth.
+- hardware_identity.py = SoftwareFingerprint، وليس PUF
+- TDX = first production path، PUF/VDF = later profiles
+
+**الترتيب التالي:**
+- Phase 1.10: Pilot End-to-End (Python verifier + JS verifier + differential)
+- ثم Phase 2: Hybrid Crypto
