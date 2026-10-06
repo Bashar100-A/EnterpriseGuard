@@ -417,3 +417,45 @@ note: `rsa 0.9.6` remains a valid fallback if sad-rsa becomes
   unavailable. Its API shape is documented above (sections 5-7 of
   the Gate 0 investigation). Migration cost is contained because
   the invocation is isolated in one module.
+
+
+---
+
+## DEFECT-015 — sad-rsa 0.10.2 fails to build; rsa 0.9.6 selected as fallback
+
+date: 2026-10-07
+commit_found: a7082fa
+commit_fixed: <this commit>
+suite: rust/adie-primitives build
+test_id: n/a
+test_phase: Phase 3, Gate 0
+category: dependency
+language_pair: n/a
+failure_mode: structural
+invariant_at_risk: none (build-time only)
+root_cause: `sad-rsa 0.10.2` declares `pkcs1 = "0.8"` allowing RCs.
+  Cargo resolved to `pkcs1 0.8.0-rc.5`, which changed `RsaPublicKey`
+  to require a generic parameter `U`. sad-rsa's code was written
+  against an earlier pkcs1 0.8 API and does not compile against
+  rc.5. This is a pinned-RC issue, not a feature-selection issue —
+  it fails with default features too.
+resolution_attempted:
+  1. `sad-rsa = { version = "=0.10.2", default-features = false, features = ["std","encoding","sha2"] }`
+     -> 8 errors
+  2. `sad-rsa = "=0.10.2"` (default features)
+     -> same 8 errors
+  3. Decision: fall back to `rsa 0.9.6` (mainline RustCrypto),
+     which builds cleanly in `/tmp/adie-rsa-test/`.
+consequence:
+  - RISK-3.1 updated: mainline `rsa 0.9.6` has RUSTSEC-2023-0071
+    (Marvin) open on PKCS#1 v1.5 DECRYPTION. ADIE does VERIFICATION
+    only, offline. Marvin requires a decryption oracle and targets
+    the private key. Not applicable.
+  - RISK-3.2 updated: dependency surface ~30 crates (vs ~46 for sad-rsa).
+  - Migration to sad-rsa remains possible once pkcs1 0.8.0 stable
+    ships and sad-rsa updates. Single-module change.
+lesson: A library that resolves in cargo fetch does not prove it
+  compiles. The `/tmp/adie-sad-rsa-test/` sandbox fetched but was
+  never built. Sandbox verification MUST include `cargo build`,
+  not only `cargo fetch`. This is the same class as DEFECT-007/008
+  (partial-information commitment), applied to build verification.

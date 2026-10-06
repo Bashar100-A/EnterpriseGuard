@@ -102,29 +102,37 @@ consequence of DEFECT-014.
 
 
 
-## Decision 9 - RSA library selection (Gate 0)
+## Decision 9 - RSA library selection (Gate 0) [AMENDED 2026-10-07]
+
+**Original decision (superseded):** `sad-rsa = "=0.10.2"`.
+**Reason for amendment:** DEFECT-015. sad-rsa 0.10.2 does not
+compile against pkcs1 0.8.0-rc.5 (mandatory generic parameter).
+**Final decision:** `rsa = "=0.9.6"` + `sha2 = "0.10"`.
 
 For Phase 3 Gate 0 (Rust full hybrid verifier), the RSA implementation
-is `sad-rsa = "=0.10.2"`.
+is `rsa = "=0.9.6"`.
 
-Rationale:
-- mainline `rsa 0.9.6` has RUSTSEC-2023-0071 (Marvin) unpatched and
-  partial RFC 8017 length validation.
-- mainline `rsa 0.10.x` is still RC.
-- `sad-rsa 0.10.2` mitigates Marvin, applies complete RFC 8017
-  length validation, and enhances zeroization.
+Rationale for amendment:
+- `sad-rsa 0.10.2` does not compile (DEFECT-015).
+- `rsa 0.10.0-rc.19` is still RC.
+- `rsa 0.9.6` builds cleanly and is mainline RustCrypto.
+- Marvin CVE (RUSTSEC-2023-0071) applies to PKCS#1 v1.5 DECRYPTION
+  oracle scenarios, not to offline public-key VERIFICATION. ADIE
+  uses verification only.
 
 Constraints:
-- `sad-rsa` is invoked ONLY from `rust/adie-primitives/src/rsa_verify.rs`.
+- `rsa` is invoked ONLY from `rust/adie-primitives/src/rsa_verify.rs`.
 - No direct calls from `verifier.rs` or anywhere else.
-- Cargo.lock pins `=0.10.2`; checksum verified.
+- Cargo.lock pins `rsa=0.9.6` and `sha2=0.10`; checksums verified.
 - RISK-3.1 and RISK-3.2 recorded in DEFECTS-LOG.md.
 
 Reconsideration trigger:
 - If mainline `rsa` ships 0.10.x stable with Marvin mitigation, swap
-  to mainline in one commit (API is compatible with sad-rsa 0.10.x).
-- If sad-rsa becomes unmaintained, revert to `rsa 0.9.6` + explicit
-  offline-only usage boundary.
+  to it in one commit.
+- If `sad-rsa` fixes its pkcs1 pin and compiles, reconsider it (single
+  module change).
+- If ADIE moves to ONLINE verification in a future phase, revisit
+  the Marvin risk for `rsa 0.9.6`.
 
 ---
 

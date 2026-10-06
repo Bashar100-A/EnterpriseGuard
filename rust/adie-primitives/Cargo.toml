@@ -32,6 +32,8 @@ path = "src/bin/adie-mldsa.rs"
 [dependencies]
 serde_json = "1.0"
 ml-dsa = "=0.1.1"
+rsa = "=0.9.6"
+sha2 = "0.10"
 
 [profile.release]
 opt-level = 3
