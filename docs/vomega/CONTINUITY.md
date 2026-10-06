@@ -466,3 +466,23 @@ cat docs/vomega/CONTINUITY.md
 - 10k+ fuzz cases
 
 **التالي:** القرار (Phase 1.12 vs Phase 2)
+
+---
+
+## 19. قرار المرحلة
+
+**التاريخ:** 2026-10-06
+**القرار:** Phase 1.12-lite
+
+**السبب:**
+- Phase 1.11 أثبت: H_A + JCS + ClaimRoot + ACL في 3 لغات
+- لم يُثبت: أن Rust يستخدمها في DCP 2.0 كاملاً
+- RSA verify في Rust = أسبوع أو crate خارجي = كسر المبدأ
+
+**الحل:**
+- Rust semantic verifier (كل شيء عدا التوقيع)
+- التوقيع في Python/JS فقط
+- الفجوة موثقة صراحة في spec/RUST-VERIFIER-0.1.md
+
+**التكلفة:** ~250 سطر Rust، ساعتان
+**المكسب:** إغلاق الفجوة الدلالية ثلاثية اللغة قبل ML-DSA
