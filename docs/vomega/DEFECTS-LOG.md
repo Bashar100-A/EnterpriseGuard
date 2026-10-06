@@ -574,3 +574,75 @@ Wire Format (Gate 1), Governance (Gate 3), and Revocation (Gate 4),
 not only in the verifier.
 
 **Tracking:** new entry on the Phase 3 architecture requirements list.
+
+
+---
+
+## CBOR-LIB-EVAL-001 — ciborium 0.2.2 selected for 3A.2
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.2
+category: dependency-selection
+
+### Candidates surveyed
+
+| crate | v | license | MSRV | Value type | status |
+|---|---|---|---|---|---|
+| ciborium | 0.2.2 | Apache-2.0 | 1.58 | Yes | selected |
+| minicbor | 2.3.0 | BlueOak-1.0.0 | unknown | No (needs impl) | rejected |
+| cbor4ii | 1.2.3 | MIT | unknown | types module only | rejected |
+| serde_cbor | 0.11.2 | MIT/Apache | unknown | Yes | unmaintained since 2020 |
+| cbor | 0.4.2 | — | — | — | deprecated (crates.io warning) |
+
+### Rationale for ciborium
+
+- Available on rustc 1.99 (MSRV 1.58).
+- Provides a Value type (`ciborium::value::Value`) usable without
+  serde derives.
+- Apache-2.0 license, mainstream ecosystem.
+- Actively maintained by Enarx project.
+
+### What ciborium does NOT enforce (probe results)
+
+Direct probe of the sandbox (`/tmp/adie-ciborium-test`), same input
+encoded twice and same malformed inputs decoded:
+
+| # | Behavior | Result |
+|---|---|---|
+| T1 | Deterministic map ordering | NO — insertion order preserved |
+| T2 | Overlong integer | ACCEPTED |
+| T3 | Indefinite-length map | ACCEPTED |
+| T4 | Duplicate map keys | ACCEPTED (Vec of pairs) |
+| T5 | Float | ACCEPTED |
+| T6 | Tag | ACCEPTED |
+| T7 | Trailing bytes | ACCEPTED |
+| T8 | Round-trip stability | YES (for well-formed input) |
+
+### Consequence
+
+ciborium is the *codec primitive*. It does not implement the ADIE
+Deterministic CBOR Profile (WIRE-FORMAT-0.2 §7–§9). ADIE code MUST
+enforce the profile on top:
+
+- Encode side: sort map keys numerically before writing.
+- Decode side: after reading Value, walk it and reject:
+  - noncanonical integers (must be shortest-form)
+  - indefinite-length items
+  - floats
+  - tags
+  - duplicate keys
+  - trailing bytes after top-level Value
+  - text keys / byte keys / compound keys (only integer keys allowed)
+  - required fields with wrong type
+  - unknown critical fields
+
+This validation layer is ADIE-owned (`rust/adie-primitives/src/cbor/`).
+ciborium is isolated to a single module; replacement (e.g., future
+minicbor adoption) requires touching only that module.
+
+### Not claimed
+
+- ciborium does not provide ADIE profile enforcement.
+- ciborium does not provide canonical encoding.
+- Selection of ciborium does not imply it satisfies WIRE-FORMAT-0.2.
+  The spec and the profile layer do.
