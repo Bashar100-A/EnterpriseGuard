@@ -765,3 +765,34 @@ cat docs/vomega/CONTINUITY.md
 **GAP-8:** Rust لا يغطي sigGen بسبب API. موثق مع paths tried.
 
 **التالي:** Block D.2c — JS KAT (sigGen + sigVer).
+
+---
+
+## 29. Phase 2 D.2c — JS KAT 55/55 (mldsa ثلاثي مُغطّى)
+
+**التاريخ:** 2026-10-06
+
+**JS (@noble/post-quantum 0.7.1):**
+- keygen: 25/25
+- siggen: 15/15
+- sigver: 15/15
+- TOTAL: 55/55
+
+**الحصيلة الكلية على NIST ACVP ML-DSA-65 (pure):**
+- Python (dilithium-py 1.4.0): 55/55
+- JavaScript (@noble 0.7.1):    55/55
+- Rust (RustCrypto 0.1.1):      40/40 (keygen+sigver؛ sigGen = GAP-8)
+- **Total: 150/150**
+
+**الـrunner:**
+- js/run_acvp_kat.mjs (موضوع داخل js/ لـmodule resolution)
+- tests/vomega/mldsa/kat/run_python.py
+- tests/vomega/mldsa/kat/run_rust.py
+
+**الـvectors:**
+- tests/vomega/mldsa/kat/{keygen,siggen,sigver}_65.json
+- مُستخرجة من NIST ACVP-Server عبر jsDelivr CDN
+
+**GAP-8 بقي:** Rust sigGen غير مغطّى عبر API. القرار: مقبول، موثّق.
+
+**التالي:** Block D.3 — hybrid combiner (RS256 + ML-DSA-65).
