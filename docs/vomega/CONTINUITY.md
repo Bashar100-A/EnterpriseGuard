@@ -818,3 +818,27 @@ cat docs/vomega/CONTINUITY.md
 - TBS: py 12/12، js 11/11، diff 5/5
 - Sign: py 16/16
 - Verify: smoke test ✅ (5/5)
+
+---
+
+## 31. Phase 2 مُغلق رسمياً
+
+**التاريخ:** 2026-10-07
+
+**الحصيلة النهائية:**
+- Phase 2 suites: 75/75 (TBS 12+11+5، Sign 16، Verify 20، E2E 11)
+- NIST ACVP ML-DSA-65: 150/150 (Python 55، JS 55، Rust 40 مع GAP-8)
+- MLDSA-XLANG-001: ثلاث لغات مطابقة بايت-ببايت
+- Phase 1 regression: 648/648 لا يزال أخضر
+- **المجموع: 723/723**
+
+**DEFECTs مغلقة في Phase 2:** 010, 011, 012, 013
+**GAPs مفتوحة:** 8 (Rust sigGen)، 9 (raw pk key_id)
+**RISKs نشطة:** 2.1، 2.2، 2.3
+
+**الوثائق:**
+- PHASE-2-CLOSURE.md
+- spec/HYBRID-CRYPTO-0.1.md
+- spec/test-vectors/MLDSA-XLANG-001.json
+
+**التالي:** قرار Phase 3 (3A-3E مرشحة، الأرجح 3A = CBOR/COSE).
