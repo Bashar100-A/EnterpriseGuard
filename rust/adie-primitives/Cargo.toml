@@ -1,0 +1,30 @@
+[package]
+name = "adie-primitives"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+description = "ADIE vOmega - independent Rust implementation (SHA-256, H_A, JCS, ClaimRoot, ACL)."
+
+[lib]
+name = "adie_primitives"
+path = "src/lib.rs"
+
+[[bin]]
+name = "adie-h-a"
+path = "src/main.rs"
+
+[[bin]]
+name = "adie-claimroot"
+path = "src/bin/adie-claimroot.rs"
+
+[[bin]]
+name = "adie-acl"
+path = "src/bin/adie-acl.rs"
+
+[dependencies]
+serde_json = "1.0"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

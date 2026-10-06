@@ -433,3 +433,36 @@ cat docs/vomega/CONTINUITY.md
 - كل DEFECT جديد من هنا يتضمن: language_pair، failure_mode، invariant_at_risk
 
 **التالي:** Rust H_A + JCS + ClaimRoot + ACL normalize.
+
+---
+
+## 18. Phase 1.11 مكتمل — Rust third-verifier
+
+**التاريخ:** 2026-10-06
+
+**Rust crate:** rust/adie-primitives/
+- SHA-256 من الصفر (FIPS 180-4): 3/3
+- H_A: 20/20 مقابل Python
+- JCS (canonical JSON): من الصفر
+- ClaimRoot: 200/200 fuzzed
+- ACL eval+normalize: 200/200 fuzzed
+- لا external crate عدا serde_json للتحليل
+
+**Python↔JS (1500 حالة):**
+- ACL fuzz: 500/500
+- ClaimRoot fuzz: 500/500
+- Authoring fuzz: 500/500
+
+**المجموع الكلي للـdifferential:** 1920/1920
+
+**Rust بنى بنجاح:**
+- cargo 1.75.0 (من apt، لا rustup)
+- 3 binaries: adie-h-a, adie-claimroot, adie-acl
+
+**ما لم يُثبَت بعد:**
+- Rust DCP 2.0 verify كامل
+- Rust Authoring compiler
+- Rust RSA signature verify
+- 10k+ fuzz cases
+
+**التالي:** القرار (Phase 1.12 vs Phase 2)
