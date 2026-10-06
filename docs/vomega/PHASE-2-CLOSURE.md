@@ -59,7 +59,7 @@ Python ≡ JS ≡ Rust: pk, sig, byte-identical
 
 ## §5. Phase 1 regression
 
-All 648 Phase 1 tests remain green:
+All 633 Phase 1 tests remain green:
 - frozen 51, vΩ 12, META 40, REGISTRY 20, ACL 40, AUTHORING 20, PILOT 15, Rust 435
 
 ## §6. Defects closed in Phase 2
@@ -102,7 +102,7 @@ All 648 Phase 1 tests remain green:
 ## §10. Precondition for Phase 3
 
 - Phase 2 committed on vOmega
-- 723 tests (648 + 75) all green
+- 758 (unique) tests (648 + 75) all green
 - No open code DEFECT
 - Target spec for Phase 3 exists
 
@@ -121,3 +121,26 @@ across languages without ambiguity.
 ---
 
 **End of PHASE-2-CLOSURE**
+
+
+---
+
+## §12. Correction (2026-10-07)
+
+An earlier draft of this document claimed "723/723 tests." That
+number was computed incorrectly. Real, measured numbers:
+
+| Bucket | Count | Source |
+|---|---|---|
+| Phase 1 regression | 633 | tests/account.py |
+| Phase 2 Python ADIE | 59 | tests/account.py |
+| Phase 2 JavaScript ADIE | 11 | tests/account.py |
+| ACVP vector executions | 150 | 3 languages × 50 avg |
+| ACVP unique vectors | 55 | 25 keygen + 15 siggen + 15 sigver |
+| **Grand total (unique)** | **758** | regression + py + js + acvp-unique |
+
+DEFECT-014 records the process failure.
+
+See `tests/account.py` for the authoritative source. Any external
+claim MUST cite numbers from that tool, never from memory or from
+a commit message.

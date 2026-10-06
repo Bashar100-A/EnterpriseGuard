@@ -321,3 +321,38 @@ resolution path (Phase 2.5):
   - Cross-verify SPKI bytes across Python/JS/Rust.
   - Bump to key_id scheme v2 (not v1, to avoid identifier redefinition).
 not retracted: RISK-2.1.
+
+
+---
+
+## DEFECT-014 — Test count conflation across phases
+
+date: 2026-10-07
+commit_found: 6f1152b
+commit_fixed: <TBD>
+suite: n/a (process)
+test_id: n/a
+test_phase: Phase 2 closure
+category: process
+language_pair: n/a
+failure_mode: semantic
+invariant_at_risk: I34 (identifier immutability — numbers are identifiers)
+root_cause: Multiple numbers were claimed based on ad-hoc summation:
+  (a) "648 Phase 1 regression" — actually 633. Off by 15.
+  (b) "723/723 total" — sum of 648 + 75. Neither base number was correct.
+  (c) "75 Phase 2" — actually 59 Python + 11 JS = 70, with 5 TBS-differential
+      not being a standalone suite (they are inside test_tbs.py).
+  The numbers were asserted in commit messages (fd5d98d, 6f1152b) and in
+  PHASE-2-CLOSURE.md before being measured by a tool.
+fix: Created tests/account.py as the sole authority for test counts. It
+  runs every suite as a subprocess and reads the TOTAL line from stdout.
+  Real numbers: 633 regression + 59 py + 11 js + 55 ACVP-unique = 758.
+  PHASE-2-CLOSURE.md §12 and CONTINUITY §32 record the correction.
+lesson: A number in a document is an identifier (I34). It must be produced
+  by a deterministic tool, not by memory. The pattern is identical to
+  DEFECT-007, DEFECT-008, DEFECT-009: a claim was committed before being
+  measured. The difference here is that the claim was numeric and would
+  have propagated into external communication. The consequence of leaving
+  it uncorrected: an investor or auditor could have found the discrepancy
+  and lost confidence in all other numbers. Now the source of every number
+  is a script that any third party can run.

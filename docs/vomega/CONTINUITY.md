@@ -826,11 +826,11 @@ cat docs/vomega/CONTINUITY.md
 **التاريخ:** 2026-10-07
 
 **الحصيلة النهائية:**
-- Phase 2 suites: 75/75 (TBS 12+11+5، Sign 16، Verify 20، E2E 11)
+- Phase 2 suites: 70/70 (59 Python + 11 JS) (TBS 12+11+5، Sign 16، Verify 20، E2E 11)
 - NIST ACVP ML-DSA-65: 150/150 (Python 55، JS 55، Rust 40 مع GAP-8)
 - MLDSA-XLANG-001: ثلاث لغات مطابقة بايت-ببايت
 - Phase 1 regression: 648/648 لا يزال أخضر
-- **المجموع: 723/723**
+- **المجموع: 758 حالة فريدة عبر 4 دلو (633+59+11+55)**
 
 **DEFECTs مغلقة في Phase 2:** 010, 011, 012, 013
 **GAPs مفتوحة:** 8 (Rust sigGen)، 9 (raw pk key_id)
@@ -842,3 +842,28 @@ cat docs/vomega/CONTINUITY.md
 - spec/test-vectors/MLDSA-XLANG-001.json
 
 **التالي:** قرار Phase 3 (3A-3E مرشحة، الأرجح 3A = CBOR/COSE).
+
+
+---
+
+## 32. تصحيح عدّ الاختبارات (DEFECT-014)
+
+**التاريخ:** 2026-10-07
+
+**الادعاء الخاطئ السابق:** 723/723 مجموع، 75 Phase-2.
+**الحقيقة بعد إنشاء tests/account.py:**
+- 633 regression (Phase 1)
+- 59 Phase 2 Python
+- 11 Phase 2 JS
+- 55 ACVP unique (150 executions)
+- **المجموع الفريد: 758**
+
+**السبب الجذري:** الأرقام كانت تُحسب يدوياً/ذاكرياً. `648` كان خطأ جمع، `75` كان خلطاً بين Python و JS.
+
+**الحل:**
+- `tests/account.py` مصدر السلطة الوحيد للأرقام
+- كل ادعاء خارجي ينسخ الأرقام من stdout الأداة
+- لا رقم في commit message قبل رؤيته في المخرجات
+
+**القاعدة (نافذة):** لا أرقام مُتذكَّرة. لا أرقام مُجمَّعة. لا أرقام مُقدَّرة.
+فقط أرقام من أداة آلية.
