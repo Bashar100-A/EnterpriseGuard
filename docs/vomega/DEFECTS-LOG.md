@@ -520,3 +520,57 @@ lesson: key_id binding and signature verification are two independent
   across languages is the mechanism that catches such omissions; without
   R12, this would have gone unnoticed until an auditor noted inconsistent
   error codes for the same rejection.
+
+
+---
+
+## RISK-3.1 RECLASSIFICATION (Commander order, 2026-10-07)
+
+**Previous status:** "not applicable" (rejected as too absolute).
+
+**New status:** BOUNDED EXPOSURE / NOT USED FOR PRIVATE-KEY
+OPERATIONS IN CURRENT VERIFIER PATH.
+
+**Technical basis:** RUSTSEC-2023-0071 (Marvin attack) targets
+timing side channels in RSA PKCS#1 v1.5 *decryption* oracles,
+where the attack extracts information about the private key from
+distinguishable error responses. ADIE's current usage of `rsa`
+is exclusively:
+
+- RsaPublicKey::from_public_key_pem (public-key parsing)
+- VerifyingKey::<Sha256>::verify (public-key verification)
+
+No RSA private-key signing, no RSA decryption, no online oracle.
+
+**Residual risk:** if ADIE ever moves to online private-key
+operations (Phase 4+), this reclassification must be revisited.
+
+**Register:** RISK-3.1 remains in the active risk register. It is
+not converted to "resolved" or "accepted". It is bounded by usage
+scope and by offline verification semantics.
+
+---
+
+## DEFECT-017 — ARCHITECTURAL CLASSIFICATION (Commander order, 2026-10-07)
+
+**Previous classification:** code defect (CLI-level).
+
+**New classification:** evidence for an **Identity Binding Invariant**.
+
+**Invariant definition:**
+
+    Algorithm
+      + Key ID
+      + Public Key
+      + Fingerprint
+      + TBS
+
+must be treated as one interconnected system. A valid signature is
+not sufficient evidence if the identity of the key used does not
+match the expected identity for the protocol.
+
+**Integration requirement:** this invariant must be implemented in
+Wire Format (Gate 1), Governance (Gate 3), and Revocation (Gate 4),
+not only in the verifier.
+
+**Tracking:** new entry on the Phase 3 architecture requirements list.
