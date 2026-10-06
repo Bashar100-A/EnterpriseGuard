@@ -383,9 +383,37 @@ Installed into: `.venv/`
 Python version: 3.12.3
 cryptography in venv: 50.0.1
 
-### Rust (C.2 — pending)
+### Rust (C.2 — 2026-10-06)
 
-(To be recorded.)
+| Crate | Version | SHA-256 (crate file) | Cargo.lock checksum |
+|---|---|---|---|
+| `ml-dsa` (RustCrypto) | 0.1.1 | `add6b9d92e496f16f4526d68ff29da1483aba4b119baeab8bed3b9e3544a6f3d` | `add6b9d92e496f16f4526d68ff29da1483aba4b119baeab8bed3b9e3544a6f3d` |
+
+**Build environment:**
+- rustc 1.99.0 (b940084d7 2026-09-28)
+- cargo 1.99.0 (5f94df478 2026-08-27)
+- Path: `/home/biss/.cargo/bin/` (rustup-managed)
+
+**Dependency tree (depth 1):**
+ml-dsa v0.1.1
+├── const-oid v0.10.2
+├── crypto-common v0.2.2
+├── ctutils v0.4.3
+├── hybrid-array v0.4.15
+├── module-lattice v0.2.3
+├── pkcs8 v0.11.0
+├── shake v0.1.0
+└── signature v3.0.0
+text
+
+
+**Verified:** `adie-primitives` builds with `ml-dsa` as a dependency
+without regression. The 435/435 conformance suite (SHA-256, H_A, JCS,
+ClaimRoot, ACL, DCP semantic verify) remains green.
+
+**Not yet verified:** ML-DSA sign/verify operations. These are
+introduced in C.2.c and validated against NIST ACVP KAT vectors in
+Block D.
 
 ### JavaScript (C.3 — pending)
 

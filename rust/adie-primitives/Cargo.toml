@@ -27,6 +27,7 @@ path = "src/bin/adie-verify.rs"
 
 [dependencies]
 serde_json = "1.0"
+ml-dsa = "=0.1.1"
 
 [profile.release]
 opt-level = 3

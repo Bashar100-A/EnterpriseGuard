@@ -617,3 +617,29 @@ cat docs/vomega/CONTINUITY.md
 **الـ435/435 خضراء** تحت rustc 1.99.
 
 **التالي:** C.2.b — إضافة ml-dsa إلى adie-primitives.
+
+---
+
+## 24. Phase 2 C.2.b — ml-dsa مُدمَج في adie-primitives
+
+**التاريخ:** 2026-10-06
+
+**التغيير:**
+- rust/adie-primitives/Cargo.toml: + ml-dsa = "=0.1.1"
+- Cargo.lock يُثبّت checksum: add6b9d9...4a6f3d
+
+**البناء:**
+- rustc 1.99.0 / cargo 1.99.0
+- 8 dependencies جديدة
+- 1m 18s build time
+- 435/435 اختبار لا يزال أخضر
+
+**لم يُبنَ بعد:**
+- منطق sign/verify ML-DSA في Rust
+- هذا في C.2.c
+
+**تمييز صريح:**
+- ml-dsa الآن **مُدمَج** (dependency)
+- ml-dsa **ليس مُستخدَماً** بعد (لا sign/verify)
+
+**التالي:** C.3 — JavaScript @noble/post-quantum.
