@@ -451,3 +451,29 @@ advancing state on partial information before re-verification.
 
 **Not retracted:** RISK-2.1 (ml-dsa 0.1.1 is pre-1.0 and unaudited).
 This risk is independent of whether it builds.
+
+### GAP-6: JavaScript ML-DSA deferred
+
+**Date:** 2026-10-06
+**Paths attempted:**
+1. `@noble/post-quantum@0.7.1` — requires Node ≥ 20.19.0;
+   system Node is 18.19.1. **Rejected by engines.**
+2. `@noble/post-quantum@0.6.x` — same engines constraint.
+3. `@noble/post-quantum@0.5.x` — same engines constraint.
+4. `@noble/post-quantum@0.4.1` — no engines declared, but predates
+   FIPS 204 (Aug 2024) and likely tracks a draft. **Rejected as
+   non-conforming to the pinned standard.**
+5. Node upgrade via nvm — attempted as Block C.3.b; outcome recorded
+   in this section once known.
+
+**Consequence if deferred:**
+- Phase 2 verification of ML-DSA-65 available in:
+  - Python: pqcrypto 1.0.0 + dilithium-py 1.4.0 (two independent)
+  - Rust: ml-dsa 0.1.1
+- JavaScript verifier (verify.mjs) does NOT perform ML-DSA signature
+  verification. It reports `signature: SKIPPED` for ML-DSA, matching
+  the Rust GAP-1 pattern for RSA.
+- The browser demo (verify.html) cannot claim hybrid PQ verification
+  until Phase 2.5.
+
+**Not a security claim:** This is a documented gap.
