@@ -152,3 +152,21 @@ invariant_at_risk: I13 (cross-impl determinism)
 root_cause: verifier.rs used E-BINDING-AUDIENCE-MISMATCH (hyphens) while Python verify_cli.py uses E_BINDING_AUDIENCE_MISMATCH (underscores). Cross-language byte-equality broke on error-code format, not on decision logic.
 fix: Replaced all E-BINDING-* strings with E_BINDING_* in verifier.rs to match Python verify_pipeline.py and verify_cli.py.
 lesson: The new DEFECT schema (language_pair/failure_mode/invariant_at_risk) was justified by this defect. Byte-equality is fragile at every layer including error identifiers. A single hyphen vs underscore = a real divergence. Tests caught it; the previous commit message did NOT (claimed 435/435 when actual was 434/435).
+
+---
+
+## DEFECT-007 — Premature GAP-5 commitment based on partial information
+
+date: 2026-10-06
+commit_found: 56717dc
+commit_fixed: <TBD>
+suite: n/a (process)
+test_id: n/a
+test_phase: Phase 2 setup
+category: process
+language_pair: n/a
+failure_mode: semantic
+invariant_at_risk: I34 (identifier immutability), I13 (determinism of records)
+root_cause: After the first cargo fetch failed (Cargo 1.75 + edition2024), GAP-5 was committed as a permanent deferral without first attempting the alternative (rustup official). The second attempt succeeded immediately, invalidating the committed text.
+fix: GAP-5 replaced by GAP-5-CORRECTED. DEFECT-007 logged. The lesson is that "attempt failed" does not equal "attempt impossible" — record the failed attempt as a note, not a permanent gap, until the alternative path is also tried.
+lesson: In protocol documentation, "deferred" is a claim about the future. It requires exhausting known paths first. Partial-information commitments pollute the spec and require a correction cycle. Rule going forward: any GAP-N entry must include a "paths attempted" list.

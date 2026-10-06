@@ -397,29 +397,29 @@ cryptography in venv: 50.0.1
 - `dilithium_py.ml_dsa.ML_DSA_65` imports cleanly
 - Both verified to have identical module path structure for the ML-DSA-65 variant
 
-### GAP-5: Rust ML-DSA deferred to Phase 2.5
+### GAP-5-CORRECTED: Rust ML-DSA is enabled
 
 **Date:** 2026-10-06
-**Reason:** `ml-dsa 0.1.1` depends on `crypto-common 0.2.2` which
-requires `edition2024`, unsupported by the system's Cargo 1.75.0.
-Upgrading the toolchain failed due to network constraints on
-`static.rust-lang.org`.
+**Supersedes:** earlier GAP-5 entry (now known incorrect, committed in 56717dc)
+
+**History:**
+- First attempt: `cargo fetch` failed because Cargo 1.75.0 (from apt)
+  does not support `edition2024`, required by `crypto-common 0.2.2`.
+- Second attempt: `rustup` official channel installed rustc 1.99.0
+  and cargo 1.99.0. `ml-dsa 0.1.1` then fetched and built cleanly
+  in 45 seconds. `adie-primitives` rebuilt under 1.99.0 and its
+  435/435 conformance suite remained green.
 
 **Consequence:**
-- Phase 2 gives Python (pqcrypto + dilithium-py) + JavaScript
-  (@noble/post-quantum) as the two independent ML-DSA verifiers.
-- Rust semantic verifier (Phase 1.12-lite) remains valid but does
-  NOT verify ML-DSA signatures.
-- A hybrid cert with ML-DSA verified only in Python/JS is accepted;
-  the manifest may optionally require a Rust-side signature check
-  once Phase 2.5 lands.
+- Rust ML-DSA is available. GAP-5 is retracted.
+- Block C.2 proceeds with `ml-dsa = "=0.1.1"` added to
+  `rust/adie-primitives/Cargo.toml`.
 
-**Not a security claim:** This is a documented gap. The protocol
-does not claim Rust-verified PQ signatures in Phase 2.
+**Note on prior commitment 56717dc:**
+An earlier commit recorded GAP-5 as a permanent deferral. That
+commit was based on the first-attempt failure and did not anticipate
+the successful retry. DEFECT-007 is logged for the process error:
+advancing state on partial information before re-verification.
 
-**Resolution path (Phase 2.5):**
-- Acquire a newer rustc via rustup mirror OR
-- Replace ml-dsa dependency with a crate whose MSRV ≤ 1.75 OR
-- Build the ml-dsa crate from source with pinned older deps
-
-**Tracked as:** RISK-2.5
+**Not retracted:** RISK-2.1 (ml-dsa 0.1.1 is pre-1.0 and unaudited).
+This risk is independent of whether it builds.
