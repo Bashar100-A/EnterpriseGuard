@@ -1057,3 +1057,253 @@ cat docs/vomega/CONTINUITY.md
 - لا كتابة CBOR من الصفر
 - Reference implementation في Rust + adapters في Python/JS
 - RFC 9964 لتمثيل ML-DSA-65 في COSE
+
+
+---
+
+## 36. Gate 0 مُغلق رسمياً — في انتظار قرار القائد
+
+**التاريخ:** 2026-10-07
+**آخر commit:** 6110273
+**الحالة:** Gate 0 مُغلق. القائد يدرس تقريراً. لا عمل حتى القرار.
+
+### Gate 0 — الملخص
+
+**النطاق:** Rust يتحقق من DCP 2.1 hybrid certificates كاملاً،
+byte-identically مع Python.
+
+**Artifacts المُلتزمة:**
+- spec/RUST-FULL-VERIFIER-0.1.md (143 سطر)
+- rust/adie-primitives/src/rsa_verify.rs (90 سطر)
+- rust/adie-primitives/src/bin/adie-hybrid-verify.rs (~280 سطر)
+- tests/vomega/hybrid/test_rust_parity.py (13/13)
+- docs/vomega/PHASE-3-GATE-0-CLOSURE.md (118 سطر)
+
+**DEFECTs مغلقة في Gate 0:** 015، 016، 017
+**RISKs نشطة:** RISK-3.1 (Marvin، غير قابل للتطبيق offline)،
+RISK-3.2 (dependency surface ~30)
+
+### الأرقام الحقيقية (من tests/account.py)
+
+| الدلو | العدد |
+|---|---|
+| REGRESSION_TOTAL (Phase 1) | 633 |
+| PHASE2_ADIE_PYTHON | 59 |
+| PHASE2_ADIE_JAVASCRIPT | 11 |
+| PHASE3_GATE0_PARITY | 13 |
+| ACVP_UNIQUE_VECTORS | 55 |
+| ACVP_VECTOR_EXECUTIONS | 150 |
+| **المجموع الفريد** | **771** |
+
+### قرار RSA النهائي
+
+- **المرشح الأول:** `sad-rsa 0.10.2` (Marvin-mitigated) — **فشل البناء** (DEFECT-015)
+- **القرار النهائي:** `rsa = { version = "=0.9.6", features = ["sha2"] }`
+- **RISK-3.1:** Marvin CVE مفتوح. **غير قابل للتطبيق** على verification offline.
+- **مسار الترقية:** إذا نُشر `rsa 0.10.x` stable مع Marvin mitigation → تغيير سطر واحد في `rsa_verify.rs`.
+
+### القواعد المُثبتة في Gate 0
+
+1. **`cargo fetch` لا يعني `cargo build`.** كل sandbox يجب أن يُنفّذ `cargo build --release`.
+2. **`default-features` قد تكون غير كافية.** اختبر `feature` selection في البناء الفعلي، ليس في الفحص النظري.
+3. **key_id binding ≠ signature verification.** كلاهما فحصان مستقلان. أي verifier يجب أن يؤدي الاثنين (DEFECT-017).
+4. **byte-equality testing يكتشف الفروق الدلالية** التي لا يكشفها التشفير وحده.
+
+### البوابة التالية — Gate 1: 3A.1
+
+**المركزية:** `spec/WIRE-FORMAT-0.2.md`
+
+**الطبقات:**
+DCP semantic model
+→ ADIE Canonical TBS
+→ DCP 2.1 CBOR data model
+→ Deterministic CBOR (RFC 8949 profile)
+→ COSE (RFC 9052)
+→ Hybrid certificate
+
+**قيود صارمة (من DECISIONS-0.3):**
+- لا CBOR من الصفر. Reference impl في Rust + adapters Python/JS.
+- RFC 9964 لتمثيل ML-DSA-65 في COSE (ML-DSA-65 = -49).
+- positive corpus: 100+ vector
+- negative corpus: 100+ vector
+
+### حالة الانتظار
+
+**لا عمل حتى إشارة القائد.**
+
+**عند الاستئناف:**
+```bash
+cd ~/Desktop/EnterpriseGuard
+.venv/bin/python tests/account.py    # يجب: 771
+cat docs/vomega/PHASE-3-GATE-0-CLOSURE.md
+cat docs/vomega/CONTINUITY.md | tail -100
+القرار المتوقع من القائد:
+
+    إما المضي إلى Gate 1 (3A.1)
+
+    أو تعديل ترتيب البوابات
+
+    أو إعادة تقييم بعد مراجعة التقرير
+    
+
+---
+
+## 37. قرار القائد — Gate 0 ACCEPTED / Gate 1 AUTHORIZED
+
+**التاريخ:** 2026-10-07
+**الحالة:** 3A.1 START (spec only)
+**المرجع:** Commander Order 3A_LEVELS_GO
+
+### اعتماد Gate 0
+
+Gate 0 مُغلق رسمياً. الإنجاز الجوهري: Rust يتحقق من DCP 2.1
+hybrid certificate كاملاً، parity مع Python.
+
+**ما لا يُدَّعى:**
+- production-grade cryptography
+- independent security audit
+- side-channel immunity
+- NIST/CAVP certification
+
+**ما يُدَّعى:**
+- interoperability and implementation evidence قوي
+- protocol-level determinism across heterogeneous runtimes
+
+### تصحيحات إلزامية
+
+**1. RISK-3.1 — إعادة تصنيف:**
+- ❌ لا: "not applicable"
+- ✅ نعم: "BOUNDED EXPOSURE / NOT USED FOR PRIVATE-KEY OPERATIONS IN CURRENT VERIFIER PATH"
+- السبب: Marvin يرتبط بعمليات private-key. ADIE يستخدم RSA public-key verify فقط.
+- الإجراء: يبقى في Dependency Register. يُراجَع عند تغير scope.
+
+**2. DEFECT-017 — ترقية معمارية:**
+- لا يُصنّف كخطأ CLI
+- يُصنّف كدليل على ضرورة **Identity Binding Invariant**
+- Algorithm + Key ID + Public Key + Fingerprint + TBS = منظومة مترابطة
+- valid signature ≠ دليل كافٍ إن كانت هوية المفتاح لا تطابق المتوقع
+- سيُدمج في Wire Format + Governance + Revocation لاحقاً
+
+**3. FIPS 204 errata:**
+- NIST نشرت errata في يوليو 2026
+- يجب تثبيت exact revision في سجل التوافق
+- reference: FIPS 204 (2024-08-13) + July 2026 errata
+
+**4. RFC 9964 vs ADIE Hybrid Profile:**
+- RFC 9964 يعرّف ML-DSA في JOSE/COSE
+- ADIE Hybrid Profile هو شيء آخر (combines classical + PQ)
+- لا يُدَّعى أن ADIE = "RFC 9964 implementation"
+- Composite ML-DSA مسودة Internet-Draft (لم تصبح RFC). لا يُدَّعى compliance.
+
+### تصحيح في 3A — Semantic Strictness
+
+**بدل "احظر جميع الحقول غير المعروفة":**
+- Unknown Critical → REJECT
+- Unknown Non-Critical → behavior defined by profile
+- Version-breaking structure → REJECT
+- Ambiguous interpretation → REJECT
+
+### تصحيح في 3A — Reference implementation
+
+- ❌ لا: 3 مستقلات CBOR
+- ✅ نعم: Rust reference + Python adapter + JS/WASM adapter
+- الهدف: One normative protocol + independent verification paths
+
+### Exit gate لـ3A.1
+
+- ≥100 valid vectors
+- ≥100 malformed/noncanonical vectors
+- 3-way differential (positive AND negative convergence)
+- Fuzzing من day-1
+
+### ترتيب 3A
+
+```
+3A.1  WIRE-FORMAT-0.2.md         (spec only — NOW)
+3A.2  Rust reference encoder/decoder
+3A.3  Python adapter
+3A.4  JS/WASM adapter
+3A.5  Differential + malformed corpus
+3A.6  COSE integration
+3A.7  Hybrid round-trip verification
+```
+
+**لا ننتقل إلى 3A.2 حتى يوافق القائد على اكتمال WIRE-FORMAT-0.2.md.**
+
+### القاعدة السيادية
+
+Specification precedes implementation.
+Implementation precedes optimization.
+Validation precedes claim.
+Independent verification precedes trust.
+
+
+---
+
+## 38. Gate 1 / 3A.1 — CLOSED
+
+**التاريخ:** 2026-10-07
+**Gate:** Phase 3, Gate 1 — DCP 2.1 Wire Format Specification
+**Status:** Specification approved and frozen for implementation
+
+### Artifact
+
+- `spec/WIRE-FORMAT-0.2.md` (amended, ~530 سطر)
+- غير معياري لأي كود. لا CBOR implementation. لا 3A.2.
+
+### القرارات المعتمدة (Commander Order 3A_LEVELS_GO)
+
+| # | القرار |
+|---|---|
+| 1 | **1C** — CBOR integer keys، JCS-JSON TBS |
+| 2 | **ب** — TBS مستقل عن wire encoding |
+| 3 | **نعم** — فصل COSE_Key container عن raw pk material |
+| 4 | **نعم** — §16 vectors تُنتَج في 3A.2 |
+
+### المبدأ المحوري المُثبَّت
+
+> **Wire encoding must not silently redefine cryptographic identity.**
+
+النظام:
+
+    Semantic Certificate
+         ↓
+    JCS canonical (TBS)
+         ↓
+    "ADIE-SIG-V2\0" || TBS
+         ↓
+    RS256 + ML-DSA-65
+         ↓
+    CBOR / COSE (transport only)
+
+CBOR لا يغيّر TBS. لا يغيّر key_id. لا يغيّر التوقيع. هو transport layer.
+
+### تعديلات على المواصفة (نُفِّذت بعد موافقة القائد)
+
+1. §7: integer keys allowed, text keys forbidden
+2. §8 rule 2: clarify integer sorting = numeric ascending
+3. §13 opening: COSE relationship explicit (not RFC 9964 compliance)
+4. §13.2: TBS independence paragraph added
+5. §14.3: three-layer table (wire / material / key_id source)
+6. §14.4: Fingerprint Source Invariant (new section)
+7. §16: vectors produced in 3A.2
+8. §20: explicit status token on closure
+
+### ما لا يُدَّعى
+
+- لا "RFC 9964 implementation" (subset for identifiers only)
+- لا "composite ML-DSA compliant" (draft, not RFC)
+- لا "production-grade cryptography"
+- لا "NIST/CAVP certified"
+
+### الحالة
+
+**GATE 1 / 3A.1 — CLOSED**
+Specification approved and frozen for implementation.
+
+### التالي
+
+**3A.2 — GO عند استلام أمر جديد من القائد.**
+
+لا يبدأ 3A.2 حتى يرد أمر مستقل. القاعدة السارية:
+Specification precedes implementation.
