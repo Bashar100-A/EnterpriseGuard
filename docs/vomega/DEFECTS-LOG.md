@@ -186,3 +186,19 @@ invariant_at_risk: I34
 root_cause: Same as DEFECT-007, second occurrence. GAP-6 was written assuming nvm was the only path, while NodeSource was simultaneously attempted and succeeded.
 fix: GAP-6-RETRACTED. DEFECT-008 logged.
 lesson: This is a pattern, not an isolated incident. Going forward, GAP-N entries require a MANDATORY pre-condition: the author must run a "paths-tried" checklist and include raw evidence (commands + exit codes) for EVERY path before committing a "deferred" claim. A GAP-N without such evidence is treated as incomplete.
+
+---
+
+## DEFECT-009 — Placeholder contamination in spec §12.3
+
+date: 2026-10-06
+commit_found: <uncommitted>
+commit_fixed: <TBD>
+suite: n/a (documentation)
+category: process
+language_pair: n/a
+failure_mode: semantic
+invariant_at_risk: I34 (identifier immutability)
+root_cause: A Python script was provided to update spec/HYBRID-CRYPTO-0.1.md with three hash values. The script included literal placeholders (INTEGRITY, SHA_MLDSA, SHA_PKG) with instructions to substitute them before running. The instruction was not followed, so the placeholders were written to the spec verbatim, making it look complete when it was not.
+fix: Replaced placeholders by reading values directly from the filesystem inside the script. No manual substitution required.
+lesson: Templates with placeholders are a failure mode. Any script that writes to a normative document MUST resolve all values programmatically. Manual substitution is not permitted for spec files. This is a stricter rule than DEFECT-007 and DEFECT-008 — the defect class is different (placeholders shipped, not partial-information commits).

@@ -643,3 +643,33 @@ cat docs/vomega/CONTINUITY.md
 - ml-dsa **ليس مُستخدَماً** بعد (لا sign/verify)
 
 **التالي:** C.3 — JavaScript @noble/post-quantum.
+
+---
+
+## 25. Phase 2 C.3 — JavaScript ML-DSA مُثبَّت
+
+**التاريخ:** 2026-10-06
+
+**التغييرات:**
+- js/ directory أنشئت
+- js/package.json (type=module, name=adie-js, version=0.1.0)
+- @noble/post-quantum 0.7.1 مثبت
+- 4 packages: post-quantum + curves + hashes + ciphers (كلها 2.4.0)
+- Node 20.20.2 (NodeSource)
+
+**API surface:**
+- ml_dsa65: keygen, sign, verify, getPublicKey, prehash, info, lengths, securityLevel
+
+**Import path:**
+- `@noble/post-quantum/ml-dsa.js` (لاحقة .js إلزامية بسبب exports map)
+
+**لم يُبنَ بعد:**
+- كود ADIE يستخدم المكتبة
+- يبدأ في Block D (KAT vectors)
+
+**الجداول الآن:**
+- Python: pqcrypto 1.0.0 + dilithium-py 1.4.0 ✅
+- Rust: ml-dsa 0.1.1 (dependency فقط، لا استخدام) ⏳
+- JS: @noble/post-quantum 0.7.1 ✅ (dependency فقط، لا استخدام)
+
+**التالي:** C.2.c — كتابة Rust sign/verify، ثم Block D.

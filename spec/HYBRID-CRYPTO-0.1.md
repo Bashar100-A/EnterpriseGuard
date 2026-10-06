@@ -415,9 +415,35 @@ ClaimRoot, ACL, DCP semantic verify) remains green.
 introduced in C.2.c and validated against NIST ACVP KAT vectors in
 Block D.
 
-### JavaScript (C.3 — pending)
+### JavaScript (C.3 — 2026-10-06)
 
-(To be recorded.)
+**Node:** v20.20.2 (NodeSource)
+**Package manager:** npm 10.9.9
+
+| Package | Version | Integrity (package-lock) |
+|---|---|---|
+| `@noble/post-quantum` | 0.7.1 | `sha512-+P9981IiAnVh+rmcubozzVwrEy3XsN/tMhTnvsjV9VDaYpOnNCqWqKo2FLWxbu92YHfjGIlE5XnW175UK+ln+Q==` |
+
+**Companion packages (pinned by @noble/post-quantum 0.7.1):**
+- `@noble/curves` 2.4.0
+- `@noble/hashes` 2.4.0
+- `@noble/ciphers` 2.4.0
+
+**File-level SHA-256:**
+- `node_modules/@noble/post-quantum/ml-dsa.js`: `7c64e733930b115b72bd0585731d8202f1caa819e081cc1e682a19d1fcbcfbda`
+- `node_modules/@noble/post-quantum/package.json`: `193687769e8bd4d6a098a1c7f78985c2eadf23b70f2005369eb986521b28927f`
+
+**Import path (normative):**
+```js
+import { ml_dsa65 } from '@noble/post-quantum/ml-dsa.js';
+The .js suffix is required by the package's exports map.
+
+Exported API surface:
+keygen, sign, verify, getPublicKey, prehash, info,
+lengths, securityLevel, internal.
+
+Verified: module imports, keygen/sign/verify are functions.
+Actual cryptographic correctness is verified in Block D via NIST ACVP KATs.
 
 ### Verification notes
 
