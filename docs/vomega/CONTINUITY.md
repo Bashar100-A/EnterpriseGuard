@@ -700,3 +700,38 @@ cat docs/vomega/CONTINUITY.md
 - verify parity عبر اللغات الثلاث
 
 **التالي:** Block D.1 — Rust mldsa wrapper + cross-check.
+
+---
+
+## 27. Phase 2 D.1 — ML-DSA-65 مُثبَّت ثلاثياً
+
+**التاريخ:** 2026-10-06
+**commit:** القادم
+
+**النتيجة:**
+- Python (dilithium-py 1.4.0): byte-identical ✅
+- JavaScript (@noble/post-quantum 0.7.1): byte-identical ✅
+- Rust (RustCrypto ml-dsa 0.1.1): byte-identical ✅
+
+**test vector:** spec/test-vectors/MLDSA-XLANG-001.json
+
+**inputs:**
+- seed = 0x42 * 32
+- TBS  = "ADIE-SIG-V2\\0" || '{"test":"vector"}'
+- ctx  = b""
+
+**outputs:**
+- pk  = 1952 bytes, first32 = ecfb1116...ea54
+- sig = 3309 bytes, first32 = f02d487b...4a75, last32 = ff0c3b5e...2b33
+
+**Rust binary:** rust/adie-primitives/src/bin/adie-mldsa.rs
+**Rust wrapper:** rust/adie-primitives/src/mldsa.rs
+
+**ما لم يُثبَت بعد:**
+- NIST ACVP KAT vectors (Block D.2)
+- DCP 2.1 integration (Block D.3)
+- Hybrid RS256 + ML-DSA (Block D.4)
+
+**RISK-2.1 يبقى نشطاً:** ml-dsa 0.1.1 غير مُدقَّق (self-declared). Cargo wrapper معزول، قابل للاستبدال.
+
+**التالي:** Block D.2 — NIST ACVP KAT vectors.

@@ -6,3 +6,4 @@ pub mod jcs;
 pub mod claim_root;
 pub mod acl;
 pub mod verifier;
+pub mod mldsa;

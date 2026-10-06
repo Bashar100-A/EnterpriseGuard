@@ -38,20 +38,21 @@
       "library": "@noble/post-quantum",
       "version": "0.7.1",
       "api": "ml_dsa65.keygen(seed) + sign(msg, sk, {extraEntropy: false})"
-    }
-  ],
-  "pending_verification": [
+    },
     {
       "library": "ml-dsa (RustCrypto)",
       "version": "0.1.1",
-      "target": "adie-mldsa binary"
+      "api": "SigningKey::<MlDsa65>::from_seed(xi) + sign_deterministic(msg, ctx=b'')",
+      "result": "byte-identical (pk first32, sig first32, sig last32)"
     }
   ],
+  "pending_verification": [],
   "known_failures": [
     {
       "library": "pqcrypto",
       "version": "1.0.0",
       "reason": "no seed-injectable keygen; no deterministic sign mode. See DEFECT-010."
     }
-  ]
+  ],
+  "verified_date": "2026-10-06"
 }

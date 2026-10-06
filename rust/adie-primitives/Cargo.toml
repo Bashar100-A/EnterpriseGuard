@@ -25,6 +25,10 @@ path = "src/bin/adie-acl.rs"
 name = "adie-verify"
 path = "src/bin/adie-verify.rs"
 
+[[bin]]
+name = "adie-mldsa"
+path = "src/bin/adie-mldsa.rs"
+
 [dependencies]
 serde_json = "1.0"
 ml-dsa = "=0.1.1"
