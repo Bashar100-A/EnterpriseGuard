@@ -459,3 +459,31 @@ lesson: A library that resolves in cargo fetch does not prove it
   never built. Sandbox verification MUST include `cargo build`,
   not only `cargo fetch`. This is the same class as DEFECT-007/008
   (partial-information commitment), applied to build verification.
+
+
+---
+
+## DEFECT-016 — rsa 0.9.6 requires explicit sha2 feature
+
+date: 2026-10-07
+commit_found: ac1b2c4
+commit_fixed: <this commit>
+suite: rust/adie-primitives build
+test_id: n/a
+test_phase: Phase 3, Gate 0
+category: dependency
+language_pair: n/a
+failure_mode: structural
+invariant_at_risk: none (build-time only)
+root_cause: `rsa 0.9.6` default features are `[std, pem, u64_digit]`.
+  The `sha2` feature is optional and gates both `rsa::sha2` and
+  `RsaPublicKey::from_public_key_pem` for SHA-256 uses. Our initial
+  Cargo.toml line was `rsa = "=0.9.6"` without the feature, causing
+  `use rsa::sha2::Sha256` to fail with E0432.
+fix: Changed to `rsa = { version = "=0.9.6", features = ["sha2"] }`.
+  Rebuilt successfully.
+lesson: `cargo fetch` succeeding does not prove `cargo build` will.
+  Feature gating is invisible to fetch. Every sandbox verification
+  MUST end with `cargo build --release`. This is the second build-time
+  defect in the same layer (DEFECT-015, DEFECT-016) — the pattern is
+  consistent: verify by building, not by inspecting.

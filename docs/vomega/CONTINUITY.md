@@ -951,3 +951,30 @@ cat docs/vomega/CONTINUITY.md
 - Audit status من README
 
 **لا كود قبل الفحص.**
+
+
+---
+
+## 34. قاعدة الفحص الإجرائية (Gate 0)
+
+**التاريخ:** 2026-10-07
+
+**القاعدة النافذة:**
+> أي sandbox لفحص مكتبة خارجية **يجب** أن يُنفّذ `cargo build --release`
+> قبل أن يُعلن أن المكتبة "قابلة للاستخدام". `cargo fetch` أو `cargo tree`
+> أو `cargo info` **لا تكفي**.
+
+**الأسباب المُثبتة:**
+- DEFECT-015: `sad-rsa 0.10.2` نجح في `cargo fetch`، فشل في `cargo build`.
+- DEFECT-016: `rsa 0.9.6` نجح مع default features في `/tmp/`, لكنه احتاج
+  feature `sha2` صراحةً في `adie-primitives`.
+
+**ما يجري في كل sandbox مستقبلي:**
+1. `cargo add` أو كتابة Cargo.toml
+2. `cargo fetch` — تحميل
+3. **`cargo build --release`** — إثبات البناء
+4. `cargo tree --depth 1` — شجرة التبعيات
+5. تسجيل checksums
+6. **فقط بعد 1-5:** القرار
+
+**هذا امتداد لـDEFECT-007/008/009/014:** كل ادعاء يجب أن يُختبر، لا يُفترض.
