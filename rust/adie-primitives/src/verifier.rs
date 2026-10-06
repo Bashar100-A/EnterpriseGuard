@@ -129,12 +129,12 @@ pub fn verify_semantic(
     // 5. Binding
     let binding = obj.get("binding").and_then(|v| v.as_object())
         .ok_or_else(|| VerifyError {
-            code: "E-BINDING-MISSING-FIELD".into(),
+            code: "E_BINDING_MISSING_FIELD".into(),
             message: "E-BINDING-MISSING-FIELD: binding".into() })?;
 
     for f in ["audience","purpose","resource","request_hash","nonce","certificate_id"] {
         if !binding.contains_key(f) {
-            return fail_binding("E-BINDING-MISSING-FIELD", f);
+            return fail_binding("E_BINDING_MISSING_FIELD", f);
         }
     }
 
@@ -143,7 +143,7 @@ pub fn verify_semantic(
     let declared_req_h = binding.get("request_hash")
         .and_then(|v| v.as_str()).unwrap_or("");
     if declared_req_h != re_req_h {
-        return fail_binding("E-BINDING-REQUEST-HASH", &format!(
+        return fail_binding("E_BINDING_REQUEST_HASH", &format!(
             "declared {}, recomputed {}",
             take_n(declared_req_h, 20), take_n(&re_req_h, 20)));
     }
@@ -151,7 +151,7 @@ pub fn verify_semantic(
     if let Some(exp) = expected_audience {
         let got = binding.get("audience").and_then(|v| v.as_str()).unwrap_or("");
         if got != exp {
-            return fail_binding("E-BINDING-AUDIENCE-MISMATCH", &format!(
+            return fail_binding("E_BINDING_AUDIENCE_MISMATCH", &format!(
                 "expected {}, got {}", exp, got));
         }
     }

@@ -133,3 +133,22 @@ invariant_at_risk:   I13 | I14 | ... | I34 | none
 ```
 
 Rationale: the pilot layer exposed that cross-language byte-equality failures split into three distinct classes (structural, message, crypto). Tracking them explicitly prevents future regression.
+
+---
+
+## DEFECT-006 — Rust verifier binding error codes use hyphens
+
+date: 2026-10-06
+commit_found: f8fb6e5
+commit_fixed: <TBD>
+suite: tests/vomega/rust/run_all.py
+test_id: P06
+test_name: wrong audience
+test_phase: RUST-VERIFY
+category: code
+language_pair: py/rust
+failure_mode: message
+invariant_at_risk: I13 (cross-impl determinism)
+root_cause: verifier.rs used E-BINDING-AUDIENCE-MISMATCH (hyphens) while Python verify_cli.py uses E_BINDING_AUDIENCE_MISMATCH (underscores). Cross-language byte-equality broke on error-code format, not on decision logic.
+fix: Replaced all E-BINDING-* strings with E_BINDING_* in verifier.rs to match Python verify_pipeline.py and verify_cli.py.
+lesson: The new DEFECT schema (language_pair/failure_mode/invariant_at_risk) was justified by this defect. Byte-equality is fragile at every layer including error identifiers. A single hyphen vs underscore = a real divergence. Tests caught it; the previous commit message did NOT (claimed 435/435 when actual was 434/435).
