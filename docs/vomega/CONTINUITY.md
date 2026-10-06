@@ -867,3 +867,87 @@ cat docs/vomega/CONTINUITY.md
 
 **القاعدة (نافذة):** لا أرقام مُتذكَّرة. لا أرقام مُجمَّعة. لا أرقام مُقدَّرة.
 فقط أرقام من أداة آلية.
+
+
+---
+
+## 33. تصحيح العدّ + DEFECT-014 + DECISIONS-0.3 + Gate 0 spec
+
+**التاريخ:** 2026-10-07
+**آخر commit:** cf1f017
+
+### الأرقام الحقيقية (من tests/account.py)
+
+| الدلو | العدد |
+|---|---|
+| REGRESSION_TOTAL (Phase 1) | 633 |
+| PHASE2_ADIE_PYTHON | 59 |
+| PHASE2_ADIE_JAVASCRIPT | 11 |
+| ACVP_UNIQUE_VECTORS | 55 |
+| ACVP_VECTOR_EXECUTIONS | 150 |
+| **المجموع الفريد** | **758** |
+
+**الادعاءات المصححة:**
+- "648 Phase 1" → الفعلي 633
+- "723/723 total" → غير صحيح
+- "75 Phase 2" → الفعلي 70 (59 Python + 11 JS)
+
+### DEFECT-014
+
+**الفئة:** process
+**السبب:** الأرقام كانت تُحسب ذاكرياً أو يدوياً قبل إنشاء الأداة.
+**الأثر:** ادعاءات في commit messages (fd5d98d, 6f1152b) وPHASE-2-CLOSURE.md.
+**الحل:** tests/account.py مصدر السلطة الوحيد.
+
+### DECISIONS-0.3 (8 قرارات)
+
+1. **Three-bucket accounting** — لا جمع أرقام من دلاء متقاطعة
+2. **Forbidden phrases** — "NIST Certified", "Zero errors", "Production-grade PQC" ممنوعة
+3. **Approved claim forms** — صيغ محددة لكل نوع ادعاء
+4. **DEFECT/GAP discipline** — حقول إلزامية
+5. **RFC 9964 adoption** — ML-DSA في COSE = IANA identifiers، لا اختراع
+6. **CBOR philosophy** — لا CBOR من الصفر، ADIE Deterministic CBOR Profile فوق RFC 8949
+7. **Phase 3 gate order** — 3E → 3A → 3B → 3C → 3D
+8. **Commit message numbers** — لا رقم قبل نسخه من stdout لأداة
+
+### RUST-FULL-VERIFIER-0.1 (Gate 0 spec)
+
+- 143 سطر، معياري
+- Rust يتحقق من DCP 2.1 كاملاً (كان GAP-6 في Phase 1)
+- RISK-3.1: rsa crate MSRV/audit
+- RISK-3.2: RSA padding strictness
+- GAP-8 يبقى مفتوحاً (Rust sigGen)
+- Exit: 11 E2E vectors + 20 negative vectors byte-identical Python≡Rust
+
+### قواعد تشغيلية جديدة نافذة
+
+**1. لا heredoc مع triple backticks في markdown.**
+السبب: bash يفشل صامتاً. الحل: Python `Path().write_text()`.
+يُسجَّل هذا كامتداد لـDEFECT-009.
+
+**2. لا رقم في commit message قبل نسخه من stdout.**
+السبب: DEFECT-014.
+الحل: `tests/account.py` هو المصدر.
+
+**3. كل runner Python يستخدم `.venv/bin/python`.**
+السبب: Phase 2 deps فقط في .venv (PEP 668).
+
+### الحالة الحالية
+
+- branch: vOmega
+- last commit: cf1f017
+- suites: 633 + 59 + 11 + 55 = 758 (كلها خضراء)
+- DEFECTs: 14 (كلها مُغلقة/موثقة)
+- GAPs: 8، 9 (مفتوحة، موثقة)
+- RISKs: 2.1، 2.2، 2.3 (نشطة)
+- Phase 3: Gate 0 جاهز للبدء
+
+### التالي
+
+**3E Block 1:** فحص `rsa` crate API (نفس منهج `ml-dsa` في Phase 2):
+- cargo search rsa
+- cargo tree rsa --depth 1
+- MSRV من Cargo.toml
+- Audit status من README
+
+**لا كود قبل الفحص.**
