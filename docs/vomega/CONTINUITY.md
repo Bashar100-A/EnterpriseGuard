@@ -587,3 +587,33 @@ cat docs/vomega/CONTINUITY.md
 
 **لا تثبيت حتى §12.1 مُلتزم.**
 **التالي:** Block C — تثبيت + KAT اختبار
+
+---
+
+## 23. Phase 2 — بيئة Rust مُثبَّتة
+
+**التاريخ:** 2026-10-06
+
+**الأداة:**
+- rustup (official) — من `sh.rustup.rs`
+- rustc 1.99.0 (b940084d7 2026-09-28)
+- cargo 1.99.0 (5f94df478 2026-08-27)
+- default toolchain: stable-x86_64-unknown-linux-gnu
+- المسار: /home/biss/.cargo/bin/{cargo,rustc}
+
+**apt Rust (1.75.0) لا يزال موجوداً** في /usr/bin — لم نحذفه (أمان: لو rustup انهار، يبقى احتياطي قديم).
+
+**الـPATH دائم:**
+- أُضيف `. "$HOME/.cargo/env"` إلى ~/.bashrc
+- التحقق: `bash -c "source ~/.bashrc; cargo --version"` = 1.99.0
+
+**قاعدة جديدة نافذة:**
+> كل أمر cargo/rustc في هذه الجلسة يُفترض أن يكون 1.99.0. إذا ظهر 1.75.0، فهذا يعني shell غير مبدوء من .bashrc → صحّح قبل المتابعة.
+
+**GAP-5:** صُحِّح. ml-dsa 0.1.1 يُبنى على rustc 1.99 في 45 ثانية.
+
+**DEFECT-007:** مُسجَّل (التزام قبل استنفاد البدائل).
+
+**الـ435/435 خضراء** تحت rustc 1.99.
+
+**التالي:** C.2.b — إضافة ml-dsa إلى adie-primitives.
