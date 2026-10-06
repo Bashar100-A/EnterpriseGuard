@@ -21,6 +21,10 @@ path = "src/bin/adie-claimroot.rs"
 name = "adie-acl"
 path = "src/bin/adie-acl.rs"
 
+[[bin]]
+name = "adie-verify"
+path = "src/bin/adie-verify.rs"
+
 [dependencies]
 serde_json = "1.0"
 

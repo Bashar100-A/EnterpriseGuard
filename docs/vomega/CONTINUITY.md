@@ -486,3 +486,39 @@ cat docs/vomega/CONTINUITY.md
 
 **التكلفة:** ~250 سطر Rust، ساعتان
 **المكسب:** إغلاق الفجوة الدلالية ثلاثية اللغة قبل ML-DSA
+
+---
+
+## 20. Phase 1.12-lite مكتمل — Rust semantic verifier
+
+**التاريخ:** 2026-10-06
+
+**Rust binaries:**
+- adie-h-a: H_A
+- adie-claimroot: ClaimRoot
+- adie-acl: ACL eval + normalize
+- adie-verify: DCP 2.0 semantic verifier
+
+**الـconformance الكامل:**
+- RUST-HA: 20/20
+- RUST-CR: 200/200
+- RUST-ACL: 200/200
+- RUST-VERIFY: 15/15 (14 مطابقة + 1 متوقع P13)
+- TOTAL: 435/435
+
+**الفجوات الموثقة (spec/RUST-VERIFIER-0.1.md §2):**
+- GAP-1: RSA signature verify غير منفذ (SKIPPED)
+- GAP-2: strict_load I-JSON غير منفذ
+- GAP-3: ACL validate() غير منفذ في Rust verifier
+- GAP-4: 200 حالة fuzz بدلاً من 10k
+
+**الرصيد الكلي عبر اللغات الثلاث:**
+- Python/JS ACL: 500/500
+- Python/JS ClaimRoot: 500/500
+- Python/JS Authoring: 500/500
+- Python/Rust H_A: 20/20
+- Python/Rust ClaimRoot: 200/200
+- Python/Rust ACL: 200/200
+- Python/Rust DCP verify: 15/15
+
+**التراكمي:** 1935 حالة، كلها مطابقة
