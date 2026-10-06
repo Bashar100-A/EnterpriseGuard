@@ -735,3 +735,33 @@ cat docs/vomega/CONTINUITY.md
 **RISK-2.1 يبقى نشطاً:** ml-dsa 0.1.1 غير مُدقَّق (self-declared). Cargo wrapper معزول، قابل للاستبدال.
 
 **التالي:** Block D.2 — NIST ACVP KAT vectors.
+
+---
+
+## 28. Phase 2 D.2b — KAT: Python 55/55 + Rust 40/40
+
+**التاريخ:** 2026-10-06
+
+**ACVP vectors المُستخرجة:**
+- keygen_65.json: 25 (كلها pure)
+- siggen_65.json: 15 (deterministic + pure + ctx متنوع)
+- sigver_65.json: 15 (pure + ctx متنوع)
+- المُستبعَد: 90 siggen (HashML-DSA) + 15 siggen (randomized) + 45 sigver (HashML-DSA)
+
+**Python (dilithium-py 1.4.0):**
+- keygen: 25/25
+- siggen: 15/15
+- sigver: 15/15
+- TOTAL: 55/55
+
+**Rust (RustCrypto ml-dsa 0.1.1):**
+- keygen: 25/25
+- sigver: 15/15
+- siggen: not covered (GAP-8، بسبب API seed-only)
+- TOTAL: 40/40 (cross-python مطابق في كل ما غُطّي)
+
+**DEFECT-012:** Rust decode كان يُرجع Err بدل Ok(false) لتوقيعات malformed. صُحِّح.
+
+**GAP-8:** Rust لا يغطي sigGen بسبب API. موثق مع paths tried.
+
+**التالي:** Block D.2c — JS KAT (sigGen + sigVer).

@@ -234,3 +234,51 @@ invariant_at_risk: none (discovered while preparing Block D.2 KAT)
 root_cause: The ML-DSA wrapper (mldsa.rs) hard-coded SIGNING_CONTEXT = b"". This was correct for MLDSA-XLANG-001 (which used ctx=b"") but does not cover the ACVP KAT vectors, which carry variable-length context strings (e.g. 17 bytes, 20 bytes). The mismatch was discovered by inspecting the ACVP JSON structure before writing the KAT runner, not by a failing test.
 fix: Extended mldsa.rs to expose sign_deterministic_ctx(seed, msg, ctx) and verify_with_ctx(pk, msg, ctx, sig). Legacy sign_deterministic(tbs) and verify() now delegate with ctx=b"". The CLI adie-mldsa accepts ctx_hex (optional, defaults to empty). MLDSA-XLANG-001 regression check passes with ctx=b"".
 lesson: A wrapper that "works" for one test vector can still be incomplete for the general case. When preparing to add standard test vectors, read their structure first and confirm the wrapper covers every field. This is DEFECT-009 applied to code instead of docs: do not assume the first passing input defines the contract.
+
+---
+
+## DEFECT-012 — RustCrypto decode was stricter than FIPS 204.Verify semantics
+
+date: 2026-10-06
+commit_found: uncommitted (Block D.2b Rust run)
+commit_fixed: <TBD>
+suite: tests/vomega/mldsa/kat/run_rust.py
+test_id: sigver tcId=32,38,41
+test_phase: Phase 2 D.2b
+category: code
+language_pair: py/rust
+failure_mode: structural
+invariant_at_risk: none (API shape, not protocol)
+root_cause: RustCrypto ml-dsa 0.1.1 Signature::decode returns Option::None for signatures whose hint field is out of range (per FIPS 204 sigDecode). The wrapper mapped this None to Err("signature decode failed"). ACVP expects such inputs to produce testPassed=false, not an error. Python dilithium-py returns False directly. Divergence: Err vs Ok(false).
+fix: mldsa.rs verify_with_ctx maps decode failures to Ok(false), matching FIPS 204 ML-DSA.Verify which rejects invalid signatures. Wrong-length signature bytes also return Ok(false) now (they cannot be valid by construction).
+lesson: "Signature decode" and "signature verification" are both rejections under FIPS 204; only the input format is what differs. Splitting them into Err vs Ok(false) in a wrapper breaks cross-language byte-equality on the decision (which ACVP tests). API ergonomics should follow the spec, not vice versa.
+
+---
+
+## GAP-8 — Rust ML-DSA sigGen not covered by ACVP KAT
+
+date: 2026-10-06
+paths tried:
+  1. sign_deterministic(seed, msg, ctx) — requires Seed(32B)
+  2. ACVP sigGen provides sk (4032B), not seed. Seed cannot be recovered
+     from sk (it is derived from seed by an irreversible expansion).
+  3. SigningKey::from_expanded(enc) — takes ExpandedSigningKeyBytes, but
+     ACVP sk format is FIPS 204 sk encoding, not the RustCrypto
+     internal expanded format.
+  4. ml-dsa 0.1.1 does not expose a public API to construct SigningKey
+     from raw FIPS 204 sk bytes without round-tripping through seed.
+consequence:
+  - Rust covers: keygen (25/25) + sigver (15/15).
+  - Rust does not cover: sigGen (0/15).
+  - Cross-language coverage for sigGen: Python (15/15) + JS (pending).
+  - This is a wrapper-coverage limit, not a cryptographic gap: Rust
+    verifies every ACVP sigVer vector correctly and its pk matches
+    every ACVP keygen vector exactly.
+resolution path (Phase 2.5):
+  - Inspect RustCrypto for a hypothetical from_encoded API in later
+    versions, OR
+  - Build a thin adapter that reconstitutes the internal key from the
+    standard sk format (if FIPS 204 defines such a path).
+  - MLDSA-XLANG-001 already proves byte-equality of sigGen across the
+    three languages for the seed-based path.
+not retracted: RISK-2.1 (ml-dsa pre-1.0, unaudited).

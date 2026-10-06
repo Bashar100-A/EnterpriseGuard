@@ -58,10 +58,17 @@ pub fn verify_with_ctx(
         .map_err(|_| format!("pk len: expected {}, got {}", MLDSA65_PUBKEY_BYTES, pk_bytes.len()))?;
     let vk = VerifyingKey::<MlDsa65>::decode(&pk_enc);
 
-    let sig_enc = EncodedSignature::<MlDsa65>::try_from(sig_bytes)
-        .map_err(|_| format!("sig len: expected {}, got {}", MLDSA65_SIGNATURE_BYTES, sig_bytes.len()))?;
-    let sig = Signature::<MlDsa65>::decode(&sig_enc)
-        .ok_or_else(|| "signature decode failed".to_string())?;
+    // Per FIPS 204 ML-DSA.Verify: if signature decoding fails, the
+    // signature is REJECTED (verification returns false). Do not
+    // propagate as Err — that would confuse the verify semantics.
+    let sig_enc = match EncodedSignature::<MlDsa65>::try_from(sig_bytes) {
+        Ok(e) => e,
+        Err(_) => return Ok(false),  // wrong length → invalid
+    };
+    let sig = match Signature::<MlDsa65>::decode(&sig_enc) {
+        Some(s) => s,
+        None => return Ok(false),  // out-of-range z → invalid
+    };
 
     Ok(vk.verify_with_context(msg, ctx, &sig))
 }
