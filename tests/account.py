@@ -91,6 +91,9 @@ phase2_py = [
     "tests/vomega/hybrid/test_verify.py",
     "tests/vomega/hybrid/test_e2e.py",
 ]
+phase3_py = [
+    "tests/vomega/hybrid/test_rust_parity.py",
+]
 p2_total = p2_pass = p2_fail = 0
 print("PHASE 2 ADIE (Python):")
 for s in phase2_py:
@@ -102,6 +105,19 @@ for s in phase2_py:
         p2_fail += f
         print(f"  {s:45s} {p}/{n}")
 print(f"  PYTHON_PHASE2 = {p2_total}  (pass={p2_pass}, fail={p2_fail})")
+print()
+
+p3_total = p3_pass = p3_fail = 0
+print("PHASE 3 Gate 0 (Python-Rust parity):")
+for s in phase3_py:
+    res = run_py(s, VPY)
+    if res:
+        n, p, f = res
+        p3_total += n
+        p3_pass += p
+        p3_fail += f
+        print(f"  {s:45s} {p}/{n}")
+print(f"  PHASE3_GATE0 = {p3_total}  (pass={p3_pass}, fail={p3_fail})")
 print()
 
 # JS suite (Phase 2)
@@ -135,10 +151,11 @@ print("=" * 72)
 print(f"  REGRESSION_TOTAL (Phase 1):        {reg_total}")
 print(f"  PHASE2_ADIE_PYTHON:                {p2_total}")
 print(f"  PHASE2_ADIE_JAVASCRIPT:            {js_total}")
+print(f"  PHASE3_GATE0_PARITY:               {p3_total}")
 print(f"  ACVP_VECTOR_EXECUTIONS (3 langs):  {acvp_total}")
 print(f"  ACVP_UNIQUE_VECTORS:               55")
 print()
-print(f"Grand total (unique, non-overlapping) = {reg_total + p2_total + js_total + 55}")
+print(f"Grand total (unique, non-overlapping) = {reg_total + p2_total + js_total + p3_total + 55}")
 print(f"  (regression + phase2 + ACVP unique)")
 print()
 print("Claim form approved for external use:")

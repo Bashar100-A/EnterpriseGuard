@@ -487,3 +487,36 @@ lesson: `cargo fetch` succeeding does not prove `cargo build` will.
   MUST end with `cargo build --release`. This is the second build-time
   defect in the same layer (DEFECT-015, DEFECT-016) — the pattern is
   consistent: verify by building, not by inspecting.
+
+
+---
+
+## DEFECT-017 — Rust adie-hybrid-verify did not check key_id before signature
+
+date: 2026-10-07
+commit_found: 723e0ce
+commit_fixed: <this commit>
+suite: tests/vomega/hybrid/test_rust_parity.py
+test_id: R12
+test_phase: Phase 3, Gate 0
+category: code
+language_pair: py/rust
+failure_mode: semantic
+invariant_at_risk: none (protocol-visible behavior mismatch)
+root_cause: The Rust binary computed signatures but never checked
+  signature.key_id against the fingerprint of the provided public
+  key. On a wrong-key scenario, Rust fell through to signature
+  verification (which failed) and emitted E_SIGNATURE_HYBRID_INVALID.
+  Python explicitly checks key_id first and emits E_SIGNATURE_KEY_MISMATCH.
+  Both refuse the certificate, but with different error codes —
+  breaking byte-equality on the decision.
+fix: Added `rs256_key_id_from_pem` (SPKI DER hashed with SHA-256) and
+  `mldsa65_key_id_from_raw` (raw pk hashed with SHA-256) helpers, and
+  inserted a key_id comparison inside the per-alg verification loop,
+  before invoking the primitive. On mismatch, emit E_SIGNATURE_KEY_MISMATCH
+  with the same message format as Python.
+lesson: key_id binding and signature verification are two independent
+  security checks. A verifier must perform both. Byte-equality testing
+  across languages is the mechanism that catches such omissions; without
+  R12, this would have gone unnoticed until an auditor noted inconsistent
+  error codes for the same rejection.

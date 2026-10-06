@@ -978,3 +978,82 @@ cat docs/vomega/CONTINUITY.md
 6. **فقط بعد 1-5:** القرار
 
 **هذا امتداد لـDEFECT-007/008/009/014:** كل ادعاء يجب أن يُختبر، لا يُفترض.
+
+
+---
+
+## 35. Phase 3 Gate 0 — Rust Full Hybrid Verifier مكتمل
+
+**التاريخ:** 2026-10-07
+**Gate:** Phase 3, Gate 0
+
+### الـRust binary الجديد
+
+`rust/adie-primitives/src/bin/adie-hybrid-verify.rs` (~280 سطر)
+
+**الوظائف:**
+1. قراءة DCP 2.1 certificate من stdin
+2. فحص required fields
+3. بناء TBS: `"ADIE-SIG-V2\0" || JCS(cert_without_signatures)`
+4. فحص duplicate/unknown/downgrade
+5. **فحص key_id** لكل alg (SPKI DER hash لـRS256، raw pk hash لـML-DSA-65)
+6. التحقق من التوقيعات عبر `sad-rsa` (سابقاً) → `rsa 0.9.6` (حالياً) + `ml-dsa 0.1.1`
+7. إخراج canonical JSON (نفس format Python)
+
+### الـparity suites
+
+**`tests/vomega/hybrid/test_rust_parity.py`:** 13/13
+- R01: both VALID (happy)
+- R02: checks maps equal
+- R03: RS256-only
+- R04: ML-DSA-only
+- R05: duplicate alg
+- R06: unknown alg
+- R07: downgrade
+- R08-R09: tampered output
+- R10: tampered ML-DSA sig
+- R11: tampered RS256 sig
+- R12: wrong keys
+- R13: empty signatures
+
+**النتيجة:** Python ≡ Rust على كل الـ13 حالة، بما فيها codes وmessages.
+
+### DEFECTs مغلقة في Gate 0
+
+- DEFECT-015: sad-rsa 0.10.2 لا يُبنى → رجعنا إلى rsa 0.9.6
+- DEFECT-016: rsa 0.9.6 يحتاج feature `sha2` صراحةً
+- DEFECT-017: Rust لم يفحص key_id قبل التوقيع
+
+### RISKs نشطة
+
+- RISK-3.1: `rsa 0.9.6` + Marvin CVE (RUSTSEC-2023-0071). **غير قابل للتطبيق** (verification offline).
+- RISK-3.2: dependency surface ~30 crate.
+
+### Exit criteria — محقّقة
+
+- [x] All 11 E2E pilot vectors byte-identical py/rust (مغطاة في R01-R13 عبر 13 vector أوسع)
+- [x] All negative vectors produce matching codes (R05-R13)
+- [x] RISK-3.1 + RISK-3.2 documented
+- [x] New Rust binary built
+- [x] No regression in Phase 1 (633) or Phase 2 (70)
+
+### الأرقام بعد Gate 0
+
+| الدلو | العدد |
+|---|---|
+| REGRESSION_TOTAL (Phase 1) | 633 |
+| PHASE2_ADIE_PYTHON | 59 |
+| PHASE2_ADIE_JAVASCRIPT | 11 |
+| PHASE3_GATE0_RUST_PARITY | 13 |
+| ACVP_UNIQUE_VECTORS | 55 |
+| ACVP_VECTOR_EXECUTIONS | 150 |
+| **المجموع الفريد** | **771** |
+
+### التالي
+
+**Gate 1: 3A.1 — DCP 2.1 Wire Format Specification**
+- spec/WIRE-FORMAT-0.2.md
+- ADIE Deterministic CBOR Profile فوق RFC 8949
+- لا كتابة CBOR من الصفر
+- Reference implementation في Rust + adapters في Python/JS
+- RFC 9964 لتمثيل ML-DSA-65 في COSE
