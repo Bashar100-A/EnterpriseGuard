@@ -119,3 +119,17 @@ category: code
 root_cause: (1) JS FIELD_ORDER had 13 fields; Python uses 14 (adds "proof-set" as always-ABSENT). 13+3 padding != 14+2 padding; Merkle roots diverged. (2) Error messages did not mirror Python str(VerifyError)="code: msg"[:120] format. (3) BindingError requires two-stage slicing [code: msg][:80] -> [code: sliced][:120].
 fix: (1) FIELD_NAMES_13 + FIELD_ORDER_14; computeClaimRoot iterates all 14. (2) dcpMsg/bindingMsg helpers replicate Python slicing. (3) Rewrote verify.mjs.
 lesson: Cross-language canonical byte-equality requires matching every detail: field order, padding strategy, error message format, and slicing semantics. "Byte-identical" is not just JSON.
+
+---
+
+## Schema addition (effective from DEFECT-006)
+
+Future defect entries MUST include three additional fields:
+
+```
+language_pair:       py/js | py/rust | py/ts | single
+failure_mode:        structural | message | crypto | timing | semantic
+invariant_at_risk:   I13 | I14 | ... | I34 | none
+```
+
+Rationale: the pilot layer exposed that cross-language byte-equality failures split into three distinct classes (structural, message, crypto). Tracking them explicitly prevents future regression.
