@@ -116,7 +116,7 @@ TBS = "ADIE-SIG-V2\0" || JCS(certificate_without_signatures)
 ```
 
 Where:
-- `"ADIE-SIG-V2\0"` is an ASCII domain separation tag (13 bytes + NUL).
+- `"ADIE-SIG-V2\0"` is an ASCII domain separation tag (11 ASCII chars + NUL = 12 bytes).
   Exact bytes: `41 44 49 45 2D 53 49 47 2D 56 32 00`
 - `JCS(...)` is RFC 8785 canonical JSON.
 - `certificate_without_signatures` = the DCP object with the

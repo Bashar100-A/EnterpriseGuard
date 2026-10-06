@@ -282,3 +282,19 @@ resolution path (Phase 2.5):
   - MLDSA-XLANG-001 already proves byte-equality of sigGen across the
     three languages for the seed-based path.
 not retracted: RISK-2.1 (ml-dsa pre-1.0, unaudited).
+
+---
+
+## DEFECT-013 — spec claimed 13-byte domain tag; actual is 11 chars + NUL = 12 bytes
+
+date: 2026-10-07
+commit_found: f05af3d
+commit_fixed: <TBD>
+suite: n/a (spec text)
+category: spec
+language_pair: n/a
+failure_mode: semantic
+invariant_at_risk: none (implementation was always 12 bytes; only doc was wrong)
+root_cause: spec/HYBRID-CRYPTO-0.1.md §5 wrote ""ADIE-SIG-V2\0" is an ASCII domain separation tag (13 bytes + NUL)". The string ""ADIE-SIG-V2"" has 11 characters (A D I E - S I G - V 2), not 13. With NUL, the tag is 12 bytes. Hex "41 44 49 45 2D 53 49 47 2D 56 32 00" (also listed in the same sentence) was always correct.
+fix: spec corrected to "11 ASCII chars + NUL = 12 bytes". Code (protocol/hybrid/tbs.py) has always used 12 bytes with an explicit assertion.
+lesson: Spec docs should not describe byte counts in prose next to hex literals. The hex is the source of truth; the prose is commentary and can drift. This is the second spec-vs-implementation mismatch (DEFECT-009 was placeholder text, this is character count). Both were caught before they affected real byte output.
