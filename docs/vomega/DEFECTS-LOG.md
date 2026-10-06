@@ -202,3 +202,19 @@ invariant_at_risk: I34 (identifier immutability)
 root_cause: A Python script was provided to update spec/HYBRID-CRYPTO-0.1.md with three hash values. The script included literal placeholders (INTEGRITY, SHA_MLDSA, SHA_PKG) with instructions to substitute them before running. The instruction was not followed, so the placeholders were written to the spec verbatim, making it look complete when it was not.
 fix: Replaced placeholders by reading values directly from the filesystem inside the script. No manual substitution required.
 lesson: Templates with placeholders are a failure mode. Any script that writes to a normative document MUST resolve all values programmatically. Manual substitution is not permitted for spec files. This is a stricter rule than DEFECT-007 and DEFECT-008 — the defect class is different (placeholders shipped, not partial-information commits).
+
+---
+
+## DEFECT-010 — pqcrypto cannot participate in deterministic ML-DSA testing
+
+date: 2026-10-06
+commit_found: <uncommitted>
+commit_fixed: <TBD>
+suite: n/a (API capability)
+category: process
+language_pair: n/a
+failure_mode: structural
+invariant_at_risk: none (not a protocol violation; a testing-scope reduction)
+root_cause: pqcrypto 1.0.0 (C wrapper over PQClean) exposes sign(sk, msg, context=None, hash_algorithm=None) and keygen() with no arguments. There is no way to inject a fixed ξ seed for FIPS 204 KeyGen_internal, nor to force deterministic signing. Cross-language byte-equality tests (spec HYBRID-CRYPTO-0.1 sec 10, sec 11) require both. Measured: sig_a != sig_b for two identical calls with the same sk and msg.
+fix: Reclassified pqcrypto as VERIFY-ONLY for Phase 2. Python production sign path is dilithium-py 1.4.0 (deterministic=True, key_derive(seed)). Python verify path runs BOTH pqcrypto and dilithium-py, and requires agreement. This preserves the independent cross-check where it matters most (verification).
+lesson: A "vetted library" claim must be qualified by its API capabilities, not just its cryptographic primitive. pqcrypto implements ML-DSA correctly for the sign/verify operations it exposes, but does not expose the FIPS 204 deterministic interfaces required for reproducible testing. This is not a cryptographic weakness; it is a testing and reproducibility constraint.

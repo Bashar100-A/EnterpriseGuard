@@ -673,3 +673,30 @@ cat docs/vomega/CONTINUITY.md
 - JS: @noble/post-quantum 0.7.1 ✅ (dependency فقط، لا استخدام)
 
 **التالي:** C.2.c — كتابة Rust sign/verify، ثم Block D.
+
+
+---
+
+## 26. Phase 2 D.0 — أول تطابق ML-DSA bytes عبر اللغات
+
+**التاريخ:** 2026-10-06
+
+**الاكتشاف:**
+- dilithium-py 1.4.0 (Python) + @noble/post-quantum 0.7.1 (JS)
+- نفس ξ=0x42*32 → pk/sk/sig بايت-ببايت متطابقة
+- pk: 1952 bytes, sk: 4032 bytes, sig: 3309 bytes
+
+**الـtest vector مُثبَّت:**
+- spec/test-vectors/MLDSA-XLANG-001.json
+
+**DEFECT-010:**
+- pqcrypto لا يستطيع المشاركة (لا seed injection، لا deterministic sign)
+- أُعيد تصنيفه: verify-only
+- Python sign path = dilithium-py فقط
+- Python verify path = pqcrypto + dilithium-py (يجب أن يتفقا)
+
+**لم يُختبر بعد:**
+- ml-dsa 0.1.1 (RustCrypto) مقابل هذا الـvector
+- verify parity عبر اللغات الثلاث
+
+**التالي:** Block D.1 — Rust mldsa wrapper + cross-check.

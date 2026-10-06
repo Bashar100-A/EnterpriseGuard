@@ -347,6 +347,18 @@ fallback is dilithium-py alone (documented degradation).
 - That absence of audit is acceptable for production indefinitely
 - That agreement between two implementations implies correctness
 
+**Amendment (2026-10-06, DEFECT-010):**
+`pqcrypto 1.0.0` is reclassified as **verify-only**. It exposes no
+seed-injectable keygen and no deterministic sign mode. Python's
+signing path is `dilithium-py 1.4.0`. Python's verify path runs
+BOTH `pqcrypto` and `dilithium-py` and requires agreement.
+
+**First cross-language test vector:**
+`spec/test-vectors/MLDSA-XLANG-001.json` records a byte-identical
+result between `dilithium-py 1.4.0` (Python) and
+`@noble/post-quantum 0.7.1` (JavaScript) for seed `0x42*32`,
+TBS `"ADIE-SIG-V2\0" || '{"test":"vector"}'`, ctx `b""`.
+
 **What IS claimed:**
 - Each library's role is explicit and replaceable
 - Each library is pinned by exact version

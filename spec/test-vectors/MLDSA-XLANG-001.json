@@ -1,0 +1,57 @@
+{
+  "id": "MLDSA-XLANG-001",
+  "description": "FIPS 204 deterministic ML-DSA-65 cross-language test. First byte-identical result between Python and JS libraries.",
+  "date": "2026-10-06",
+  "algorithm": "ML-DSA-65",
+  "parameter_set": {
+    "security_level": 3,
+    "public_key_bytes": 1952,
+    "secret_key_bytes": 4032,
+    "signature_bytes": 3309
+  },
+  "inputs": {
+    "seed_hex": "4242424242424242424242424242424242424242424242424242424242424242",
+    "seed_bytes": 32,
+    "tbs_hex": "414449452d5349472d5632007b2274657374223a22766563746f72227d",
+    "tbs_construction": "\"ADIE-SIG-V2\\0\" || '{\"test\":\"vector\"}'",
+    "tbs_bytes": 30,
+    "ctx_hex": "",
+    "ctx_bytes": 0,
+    "sign_mode": "deterministic"
+  },
+  "expected": {
+    "public_key_first32_hex": "ecfb111611963d2cd4b2dbb29f77d78244a6d99e582aa3f88f406a2ac618ea54",
+    "public_key_len": 1952,
+    "secret_key_first32_hex": "ecfb111611963d2cd4b2dbb29f77d78244a6d99e582aa3f88f406a2ac618ea54",
+    "secret_key_len": 4032,
+    "signature_first32_hex": "f02d487b4a623d761eb26efe8b0dcf14b75ba3c63877a1a8e4f2d18668954a75",
+    "signature_last32_hex": "ff0c3b5e617a91adafbabfe3e8fa1f3d537d85bce7f4000000000910181e2b33",
+    "signature_len": 3309
+  },
+  "verified_by": [
+    {
+      "library": "dilithium-py",
+      "version": "1.4.0",
+      "api": "ML_DSA_65.key_derive(seed) + sign(sk, msg, ctx=b'', deterministic=True)"
+    },
+    {
+      "library": "@noble/post-quantum",
+      "version": "0.7.1",
+      "api": "ml_dsa65.keygen(seed) + sign(msg, sk, {extraEntropy: false})"
+    }
+  ],
+  "pending_verification": [
+    {
+      "library": "ml-dsa (RustCrypto)",
+      "version": "0.1.1",
+      "target": "adie-mldsa binary"
+    }
+  ],
+  "known_failures": [
+    {
+      "library": "pqcrypto",
+      "version": "1.0.0",
+      "reason": "no seed-injectable keygen; no deterministic sign mode. See DEFECT-010."
+    }
+  ]
+}
