@@ -1,0 +1,335 @@
+{
+  "version": "PILOT-0.1",
+  "manifest_base": {
+    "epoch": 1, "prev_epoch": 0,
+    "universe": {
+      "acl_versions": ["0.1"],
+      "template_ids": ["T1", "T2"],
+      "rewrite_ids": ["R1"],
+      "registry_namespaces": ["main"],
+      "algorithms": ["RS256"],
+      "compat_relations": ["EXACT"]
+    },
+    "threshold_k": 1, "threshold_n": 1, "signatures": ["s1"]
+  },
+  "vectors": [
+    {
+      "id": "P01",
+      "name": "valid minimal",
+      "expected": "VALID",
+      "issue": {
+        "template": {
+          "template_id": "T1", "acl_version": "0.1",
+          "declared_params": ["model_id"], "required_params": ["model_id"],
+          "purity": "PURE",
+          "ast": {"op": "EXISTS", "path": "model.id"}
+        },
+        "params": {"model_id": "credit-v7"},
+        "claim_id": "p01", "issuer_did": "did:adie:i1",
+        "request": {"id": "r1"},
+        "output": {"result": "REJECTED"},
+        "audience": "com.example.deployment"
+      },
+      "verify": {
+        "expected_audience": "com.example.deployment"
+      }
+    },
+    {
+      "id": "P02",
+      "name": "valid with AND of two checks",
+      "expected": "VALID",
+      "issue": {
+        "template": {
+          "template_id": "T1", "acl_version": "0.1",
+          "declared_params": ["model_id"], "required_params": ["model_id"],
+          "purity": "PURE",
+          "ast": {"op": "AND", "args": [
+            {"op": "EXISTS", "path": "model.id"},
+            {"op": "EQ", "args": [
+              {"t": "FIELD", "path": "model.id"},
+              {"t": "STR", "v": "credit-v7"}
+            ]}
+          ]}
+        },
+        "params": {"model_id": "credit-v7"},
+        "claim_id": "p02", "issuer_did": "did:adie:i1",
+        "request": {"id": "r2"},
+        "output": {"result": "APPROVED"},
+        "audience": "com.example.audit"
+      },
+      "verify": {"expected_audience": "com.example.audit"}
+    },
+    {
+      "id": "P03",
+      "name": "valid, NOT(EXISTS) normalized",
+      "expected": "VALID",
+      "issue": {
+        "template": {
+          "template_id": "T1", "acl_version": "0.1",
+          "declared_params": [], "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "NOT", "arg": {"op": "NOT", "arg": {"op": "TRUE"}}}
+        },
+        "params": {},
+        "claim_id": "p03", "issuer_did": "did:adie:i1",
+        "request": {"id": "r3"},
+        "output": {"ok": true},
+        "audience": "com.example.deployment"
+      },
+      "verify": {"expected_audience": "com.example.deployment"}
+    },
+    {
+      "id": "P04",
+      "name": "valid, custom nonce",
+      "expected": "VALID",
+      "issue": {
+        "template": {
+          "template_id": "T1", "acl_version": "0.1",
+          "declared_params": [], "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {},
+        "claim_id": "p04", "issuer_did": "did:adie:i1",
+        "nonce": "0123456789abcdef0123456789abcdef",
+        "request": {"id": "r4"},
+        "output": {"ok": true},
+        "audience": "com.example.deployment"
+      },
+      "verify": {"expected_audience": "com.example.deployment"}
+    },
+    {
+      "id": "P05",
+      "name": "valid, no expected_audience",
+      "expected": "VALID",
+      "issue": {
+        "template": {
+          "template_id": "T1", "acl_version": "0.1",
+          "declared_params": [], "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {},
+        "claim_id": "p05", "issuer_did": "did:adie:i1",
+        "request": {"id": "r5"},
+        "output": {"ok": true},
+        "audience": "com.example.deployment"
+      },
+      "verify": {}
+    },
+    {
+      "id": "P06",
+      "name": "wrong audience",
+      "expected": "INVALID",
+      "expected_code": "E_BINDING_AUDIENCE_MISMATCH",
+      "issue": {
+        "template": {
+          "template_id": "T1", "acl_version": "0.1",
+          "declared_params": [], "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {},
+        "claim_id": "p06", "issuer_did": "did:adie:i1",
+        "request": {"id": "r6"},
+        "output": {"ok": true},
+        "audience": "com.example.deployment"
+      },
+      "verify": {"expected_audience": "attacker.example"}
+    },
+    {
+      "id": "P07",
+      "name": "tampered output",
+      "expected": "INVALID",
+      "expected_code_any": ["E_CLAIM_ROOT_MISMATCH"],
+      "issue": {
+        "template": {
+          "template_id": "T1", "acl_version": "0.1",
+          "declared_params": [], "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {},
+        "claim_id": "p07", "issuer_did": "did:adie:i1",
+        "request": {"id": "r7"},
+        "output": {"result": "REJECTED"},
+        "audience": "com.example.deployment"
+      },
+      "mutate": {"path": ["output", "result"], "value": "APPROVED"},
+      "verify": {"expected_audience": "com.example.deployment"}
+    },
+    {
+      "id": "P08",
+      "name": "tampered request",
+      "expected": "INVALID",
+      "expected_code_any": ["E_BINDING_REQUEST_HASH", "E_CLAIM_ROOT_MISMATCH"],
+      "issue": {
+        "template": {
+          "template_id": "T1", "acl_version": "0.1",
+          "declared_params": [], "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {},
+        "claim_id": "p08", "issuer_did": "did:adie:i1",
+        "request": {"id": "r8", "amount": 1000},
+        "output": {"ok": true},
+        "audience": "com.example.deployment"
+      },
+      "mutate": {"path": ["request", "amount"], "value": 999999},
+      "verify": {"expected_audience": "com.example.deployment"}
+    },
+    {
+      "id": "P09",
+      "name": "tampered policy expression",
+      "expected": "INVALID",
+      "expected_code_any": ["E_CLAIM_ROOT_MISMATCH", "E-META-20"],
+      "issue": {
+        "template": {
+          "template_id": "T1", "acl_version": "0.1",
+          "declared_params": [], "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {},
+        "claim_id": "p09", "issuer_did": "did:adie:i1",
+        "request": {"id": "r9"},
+        "output": {"ok": true},
+        "audience": "com.example.deployment"
+      },
+      "mutate": {"path": ["policy", "expression"], "value": {"op": "FALSE"}},
+      "verify": {"expected_audience": "com.example.deployment"}
+    },
+    {
+      "id": "P10",
+      "name": "tampered authoring digest",
+      "expected": "INVALID",
+      "expected_code_any": ["E_CLAIM_ROOT_MISMATCH", "E-META-20"],
+      "issue": {
+        "template": {
+          "template_id": "T1", "acl_version": "0.1",
+          "declared_params": [], "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {},
+        "claim_id": "p10", "issuer_did": "did:adie:i1",
+        "request": {"id": "r10"},
+        "output": {"ok": true},
+        "audience": "com.example.deployment"
+      },
+      "mutate": {"path": ["authoring", "canonical_ast_digest"],
+                 "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"},
+      "verify": {"expected_audience": "com.example.deployment"}
+    },
+    {
+      "id": "P11",
+      "name": "tampered issuer did",
+      "expected": "INVALID",
+      "expected_code_any": ["E_CLAIM_ROOT_MISMATCH"],
+      "issue": {
+        "template": {
+          "template_id": "T1", "acl_version": "0.1",
+          "declared_params": [], "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {},
+        "claim_id": "p11", "issuer_did": "did:adie:i1",
+        "request": {"id": "r11"},
+        "output": {"ok": true},
+        "audience": "com.example.deployment"
+      },
+      "mutate": {"path": ["issuer", "did"], "value": "did:adie:evil"},
+      "verify": {"expected_audience": "com.example.deployment"}
+    },
+    {
+      "id": "P12",
+      "name": "tampered binding nonce",
+      "expected": "INVALID",
+      "expected_code_any": ["E_CLAIM_ROOT_MISMATCH"],
+      "issue": {
+        "template": {
+          "template_id": "T1", "acl_version": "0.1",
+          "declared_params": [], "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {},
+        "claim_id": "p12", "issuer_did": "did:adie:i1",
+        "request": {"id": "r12"},
+        "output": {"ok": true},
+        "audience": "com.example.deployment"
+      },
+      "mutate": {"path": ["binding", "nonce"],
+                 "value": "ffffffffffffffffffffffffffffffff"},
+      "verify": {"expected_audience": "com.example.deployment"}
+    },
+    {
+      "id": "P13",
+      "name": "tampered signature value",
+      "expected": "INVALID",
+      "expected_code_any": ["E_SIGNATURE", "E_CLAIM_ROOT_MISMATCH"],
+      "issue": {
+        "template": {
+          "template_id": "T1", "acl_version": "0.1",
+          "declared_params": [], "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {},
+        "claim_id": "p13", "issuer_did": "did:adie:i1",
+        "request": {"id": "r13"},
+        "output": {"ok": true},
+        "audience": "com.example.deployment"
+      },
+      "mutate": {"path": ["signature", "value"],
+                 "value": "base64:AAAA"},
+      "verify": {"expected_audience": "com.example.deployment"}
+    },
+    {
+      "id": "P14",
+      "name": "template with multi-param validation",
+      "expected": "VALID",
+      "issue": {
+        "template": {
+          "template_id": "T2", "acl_version": "0.1",
+          "declared_params": ["model_id", "threshold", "region"],
+          "required_params": ["model_id", "threshold"],
+          "purity": "PURE",
+          "ast": {"op": "OR", "args": [
+            {"op": "EXISTS", "path": "model.id"},
+            {"op": "EXISTS", "path": "model.fallback"}
+          ]}
+        },
+        "params": {"model_id": "credit-v8", "threshold": 600, "region": "eu"},
+        "claim_id": "p14", "issuer_did": "did:adie:i1",
+        "request": {"id": "r14"},
+        "output": {"ok": true},
+        "audience": "com.example.deployment"
+      },
+      "verify": {"expected_audience": "com.example.deployment"}
+    },
+    {
+      "id": "P15",
+      "name": "tampered purpose",
+      "expected": "INVALID",
+      "expected_code_any": ["E_CLAIM_ROOT_MISMATCH"],
+      "issue": {
+        "template": {
+          "template_id": "T1", "acl_version": "0.1",
+          "declared_params": [], "required_params": [],
+          "purity": "PURE",
+          "ast": {"op": "TRUE"}
+        },
+        "params": {},
+        "claim_id": "p15", "issuer_did": "did:adie:i1",
+        "request": {"id": "r15"},
+        "output": {"ok": true},
+        "audience": "com.example.deployment"
+      },
+      "mutate": {"path": ["binding", "purpose"], "value": 99},
+      "verify": {"expected_audience": "com.example.deployment"}
+    }
+  ]
+}

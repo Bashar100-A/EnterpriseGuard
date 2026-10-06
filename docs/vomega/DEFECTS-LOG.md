@@ -91,3 +91,31 @@ text
 ---
 
 **End of DEFECTS-LOG**
+
+---
+
+## DEFECT-003 — Block B test 4 over-specified code
+
+date: 2026-10-06
+commit_found: <TBD>
+commit_fixed: <TBD>
+suite: Block B exploratory test
+test_id: manual-4
+test_name: authoring tampered → E-META-20
+category: test
+root_cause: ClaimRoot covers the `authoring` field (13 named fields). Tampering with authoring.canonical_ast_digest changes ClaimRoot, so DCP 2.0 pipeline raises E_CLAIM_ROOT_MISMATCH before the pilot-level authoring check runs. My expectation of E-META-20 was too specific.
+fix: Accept either E_CLAIM_ROOT_MISMATCH or E-META-20 as valid rejection in the pilot conformance vectors. Document the ordering guarantee: DCP 2.0 claim_root runs before authoring-level checks.
+lesson: Defense-in-depth means a single field tampering may be caught at multiple layers. Test expectations should be written against the failure SET, not a single code, unless the ordering is normative.
+
+---
+
+## DEFECT-004 — JS verify.mjs: ClaimRoot field mismatch + message format
+
+date: 2026-10-06
+commit_found: 5fe41ab
+commit_fixed: <TBD>
+suite: Block C differential
+category: code
+root_cause: (1) JS FIELD_ORDER had 13 fields; Python uses 14 (adds "proof-set" as always-ABSENT). 13+3 padding != 14+2 padding; Merkle roots diverged. (2) Error messages did not mirror Python str(VerifyError)="code: msg"[:120] format. (3) BindingError requires two-stage slicing [code: msg][:80] -> [code: sliced][:120].
+fix: (1) FIELD_NAMES_13 + FIELD_ORDER_14; computeClaimRoot iterates all 14. (2) dcpMsg/bindingMsg helpers replicate Python slicing. (3) Rewrote verify.mjs.
+lesson: Cross-language canonical byte-equality requires matching every detail: field order, padding strategy, error message format, and slicing semantics. "Byte-identical" is not just JSON.
