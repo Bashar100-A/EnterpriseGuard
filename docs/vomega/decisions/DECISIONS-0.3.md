@@ -100,4 +100,32 @@ consequence of DEFECT-014.
 
 ---
 
-**End of DECISIONS-0.3**
+
+
+## Decision 9 - RSA library selection (Gate 0)
+
+For Phase 3 Gate 0 (Rust full hybrid verifier), the RSA implementation
+is `sad-rsa = "=0.10.2"`.
+
+Rationale:
+- mainline `rsa 0.9.6` has RUSTSEC-2023-0071 (Marvin) unpatched and
+  partial RFC 8017 length validation.
+- mainline `rsa 0.10.x` is still RC.
+- `sad-rsa 0.10.2` mitigates Marvin, applies complete RFC 8017
+  length validation, and enhances zeroization.
+
+Constraints:
+- `sad-rsa` is invoked ONLY from `rust/adie-primitives/src/rsa_verify.rs`.
+- No direct calls from `verifier.rs` or anywhere else.
+- Cargo.lock pins `=0.10.2`; checksum verified.
+- RISK-3.1 and RISK-3.2 recorded in DEFECTS-LOG.md.
+
+Reconsideration trigger:
+- If mainline `rsa` ships 0.10.x stable with Marvin mitigation, swap
+  to mainline in one commit (API is compatible with sad-rsa 0.10.x).
+- If sad-rsa becomes unmaintained, revert to `rsa 0.9.6` + explicit
+  offline-only usage boundary.
+
+---
+
+**End of DECISIONS-0.3 (with amendment)**

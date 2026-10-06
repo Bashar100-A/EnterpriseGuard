@@ -356,3 +356,64 @@ lesson: A number in a document is an identifier (I34). It must be produced
   it uncorrected: an investor or auditor could have found the discrepancy
   and lost confidence in all other numbers. Now the source of every number
   is a script that any third party can run.
+
+
+---
+
+## RISK-3.1 — sad-rsa fork tracks unstable rsa 0.10.x API line
+
+date: 2026-10-07
+phase: Phase 3, Gate 0
+crate: sad-rsa 0.10.2
+checksum: 195609fa42645e9a027b45bc953163057a7c6d468d98088d4a3551b2b1d02d0f
+reason:
+  - mainline `rsa 0.9.6` has RUSTSEC-2023-0071 (Marvin attack) unpatched.
+  - mainline `rsa 0.10.x` is still in release-candidate (0.10.0-rc.19).
+  - `sad-rsa 0.10.2` is a security-focused fork that applies Marvin
+    mitigation, complete RFC 8017 length validation, and enhanced
+    zeroization. It tracks the 0.10.x API line.
+mitigation:
+  - Isolated behind rust/adie-primitives/src/rsa_verify.rs (single module).
+  - No direct call from verifier.rs or any other module.
+  - Swap to mainline rsa is a one-line change if upstream stabilizes.
+  - Vendor mirror + checksum pinned in Cargo.lock.
+consequence: if maintainer disappears, we fall back to rsa 0.9.6 +
+  documented Marvin CVE, or to mainline 0.10.x once stable.
+not hidden: this is a documented trade-off, not a silent choice.
+
+---
+
+## RISK-3.2 — sad-rsa dependency surface (~46 crates)
+
+date: 2026-10-07
+phase: Phase 3, Gate 0
+count: ~46 crates in the dependency tree
+reason:
+  - crypto-bigint 0.7 (modern, well-audited) replaces the older
+    num-bigint-dig used by rsa 0.9.6.
+  - SHA-2, PEM/SPKI, and rand are standard RustCrypto crates, also
+    used by ml-dsa (Phase 2).
+mitigation:
+  - No exotic deps: all are RustCrypto or well-known (serde, zerocopy).
+  - Cargo.lock pins exact versions.
+  - Vendoring possible (cargo vendor) for reproducibility.
+justification: RFC 8017 length validation in sad-rsa is complete,
+  whereas upstream rsa 0.9.6 has partial validation. For a hybrid
+  certificate verifier under regulatory audit, this is worth
+  the extra dependency surface.
+
+---
+
+## Archival note — why not rsa 0.9.6
+
+date: 2026-10-07
+decision: rejected for Gate 0
+reason:
+  - RUSTSEC-2023-0071 open, no patch on mainline.
+  - RFC 8017 length validation partial.
+  - MSRV 1.65 is fine, but the crate is on a maintenance branch
+    pending the 0.10 rewrite.
+note: `rsa 0.9.6` remains a valid fallback if sad-rsa becomes
+  unavailable. Its API shape is documented above (sections 5-7 of
+  the Gate 0 investigation). Migration cost is contained because
+  the invocation is isolated in one module.
