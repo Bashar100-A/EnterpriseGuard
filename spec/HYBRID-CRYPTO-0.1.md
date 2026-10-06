@@ -298,3 +298,72 @@ This document is append-only. Any change:
   REGISTRY-0.1, or any existing test vector
 
 **End of ADIE-HYBRID-CRYPTO-0.1**
+
+---
+
+## §12.1. Library selection (Block B, 2026-10-06)
+
+**Candidate libraries — final selection:**
+
+| Language | Package | Version | Pinned by | Audit status |
+|---|---|---|---|---|
+| Rust | `ml-dsa` (RustCrypto) | 0.1.1 | Cargo.lock | **Unaudited** (self-declared) |
+| Python (A) | `pqcrypto` | 1.0.0 | requirements.txt | Wraps PQClean; wrapper unaudited |
+| Python (B) | `dilithium-py` | 1.4.0 | requirements.txt | Pure-Python reference, independent |
+| JavaScript | `@noble/post-quantum` | 0.7.1 | package-lock.json | Pre-1.0; audit status undisclosed |
+| Python (RS256) | `pycryptodome` | 3.24.0 | requirements.txt | Already used in Phase 1 |
+
+**Rationale for two Python implementations:**
+- `pqcrypto` (fast, C-backed) is the production path
+- `dilithium-py` (pure Python, independent lineage) is the cross-check
+- Agreement on NIST ACVP KAT vectors between the two
+  establishes that no single Python wrapper's bugs are silently trusted
+
+**Recorded risks:**
+
+```
+RISK-2.1: ml-dsa 0.1.1 is pre-1.0 and not independently audited.
+Mitigation: isolated behind ADIE's own wrapper; replaceable;
+protocol commit does not depend on its internals.
+
+RISK-2.2: pqcrypto 1.0.0 wrapper not audited; PQClean itself is
+community-maintained but has not been through formal FIPS 204
+validation that we can verify from this environment.
+Mitigation: cross-checked against dilithium-py.
+
+RISK-2.3: @noble/post-quantum 0.7.1 is pre-1.0, audit status
+undisclosed by author.
+Mitigation: isolated; replaceable; verified against Python/Rust
+on every test vector.
+
+RISK-2.4: Exact wheel availability for Python 3.12 unknown until
+Block C attempts installation. If pqcrypto wheel is missing,
+fallback is dilithium-py alone (documented degradation).
+```
+
+**What is NOT claimed:**
+- That any of these libraries is bug-free
+- That any of them resists side-channels
+- That absence of audit is acceptable for production indefinitely
+- That agreement between two implementations implies correctness
+
+**What IS claimed:**
+- Each library's role is explicit and replaceable
+- Each library is pinned by exact version
+- Each library is wrapped by ADIE code (no direct protocol use)
+- Every library is cross-verified against the others on KAT vectors
+
+## §12.2. Installation gate
+
+No installation occurs until §12.1 is committed on `vOmega`.
+
+After commit, Block C:
+1. Installs each library with its exact pin.
+2. Runs NIST ACVP ML-DSA-65 KAT vectors.
+3. Records SHA-256 of each downloaded wheel/crate in
+   `spec/HYBRID-CRYPTO-0.1.md §12.3` (to be added).
+4. Any KAT failure → STOP; do not proceed to hybrid signing.
+
+## §12.3. Downloaded artifact hashes
+
+(To be filled during Block C. Left empty in Block B.)

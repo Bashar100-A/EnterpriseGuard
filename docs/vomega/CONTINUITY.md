@@ -562,3 +562,28 @@ cat docs/vomega/CONTINUITY.md
 - لا ادعاءات library صحيحة بلا تدقيق مستقل
 
 **التالي:** Block B — اختيار المكتبات + pinned versions
+
+---
+
+## 22. Phase 2 Block B — مكتبات مختارة
+
+**التاريخ:** 2026-10-06
+
+**القرار:**
+- Rust: ml-dsa 0.1.1 (RustCrypto)
+- Python A: pqcrypto 1.0.0 (production)
+- Python B: dilithium-py 1.4.0 (cross-check مستقل)
+- JavaScript: @noble/post-quantum 0.7.1
+- RS256: pycryptodome 3.24.0 (موجود مسبقاً)
+
+**مبدأ مزدوج Python:**
+- مكتبتان مستقلتان = KAT agreement بدون ثقة أعمى
+
+**مخاطر مسجلة (RISK-2.1..2.4):**
+- ml-dsa pre-1.0، غير مدقق
+- pqcrypto wrapper غير مدقق
+- @noble pre-1.0، تدقيق غير معلن
+- توفر wheel Python 3.12 غير مؤكد
+
+**لا تثبيت حتى §12.1 مُلتزم.**
+**التالي:** Block C — تثبيت + KAT اختبار
