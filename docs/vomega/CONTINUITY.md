@@ -403,3 +403,33 @@ cat docs/vomega/CONTINUITY.md
 - ZK / FHE / IVC
 
 **التالي:** قرار المرحلة (Phase 2 vs Phase 1.11)
+
+---
+
+## 17. Phase 1.11 (fuzzing) مكتمل جزئياً
+
+**التاريخ:** 2026-10-06
+
+**المُثبَّت (يُلتزم الآن):**
+- spec/FUZZ-0.1.md (115 سطر)
+- protocol/fuzz/generator.py (136 سطر)
+- protocol/fuzz/acl_fuzz.py (38 سطر)
+- protocol/fuzz/claimroot_fuzz.py (29 سطر)
+- protocol/fuzz/authoring_fuzz.py (70 سطر)
+- protocol/fuzz/runner.py (يدعم 3 suites)
+- protocol/acl/acl.mjs (210 سطر)
+- protocol/core/claim_root.mjs (84 سطر)
+
+**النتائج (seed=42, budget=500):**
+- acl: 500/500
+- claimroot: 500/500
+- authoring: 500/500
+
+**ما لم يُنجَز بعد:**
+- Rust verifier (third-language primitive agreement)
+
+**القاعدة الجديدة:**
+- كل fuzz vector يعمل بايت-ببايت بين Python و JS
+- كل DEFECT جديد من هنا يتضمن: language_pair، failure_mode، invariant_at_risk
+
+**التالي:** Rust H_A + JCS + ClaimRoot + ACL normalize.
