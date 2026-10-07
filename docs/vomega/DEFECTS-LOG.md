@@ -714,3 +714,35 @@ consequence: Development is functional but constrained.
 not hidden: recorded as an active operational constraint.
 
 ---
+
+
+---
+
+## DEFECT-020 — account.py summary anchor mismatch
+
+date: 2026-10-07
+commit_found: 42b7722
+commit_fixed: 928d0df
+suite: n/a (tooling)
+category: process
+language_pair: n/a
+failure_mode: structural
+invariant_at_risk: I34 (identifier immutability — numbers)
+root_cause: A Python updater script assumed the summary block in
+tests/account.py had a fixed string form. The actual form differed
+(pytest-style indentation, extra spaces). The script's anchor regex
+did not match, so the PHASE3_3A2_CBOR line was not added and the
+Grand total formula was not updated. account.py therefore continued
+to display 771 instead of 882 in its final output.
+fix: Rewrote the updater using a narrower regex anchored on
+'PHASE3_GATE0_PARITY' with a fallback line-scan loop. Ran the
+verifier; account.py now emits 882 correctly. Committed as 928d0df.
+lesson: Numeric aggregation code is as sensitive as cryptographic
+code. Strings that matter (formulas, summaries) must be updated by
+parsing rather than string replacement, or must be regenerated from
+a single source. This is the same class as DEFECT-014 (numbers
+conflated) applied to the tooling layer: a fix that "looks done"
+can still ship an incorrect number.
+follow-up rule: after any change to tests/account.py, the immediate
+next step is to run it and read its stdout. No commit until the
+displayed total matches the expected sum.

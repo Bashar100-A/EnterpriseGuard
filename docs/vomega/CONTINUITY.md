@@ -1387,3 +1387,52 @@ Specification precedes implementation.
 
 > The codec is not the protocol.
 > ADIE owns the profile; ciborium owns the primitive.
+
+
+---
+
+## 40. تصحيح tooling — DEFECT-020 (account.py summary)
+
+**التاريخ:** 2026-10-07
+**commits:** 42b7722 (impl) → 928d0df (fix)
+
+### ما حدث
+
+- التزام 3A.2 (42b7722) أضاف قسم `PHASE3_3A2_CBOR` إلى account.py
+- لكن script التحديث لم يُطابق anchor الـsummary block
+- account.py استمر في عرض 771 بدل 882
+- اكتُشف فوراً عند تشغيل account.py بعد الالتزام
+
+### الإصلاح (928d0df)
+
+- Regex أدق anchored على `PHASE3_GATE0_PARITY`
+- Fallback line-scan
+- account.py الآن يعرض 882
+
+### القاعدة الجديدة (مضافة إلى CONTINUITY)
+
+> بعد أي تعديل على `tests/account.py`، الخطوة التالية **إلزامية**:
+> تشغيل `account.py`، قراءة stdout، التحقق من أن المجموع المطبوع
+> يساوي المجموع المتوقع حسابياً. لا commit قبل ذلك.
+
+### الحالة بعد الإصلاح
+
+GATE 1 / 3A.2 — CLOSED
+Rust reference CBOR: 111/111
+Grand total (unique): 882
+Commits: 42b7722 (impl) + 928d0df (fix)
+Awaiting Commander order for 3A.3
+
+### الأرقام الرسمية
+
+| الدلو | العدد |
+|---|---|
+| REGRESSION_TOTAL (Phase 1) | 633 |
+| PHASE2_ADIE_PYTHON | 59 |
+| PHASE2_ADIE_JAVASCRIPT | 11 |
+| PHASE3_GATE0_PARITY | 13 |
+| PHASE3_3A2_CBOR | 111 |
+| ACVP_UNIQUE_VECTORS | 55 |
+| **المجموع الفريد** | **882** |
+
+ACVP_VECTOR_EXECUTIONS: 150 (بلا زيادة في المجموع — إعادة تنفيذ الـ55 في 3 لغات)
