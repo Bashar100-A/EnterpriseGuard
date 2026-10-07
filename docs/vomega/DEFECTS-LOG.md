@@ -1404,3 +1404,60 @@ integrators do not mistake the ENOENT for an ADIE failure.
 impact: low. No protocol semantics affected. Delivery consumers
 (applications) will typically use --target bundler or
 --target web with a proper module resolution setup.
+
+
+---
+
+## DEFECT-033 — Build artifacts and toolchain binaries tracked
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.4B
+commit_found: e710fa4
+commit_fixed: 6982220 (partial: target/) + <this commit> (tools/wasm/ + docs)
+category: process
+failure_mode: repository-hygiene
+invariant_at_risk: Build artifacts and third-party binaries MUST NOT
+enter the permanent repository history.
+
+root_cause:
+The 3A.4B stage commit (e710fa4) used a single `git add rust/adie-wasm/`
+glob. This tracked:
+  - rust/adie-wasm/target/  (~750 files, ~90 MB of cargo output)
+  - tools/wasm/wasm-bindgen, wasm-pack, wasm2es6js,
+    wasm-bindgen-test-runner  (~39 MB of prebuilt binaries)
+
+Neither path was in .gitignore. Git status inspection did not surface
+the scale (~750 files).
+
+fix (split across two commits):
+  1. Commit 6982220:
+       git rm -r --cached rust/adie-wasm/target
+  2. This commit:
+       git rm --cached tools/wasm/{wasm-bindgen, wasm-pack,
+                                    wasm2es6js, wasm-bindgen-test-runner}
+       Extend .gitignore with the paths above.
+       Log DEFECT-033 and CONTINUITY §51.
+
+Retained (tracked, intentional):
+  - tools/wasm/LICENSE-APACHE, LICENSE-MIT, README.md
+  - tools/wasm/browser-test/          (HTML test page + server.mjs)
+  - tools/wasm/browser-test/pkg/      (generated distributable test
+                                       artifact، ~240 KB، tied to
+                                       index.html so the browser test
+                                       runs on fresh clone without
+                                       rebuild)
+
+Future consumers obtain the binaries via a pinned-version download
+script (tracked separately; not implemented in this commit).
+
+lesson:
+`git add <dir>/` is unsafe when a directory mixes source and build
+output. Every directory with generated content MUST have an explicit
+.gitignore entry BEFORE first add. The failure scales silently with
+file count; pre-commit visual inspection is insufficient.
+
+note:
+Repository hygiene only. No protocol, code, test, or binary content
+was altered. All Stage 3A.4B results remain valid:
+Node 45/45, Precision 31/31, Browser 29/29, Native↔WASM 44/44,
+regression 1120/1120.

@@ -2561,3 +2561,53 @@ WASM completion **لا يعني**:
 - Governance / revocation
 
 **لا شيء من هذه قبل أمر صريح.**
+
+
+---
+
+## 51. Stage 3A.4B-WASM — CLOSED (post DEFECT-033)
+
+**التاريخ:** 2026-10-07
+**المرجع:** DEFECT-033 hygiene commits (6982220 + <this commit>)
+
+### الأثر الفعلي
+
+Repository hygiene only. لا source changes. لا rebuild. لا test rerun.
+
+Untracked:
+- `rust/adie-wasm/target/`   (بناء cargo — ~90 MB، ~750 ملف)
+- `tools/wasm/{wasm-bindgen, wasm-pack, wasm2es6js, wasm-bindgen-test-runner}`
+  (binaries طرف ثالث — ~39 MB)
+
+Tracked (باقية بشكل صريح):
+- `tools/wasm/{LICENSE-APACHE, LICENSE-MIT, README.md}` — توثيق الترخيص
+- `tools/wasm/browser-test/` — HTML test page + server.mjs
+- `tools/wasm/browser-test/pkg/` — generated distributable test
+  artifact (~240 KB)، مرتبط مباشرة بـindex.html، يبقى قابل لإعادة
+  التوليد من المصدر بنفس toolchain المثبَّت
+
+### الاستراتيجية المعتمدة
+
+    source/configuration
+          ↓
+    pinned version
+          ↓
+    official release download    (مؤجَّل)
+          ↓
+    SHA-256 verification         (مؤجَّل)
+          ↓
+    tool invocation
+
+**Download/bootstrap mechanism: مُرحَّل لمرحلة لاحقة.** لكل binary:
+URL ثابت + SHA-256 + سكربت تنزيل. لا `latest`.
+
+### تأكيد Stage 3A.4B
+
+    Node WASM:         45/45
+    Precision:         31/31
+    Firefox headless:  29/29
+    Native ↔ WASM:     44/44   (byte-parity، 44 vectors)
+    Regression 1120:   1120/1120
+    Spec changes:      0
+
+STAGE 3A.4B-WASM — CLOSED

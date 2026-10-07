@@ -224,3 +224,10 @@ frontend/router
 !keys/adie-v1/public.pem
 !keys/adie-v1/selfsigned.pem
 !keys/adie-v1/fingerprint.txt
+
+# DEFECT-033: WASM build artifacts and toolchain binaries
+rust/adie-wasm/target/
+tools/wasm/wasm-bindgen
+tools/wasm/wasm-pack
+tools/wasm/wasm2es6js
+tools/wasm/wasm-bindgen-test-runner
