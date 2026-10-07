@@ -1989,3 +1989,188 @@ D.9 — JavaScript ↔ Python differential.
 D.10 — Stage 3A.4A closure.
 
 **لا شيء من هذه قبل أمر صريح.**
+
+
+---
+
+## 47. Phase 3 / Gate 1 / 3A.4A-DIFF — Interoperability Proof
+
+**التاريخ:** 2026-10-07
+**Gate:** Phase 3, Gate 1, 3A.4A-DIFF (D.8 + D.9)
+**Commit:** <this commit>
+
+### الهدف
+
+إثبات أن JavaScript Wire Adapter متوافق فعلياً مع Rust Reference
+ومع Python Interoperability Adapter على ثلاثة مستويات:
+
+    Encode parity
+    Decode parity
+    Negative/rejection parity
+
+### البروتوكول المشترك بين اللغات الثلاث
+
+    stdin:  {"op":"encode","value":<AdieValue>}
+    stdin:  {"op":"decode","cbor_hex":"<hex>"}
+    stdout: {"cbor_hex":"..."} | {"value":<AdieValue>} | {"error":"E_..","detail":".."}
+
+AdieValue JSON form (مشترك حرفياً بين Rust/Python/JS):
+
+    {"t":"uint","v":<u64>}      {"t":"int","v":<i64>}
+    {"t":"bytes","v":"<hex>"}   {"t":"text","v":"<utf8>"}
+    {"t":"bool","v":true|false} {"t":"null"}
+    {"t":"array","v":[...]}     {"t":"map","v":[[k,<AdieValue>],...]}
+
+### الـArtifacts
+
+- `js/wire/bin/adie-cbor.mjs` — JS endpoint (95 lines)
+- `js/wire/bin/json-io.mjs` — BigInt-safe JSON helpers (60 lines)
+- `protocol/wire/bin/adie-cbor.py` — Python endpoint (71 lines)
+- `tests/vomega/wire-js/test_differential_rust.mjs` — D.8 (147 lines)
+- `tests/vomega/wire-js/test_differential_python.mjs` — D.9 (114 lines)
+- `tests/vomega/wire-js/diff-matrix.mjs` — Matrix reporter (80 lines)
+
+### Vector corpus
+
+**44 unique vectors** (نفس corpus المستخدم في 3A.3 D.9b Python↔Rust):
+
+| Class | Count | IDs |
+|---|---|---|
+| Encode vectors | 14 | E01–E14 |
+| Decode vectors | 12 | D01–D12 |
+| Negative vectors | 18 | N01–N18 |
+
+**Executions** في هذه المرحلة:
+- D.8: 44 + 1 (A01) = 45 executions (Rust ↔ JS)
+- D.9: 44 + 1 (A01) = 45 executions (Python ↔ JS)
+- **Differential executions subtotal:** 90
+
+### Cross-implementation matrix (كل الفئات، كل اللغات)
+
+| Vector class | Rust | Python | JavaScript |
+|---|---|---|---|
+| Valid encode | OK | OK | OK |
+| Valid decode | OK | OK | OK |
+| Float rejection | `E_WIRE_FLOAT` | `E_WIRE_FLOAT` | `E_WIRE_FLOAT` |
+| Tag rejection | `E_WIRE_TAG` | `E_WIRE_TAG` | `E_WIRE_TAG` |
+| Duplicate keys | `E_WIRE_DUP_KEY` | `E_WIRE_DUP_KEY` | `E_WIRE_DUP_KEY` |
+| Indefinite length | `E_WIRE_INDEFINITE` | `E_WIRE_INDEFINITE` | `E_WIRE_INDEFINITE` |
+| Trailing bytes | `E_WIRE_TRAILING` | `E_WIRE_TRAILING` | `E_WIRE_TRAILING` |
+| Non-shortest integer | `E_WIRE_NONCANONICAL_INT` | `E_WIRE_NONCANONICAL_INT` | `E_WIRE_NONCANONICAL_INT` |
+| Invalid UTF-8 | `E_WIRE_INVALID_UTF8` | `E_WIRE_INVALID_UTF8` | `E_WIRE_INVALID_UTF8` |
+| Invalid key type | `E_WIRE_TYPE_MISMATCH` | `E_WIRE_TYPE_MISMATCH` | `E_WIRE_TYPE_MISMATCH` |
+| Invalid value type | `E_WIRE_MALFORMED` | `E_WIRE_MALFORMED` | `E_WIRE_MALFORMED` |
+| Unknown critical | N/A (semantic) | N/A (semantic) | N/A (semantic) |
+
+**قرار القائد:** لا تصفير mismatches. كل خلية إما OK أو error code دقيق.
+تطابق تام عبر اللغات الثلاث في هذه المرحلة.
+
+### A01 — Architectural proof (محفوظ عبر كل اللغات الثلاث)
+
+    "01"                 → Rust OK | Python OK | JS OK       → uint 1
+    "fb3ff0000000000000" → Rust E_WIRE_FLOAT | Python E_WIRE_FLOAT | JS E_WIRE_FLOAT
+
+نفس Number 1 في JS بعد decode. الفيصل الوحيد هو rawcheck على
+البايتات. A01 في D.8 و D.9 يُثبّت ذلك عبر كل الأزواج.
+
+### Acceptance Evidence
+
+| Metric | Required | Actual |
+|---|---|---|
+| JS core (D.1-D.7) | ≥ 200 | 253 |
+| D.8 Rust↔JS positive | ≥ 10 | 14 |
+| D.8 Rust↔JS decode | ≥ 10 | 12 |
+| D.8 Rust↔JS negative | ≥ 10 | 18 |
+| D.8 architectural | ≥ 1 | 1 |
+| D.9 Py↔JS positive | ≥ 10 | 14 |
+| D.9 Py↔JS decode | ≥ 10 | 12 |
+| D.9 Py↔JS negative | ≥ 10 | 18 |
+| D.9 architectural | ≥ 1 | 1 |
+| Previous regression | 1120/1120 | 1120/1120 |
+| Spec changes | 0 | 0 |
+
+### الأرقام بتمييز صريح (unique vs executions)
+
+| الفئة | العدد | التصنيف |
+|---|---|---|
+| Differential unique vectors | 44 | unique |
+| D.8 executions (Rust↔JS) | 45 | executions |
+| D.9 executions (Python↔JS) | 45 | executions |
+| Differential executions subtotal | 90 | executions |
+| JS core unit executions | 253 | executions |
+| Previous baseline | 1120 | executions |
+| **Grand total executions** | **1463** | executions |
+
+**ملاحظة:** الـ44 unique vector مُشتركة بين D.8 و D.9 (نفس corpus،
+مقارنات مختلفة). لا يجوز جمعها مع 3A.3 D.9b (Python↔Rust) لأنها
+تنفيذات على نفس corpus من أزواج مختلفة.
+
+### DEFECTs مغلقة في Stage
+
+| ID | Category | Summary |
+|---|---|---|
+| DEFECT-029 | test | JSON Number precision boundary at u64 range |
+
+**DEFECT-029 — تفصيل:**
+
+Two distinct manifestations, one root family:
+1. Vector file read: `JSON.parse` converts `18446744073709551615`
+   to a lossy `Number` (18446744073709552000). Re-serialization
+   then sends an out-of-range value to Rust/Python.
+2. Comparison serializer: BigInt → String → `JSON.stringify`
+   added quotes; `{"v":0}` vs `{"v":"0"}`.
+
+Fix: `js/wire/bin/json-io.mjs` (60 lines) with:
+- `parsePreservingBigInts(text)` — marks 16+ digit literals
+- `stringify(v)` — emits BigInt as plain integer literals
+- `canon(v)` — unified Number/BigInt serializer for equality
+
+**الـimplementation كان صحيحاً من البداية.** الفشل في test harness.
+
+Family: DEFECT-024 (hand-written JSON), DEFECT-029 (JSON Number
+precision). كلاهما: JSON artifact "يبدو صحيحاً" لكن يخالف ضمان
+دقة نوع رقمي.
+
+### DEFECTs مفتوحة
+
+لا شيء.
+
+### RISK-3.3
+
+مراقب. Disk 6.9 GB free قبل/بعد Stage. لا تغيير.
+
+### الـScope (احترام صريح)
+
+- ❌ WIRE-FORMAT-0.2.md — لم تُلمس
+- ❌ TBS — لم يُلمس
+- ❌ ADIE-SIG-V2\0 — لم يُلمس
+- ❌ Rust reference — لم يُلمس
+- ❌ Python adapter (protocol/wire/) — لم يُلمس
+- ❌ cbor@9.0.2 — لم يُغيَّر
+- ❌ لا WASM, COSE, E2E, fuzzing
+
+### الحالة الرسمية
+
+    3A.4A / D.1 — CLOSED  (error:       20/20)
+    3A.4A / D.2 — CLOSED  (value:       28/28)
+    3A.4A / D.3 — CLOSED  (profile:     32/32)
+    3A.4A / D.4 — CLOSED  (rawcheck:    60/60)
+    3A.4A / D.5 — CLOSED  (encoder:     43/43)
+    3A.4A / D.6 — CLOSED  (decoder:     40/40)
+    3A.4A / D.7 — CLOSED  (index:       30/30)
+    3A.4A / D.8 — CLOSED  (Rust↔JS:     45/45)
+    3A.4A / D.9 — CLOSED  (Python↔JS:   45/45)
+    ────────────────────────────────────────────
+    JS core:           253/253
+    Differential:       90/90  (44 unique × 2 pairs + 2 A01)
+    Previous:         1120/1120
+    Cumulative execs: 1463
+
+### الخطوة التالية
+
+**3A.4B — WASM delivery path** — بانتظار أمر القائد.
+
+WASM = portable execution of Rust reference (ليس لغة تحقق ثالثة).
+Rust native == Rust WASM يجب إثباته. Node.js + Browser targets.
+
+**لا شيء من 3A.4B قبل أمر صريح.**

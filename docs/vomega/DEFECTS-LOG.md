@@ -1181,3 +1181,71 @@ invariant_statement:
 The semantic authority (profile.mjs) must receive CBOR maps in
 exactly one JS representation. Cross-language parity requires it.
 Rawcheck does not address this; it is a decoder-config concern.
+
+
+---
+
+## DEFECT-029 — JSON Number precision boundary at u64 range
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.4A-DIFF
+commit_found: <uncommitted, during stage 3A.4A-DIFF>
+commit_fixed: <this stage commit>
+suite: tests/vomega/wire-js/test_differential_{rust,python}.mjs
+test_ids: D.8: E06, D03-D05, D10-D12 (7 fails)
+          D.9: E06, D03-D05, D10-D12 (7 fails)
+category: test
+language_pair: n/a
+failure_mode: structural
+invariant_at_risk: none (test harness only; implementations correct)
+
+root_cause:
+Two distinct failure modes with the same root family — JSON text
+serialization of the u64 numeric range:
+
+1. Vector file read: JSON.parse(vectors.json) parses the E06 vector's
+   v=18446744073709551615 (u64::MAX) into a lossy JavaScript Number
+   (18446744073709552000). Re-serialization by JSON.stringify sent a
+   value > u64::MAX to Rust/Python, which correctly rejected it with
+   a range error.
+
+2. Comparison serializer: the previous canonical() converted BigInt
+   values to Strings before JSON.stringify, causing JSON.stringify
+   to add double quotes. Result:
+       Rust/Py: {"t":"uint","v":0}    (Number 0)
+       JS test: {"t":"uint","v":"0"}  (String "0")
+   Textual mismatch — semantic identical.
+
+fix:
+- New helper js/wire/bin/json-io.mjs:
+    parsePreservingBigInts(text) — marks 16+ digit literals before parse,
+      revives them as BigInt
+    stringify(v) — emits BigInt as plain integer literals
+    canon(v) — unified serializer; Number and BigInt both become plain
+      decimal literals, arrays and objects serialized deterministically
+- Both differential tests import these helpers.
+- Vector file read via parsePreservingBigInts.
+- Rust/Python payload stringify via stringify.
+- Comparison via canon on both sides.
+
+lesson:
+JSON is a text format with a Number type that cannot represent the
+full u64 range. Whenever a protocol uses the u64 range (as ADIE's
+DCP 2.1 profile does for map keys and integer values), every JSON
+boundary in the toolchain MUST handle 16+ digit integers explicitly.
+This is the same family as DEFECT-024 (hand-written JSON vector file):
+the artifact "looks right" in text form but violates the format's
+numeric precision guarantee.
+
+architectural_note:
+The endpoints themselves were correct throughout. Rust's adie-cbor
+correctly rejected an out-of-range uint. The Python endpoint's UInt
+correctly rejected an out-of-range value. The JS endpoint's own
+BigInt handling was correct. Only the test harness's JSON pipeline
+was lossy. The fix is confined to test infrastructure and a new
+shared helper; no protocol, spec, or endpoint behavior changed.
+
+invariant_statement:
+Every JSON boundary in the ADIE toolchain must preserve the full
+u64 range as integers. Numbers of 16+ digits must be handled as
+BigInt end-to-end, never routed through JavaScript's Number type.
