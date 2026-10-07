@@ -2611,3 +2611,83 @@ URL ثابت + SHA-256 + سكربت تنزيل. لا `latest`.
     Spec changes:      0
 
 STAGE 3A.4B-WASM — CLOSED
+
+
+---
+
+## 52. Stage 3A.5-SR — WIRE-FORMAT RECONCILIATION
+
+**التاريخ:** 2026-10-07
+**المرحلة:** Phase 3, Gate 1, 3A.5-SR
+**قرار القائد:** B+ (ADIE Native Hybrid CBOR Envelope)
+
+### المُشكلة المُكتشفة
+
+تناقض معياري بين:
+
+- `spec/WIRE-FORMAT-0.2.md` §13.2 — TBS = JCS، "CBOR/COSE is a
+  transport encoding"؛
+- أمر القائد 3A.5 §3 — Model A (COSE-native signing, Sig_structure)؛
+- `spec/WIRE-FORMAT-0.2.md` §10 — "COSE_Sign1 semantics"، مقابل
+  أمر القائد 3A.5 §2 — "do NOT use COSE_Sign1".
+
+### القرار
+
+**Model B+ — ADIE Native Hybrid CBOR Envelope.**
+
+    Semantic certificate
+          ↓ JCS
+    ADIE-SIG-V2\0 || JCS(...)        ← TBS — unchanged
+          ↓ RS256 + ML-DSA-65
+    signatures[]                       ← ADIE-native — unchanged
+          ↓ deterministic CBOR
+    ADIE Hybrid CBOR Envelope          ← wire artifact
+
+**ليس** COSE_Sign. **ليس** COSE_Sign1. لا ادعاء COSE-signing
+compliance. التسمية "COSE_Key" تبقى فقط كتمثيل wire لمفتاح
+ML-DSA-65 العام (RFC 9964 AKP).
+
+### الأثر المعياري
+
+Amendment جديد (additive، لا يُعدِّل الأصل):
+
+- `spec/WIRE-FORMAT-0.2-AMENDMENT-1.md`
+- يُلغي 6 مواضع محددة في الأصل (بالمرجع)
+- يُثبّت TBS و signatures و hybrid policy بلا تغيير
+- يُثبّت أن COSE-native signing محجوز لـ WIRE-FORMAT-0.3
+
+سجل القرار: `docs/vomega/decisions/DECISION-0.3-COSE-ARCH.md`.
+
+### ما لم يتغير
+
+- TBS = `ADIE-SIG-V2\0 || JCS(certificate_without_signatures)` ✅
+- signatures[] بنية ADIE-native ✅
+- hybrid policy (both must verify) ✅
+- dcp_version = "2.1" ✅
+- Phase 1 / Phase 2 signatures تبقى صالحة ✅
+- WIRE-FORMAT-0.2.md الأصل — بلا تعديل ✅
+
+### الأثر المستقبلي (محجوز، غير مُنفَّذ)
+
+WIRE-FORMAT-0.3 (اسم عمل):
+- COSE_Sign (RFC 9052 §4.1)
+- Sig_structure (RFC 9052 §4.4)
+- protected headers
+- domain tag جديد: `ADIE-SIG-V3\0`
+- ML-DSA-65 عبر RFC 9964 بالكامل (AKP, -49, pub)
+- migration boundary: كل ملف يحمل domain tag واحد فقط
+- **لا إعادة استخدام توقيعات عبر السياقين**
+
+### الحالة
+
+STAGE 3A.5-SR — CLOSED (بعد commit)
+
+### الخطوة التالية
+
+**3A.5-B+ — Implementation** (بانتظار أمر القائد):
+- deterministic CBOR envelope للشهادة ADIE-native
+- encoder/decoder ثلاثي اللغات
+- hybrid E2E: sign → envelope → CBOR → decode → verify → recover
+- negative corpus (attack matrix)
+- size measurement
+- regression 1120
