@@ -2691,3 +2691,107 @@ STAGE 3A.5-SR — CLOSED (بعد commit)
 - negative corpus (attack matrix)
 - size measurement
 - regression 1120
+
+
+---
+
+## 53. Stage 3A.5-B+SR2 — SPECIFICATION RECONCILIATION (R2+)
+
+**التاريخ:** 2026-10-07
+**المرحلة:** Phase 3, Gate 1, 3A.5-B+SR2
+**قرار القائد:** R2+ — ADIE-native JCS payload inside integer-keyed
+deterministic CBOR envelope
+**الحالة:** CLOSED بعد commit
+
+### المُشكلة المُكتشفة
+
+- `WIRE-FORMAT-0.2` §4.1 يُعلن 13 حقلاً داخلياً (`issuer`,
+  `subject`, `request`, `context`, `policy`, `model`, `data`,
+  `runtime`, `output`, `binding`, `temporal`, `evidence`,
+  `authoring`) من نوع CBOR `map`.
+- §7 يُلزم كل CBOR map بمفاتيح unsigned integer.
+- §4 **لا يسجِّل** أي integer labels للمفاتيح الداخلية.
+- `protocol/pilot/issue_cli.py` و `protocol/hybrid/certificate.py`
+  تستخدمان **text keys** في هذه الـmaps.
+- corpus differential السابق اختبر codec فقط (scalars)، لم يختبر
+  شهادة DCP حقيقية.
+
+**النتيجة:** CBOR envelope لم يكن قابلاً للتعريف بدون حسم
+المواصفة.
+
+### القرار: R2+
+
+**CBOR = deterministic transport envelope.**
+**JCS = semantic identity للـnested content.**
+
+Wire model:
+
+    Top-level CBOR map (integer-keyed, base §4.1):
+      1  dcp_version  -> text
+      2  claim_id     -> text
+      3..15           -> bstr(JCS canonical UTF-8) للـnested objects
+                        (issuer, subject, request, context, policy,
+                         model, data, runtime, output, binding,
+                         temporal, evidence, authoring)
+      16 proofs       -> CBOR array (native، retained)
+      17 claim_root   -> bstr (32 raw bytes)
+      18 signatures   -> CBOR array (native، per base §4.2)
+
+`binding` يبقى JCS bytes كغيره (لا استثناء)، رغم أن §4.3 يسجِّل
+labels داخلية له — تلك labels تبقى normative للتمثيل JSON فقط.
+
+### الملفات المُنتَجة
+
+- `spec/WIRE-FORMAT-0.2-AMENDMENT-2.md` (additive)
+- `docs/vomega/decisions/DECISION-0.4-CBOR-ENVELOPE.md`
+
+### القيود المُثبَّتة
+
+- Base `WIRE-FORMAT-0.2.md`: **بلا لمس**
+- `WIRE-FORMAT-0.2-AMENDMENT-1.md`: بلا لمس
+- TBS: بلا تغيير — `ADIE-SIG-V2\0 || JCS(cert)`
+- Phase 1 / Phase 2 signatures: تبقى صالحة
+- Hybrid policy (both must verify): بلا تغيير
+- لا COSE_Sign. لا COSE_Sign1.
+- COSE-native محجوز لـ WIRE-FORMAT-0.3.
+- R1 (inner labels) rejected. R3 (text keys) rejected.
+
+### شرط إلزامي على المرحلة التالية (3A.5-B+)
+
+قبل اعتبار أي تنفيذ لـB+ مطابقاً، يجب إنتاج **canonical vector
+corpus بشهادات DCP 2.1 حقيقية** (بكل الحقول الـ13 مملوءة)، مع:
+
+- canonical JSON
+- JCS bytes لكل حقل داخلي
+- deterministic CBOR envelope
+- TBS bytes
+- توقيعات RS256 و ML-DSA-65 متوقعة
+- نتيجة قبول/رفض متوقعة
+
+وnegative vectors: non-canonical JCS، non-UTF-8، wrong JSON type،
+duplicate label، non-shortest integer، tag، float، indefinite،
+trailing bytes، label ممنوع، حقل مفقود، توقيع مُعدَّل، JCS مُعدَّل.
+
+### الحالة
+
+STAGE 3A.5-B+SR2 — CLOSED (بعد commit)
+
+### ما لم يُنفَّذ
+
+- ❌ لا كود envelope
+- ❌ لا encoder/decoder
+- ❌ لا COSE
+- ❌ لا vectors جديدة (تُنتَج في 3A.5-B+)
+- ❌ لا تعديل على WIRE-FORMAT-0.2.md
+
+### الخطوة التالية
+
+**3A.5-B+ — Implementation** (بانتظار أمر القائد):
+- Rust reference envelope (integer-keyed top-level + JCS bytes)
+- Canonical vector corpus (real certificates)
+- Sign/verify end-to-end
+- Three-runtime differential (Rust / Python / JS)
+- WASM path where applicable
+- Negative/tamper matrix
+- Size measurements
+- Regression 1120
