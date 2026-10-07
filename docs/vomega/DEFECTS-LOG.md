@@ -1461,3 +1461,63 @@ Repository hygiene only. No protocol, code, test, or binary content
 was altered. All Stage 3A.4B results remain valid:
 Node 45/45, Precision 31/31, Browser 29/29, Native↔WASM 44/44,
 regression 1120/1120.
+
+
+---
+
+## DEFECT-034 — jcs::canonical_bytes returns Result, not Vec
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.5-B+
+commit_found: uncommitted, during 3A.5-B+ Phase B
+commit_fixed: this stage commit
+suite: rust/adie-primitives/src/cbor/envelope.rs
+category: code
+failure_mode: type-mismatch
+invariant_at_risk: none (compilation only)
+
+root_cause:
+crate::jcs::canonical_bytes in the Rust crate returns
+Result<Vec<u8>, String>, unlike the Python helper of the same name
+which returns bytes directly. The initial envelope implementation
+used it as if it returned Vec<u8>, producing two compile errors at
+lines 235 and 249.
+
+fix:
+Add .map_err(...) at both call sites to translate the error into
+CborError::Malformed with context.
+
+lesson:
+Cross-language symmetry of helper names does not imply symmetry of
+error handling. Every call site must be checked against the actual
+signature.
+
+
+---
+
+## DEFECT-035 — CborError::Malformed is a struct variant, not tuple
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.5-B+
+commit_found: uncommitted, during 3A.5-B+ Phase B fix of DEFECT-034
+commit_fixed: this stage commit
+suite: rust/adie-primitives/src/cbor/envelope.rs
+category: code
+failure_mode: type-mismatch
+invariant_at_risk: none (compilation only)
+
+root_cause:
+CborError::Malformed in the existing error module is declared as a
+struct variant: Malformed { detail: String }. The envelope helper
+malformed(msg: impl Into<String>) constructed it as a tuple variant
+CborError::Malformed(msg.into()), which is not valid for a struct
+variant.
+
+fix:
+Change the helper construction to
+CborError::Malformed { detail: msg.into() }.
+
+lesson:
+Rust enum variants differ in shape (unit, tuple, struct). Every
+construction must match the declared shape. The defect is
+compile-time only; no runtime behavior was affected.

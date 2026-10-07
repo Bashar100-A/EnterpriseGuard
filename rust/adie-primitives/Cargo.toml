@@ -39,6 +39,10 @@ path = "src/bin/adie-hybrid-verify.rs"
 name = "adie-cbor"
 path = "src/bin/adie-cbor.rs"
 
+[[bin]]
+name = "adie-cbor-envelope"
+path = "src/bin/adie-cbor-envelope.rs"
+
 [dependencies]
 serde_json = "1.0"
 ml-dsa = "=0.1.1"

@@ -2795,3 +2795,120 @@ STAGE 3A.5-B+SR2 — CLOSED (بعد commit)
 - Negative/tamper matrix
 - Size measurements
 - Regression 1120
+
+
+---
+
+## 54. Stage 3A.5-B+ — IMPLEMENTATION CLOSED
+
+**التاريخ:** 2026-10-07
+**المرحلة:** Phase 3, Gate 1, 3A.5-B+
+**قرار القائد:** B+ (ADIE Native Hybrid CBOR Envelope)
+**المراجع المُجمَّدة:**
+- spec/WIRE-FORMAT-0.2.md
+- spec/WIRE-FORMAT-0.2-AMENDMENT-1.md (Model B+, no COSE_Sign/Sign1)
+- spec/WIRE-FORMAT-0.2-AMENDMENT-2.md (R2+ wire model)
+- docs/vomega/decisions/DECISION-0.3-COSE-ARCH.md
+- docs/vomega/decisions/DECISION-0.4-CBOR-ENVELOPE.md
+
+### Wire model المُنفَّذ
+
+    Semantic DCP 2.1 certificate (JSON)
+          |
+    Top-level CBOR map (integer labels 1..18):
+        1  dcp_version  -> text
+        2  claim_id     -> text
+        3..15 nested    -> bstr(JCS canonical UTF-8)
+        16 proofs       -> array (native, empty only for now)
+        17 claim_root   -> bstr (32 raw bytes)
+        18 signatures   -> array of {1:alg, 2:kid, 3:raw_sig}
+          |
+    Deterministic CBOR envelope: 5203 bytes constant
+
+### الـArtifacts
+
+Rust:
+- rust/adie-primitives/src/cbor/envelope.rs (287 lines)
+- rust/adie-primitives/src/bin/adie-cbor-envelope.rs (62 lines)
+- rust/adie-primitives/src/cbor/mod.rs (pub mod envelope + re-exports)
+- rust/adie-primitives/Cargo.toml (second [[bin]])
+
+Python:
+- protocol/wire/bin/adie-cbor-envelope.py (155 lines)
+
+JavaScript:
+- js/wire/bin/adie-cbor-envelope.mjs (182 lines, JCS inline RFC 8785)
+
+Corpus + Tests:
+- tools/gen_bplus_corpus.py (128 lines)
+- tests/vomega/b-plus/corpus.json (5 real DCP 2.1 certs)
+- tests/vomega/b-plus/test_bplus_negative.py (165 lines, 15 assertions)
+- tests/vomega/b-plus/test_bplus_e2e.py (171 lines, 10 assertions)
+- tests/vomega/b-plus/test_bplus_sizes.py (56 lines)
+
+### Acceptance Evidence
+
+| الفئة | النتيجة |
+|---|---|
+| Real DCP 2.1 corpus | 5/5 (13 fields + proofs + claim_root + signatures) |
+| Rust byte round-trip | 5/5 byte-identical |
+| Rust == Python byte-parity | 5/5 |
+| Rust == JavaScript byte-parity | 5/5 |
+| Semantic parse parity | 5/5 |
+| Negative matrix | 15/15 |
+| E2E hybrid | 10/10 |
+| TBS byte-identity | preserved (H09) |
+| Domain tag unchanged | ADIE-SIG-V2 00 (H10) |
+| Both-sigs policy | enforced (H04-H08) |
+| Spec changes | 0 |
+
+### Size baseline (Phase I)
+
+    JSON cert:           6658 bytes
+    JCS field bytes sum:  1367 bytes
+    Raw signature sum:    3565 bytes
+    B+ CBOR envelope:     5203 bytes
+    Delta vs JSON:       -1455 bytes (base64 overhead avoided)
+
+No compression. Baseline only.
+
+### DEFECTs مغلقة
+
+| ID | Category | Summary |
+|---|---|---|
+| DEFECT-034 | code | jcs::canonical_bytes returns Result, not Vec |
+| DEFECT-035 | code | CborError::Malformed is struct variant, not tuple |
+
+### RISK-3.3
+
+Disk 6.3 GB قبل/بعد. مستقر.
+
+### الأرقام بتمييز
+
+| الفئة | العدد | التصنيف |
+|---|---|---|
+| Canonical B+ vectors | 5 | unique |
+| Byte-parity executions | 10 | executions |
+| Semantic parse parity | 15 | executions |
+| Negative matrix | 15 | executions |
+| E2E hybrid | 10 | executions |
+| B+ subtotal | 55 | executions |
+| Previous baseline | 1120 | executions |
+
+### القاعدة المعمارية
+
+    B+ is an ADIE-native deterministic CBOR envelope.
+    NOT COSE_Sign. NOT COSE_Sign1.
+    Semantic identity = JCS.  Deterministic transport = CBOR.
+    Wire encoding must not redefine cryptographic identity.
+
+### الحالة
+
+    STAGE 3A.5-B+ — CLOSED (pending commit)
+
+### الخطوة التالية (محجوزة)
+
+- WIRE-FORMAT-0.3 (COSE-native)
+- Fuzzing campaign
+- Governance / revocation
+- SLH-DSA

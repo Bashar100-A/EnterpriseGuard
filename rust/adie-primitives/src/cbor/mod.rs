@@ -16,8 +16,10 @@ pub mod profile;
 pub mod rawcheck;
 pub mod encoder;
 pub mod decoder;
+pub mod envelope;
 
 pub use error::CborError;
 pub use value::AdieValue;
 pub use encoder::encode;
 pub use decoder::decode;
+pub use envelope::{build_envelope, parse_envelope};
