@@ -177,6 +177,25 @@ if (req.op === 'build') {
     const data = Buffer.from(req.envelope_hex, 'hex');
     emit({certificate_json: parseEnvelope(data)});
   } catch (e) { emit({error: 'PARSE-FAIL', detail: String(e)}); }
+} else if (req.op === 'parse_batch') {
+  const arr = req.envelopes_hex || [];
+  const results = [];
+  for (const hx of arr) {
+    try {
+      const data = Buffer.from(hx, 'hex');
+      try {
+        results.push({certificate_json: parseEnvelope(data)});
+      } catch (e) {
+        // DEFECT-036: preserve typed code when available (from wire layer).
+        const code = (e && typeof e.code === 'string' && e.code.startsWith('E_WIRE_'))
+                     ? e.code : 'E_WIRE_MALFORMED';
+        results.push({error: code, detail: String(e)});
+      }
+    } catch (e) {
+      results.push({error: 'E_WIRE_MALFORMED', detail: String(e)});
+    }
+  }
+  emit({results});
 } else {
   emit({error: 'E-OP'});
 }

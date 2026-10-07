@@ -106,6 +106,43 @@ fn read_length(bytes: &[u8], offset: usize, additional: u8) -> Result<(u64, usiz
     }
 }
 
+/// Extract the byte range of an item starting at `offset` by walking
+/// the CBOR grammar recursively (without constructing a value tree).
+/// Used for duplicate-key detection inside maps.
+fn scan_item_range(bytes: &[u8], offset: usize, depth: usize) -> Result<usize, CborError> {
+    let (next, _) = scan_item(bytes, offset, depth)?;
+    Ok(next)
+}
+
+/// Walk a map body (n keys, n values) and reject duplicate keys.
+/// Duplicate = byte-identical encoded key. This matches the
+/// DEFECT-027 principle: rawcheck rejects wire-level constructs whose
+/// semantic type would be erased by decoding.
+fn scan_map_body(
+    bytes: &[u8],
+    offset: usize,
+    n: u64,
+    depth: usize,
+) -> Result<usize, CborError> {
+    let mut cur = offset;
+    let mut key_ranges: Vec<(usize, usize)> = Vec::with_capacity((n as usize).min(4096));
+    for _ in 0..n {
+        let k_start = cur;
+        cur = scan_item_range(bytes, cur, depth)?;
+        let k_end = cur;
+        for &(ps, pe) in &key_ranges {
+            if pe - ps == k_end - k_start {
+                if &bytes[ps..pe] == &bytes[k_start..k_end] {
+                    return Err(CborError::DuplicateKey);
+                }
+            }
+        }
+        key_ranges.push((k_start, k_end));
+        cur = scan_item_range(bytes, cur, depth)?;
+    }
+    Ok(cur)
+}
+
 /// Scan a single CBOR item at `offset`. Returns (new_offset, depth_of_item).
 /// Depth tracking is only meaningful for container types; leaf types
 /// return the passed-in depth.
@@ -164,15 +201,13 @@ fn scan_item(bytes: &[u8], offset: usize, depth: usize) -> Result<(usize, usize)
             }
             Ok((cursor, depth))
         }
-        // 5: map. Keys and values are each scanned as items.
+        // 5: map. Keys and values are each scanned as items; duplicate
+        // keys (byte-identical encodings) are rejected here so the wire
+        // layer preserves that fact before any decoder deduplicates.
+        // See DEFECT-027 (JS) and DEFECT-036 (cross-runtime parity).
         5 => {
             let (count, next) = read_length(bytes, offset, additional)?;
-            let mut cursor = next;
-            for _ in 0..count {
-                let (after_key, _) = scan_item(bytes, cursor, depth + 1)?;
-                let (after_val, _) = scan_item(bytes, after_key, depth + 1)?;
-                cursor = after_val;
-            }
+            let cursor = scan_map_body(bytes, next, count, depth + 1)?;
             Ok((cursor, depth))
         }
         // 6: tag — forbidden.

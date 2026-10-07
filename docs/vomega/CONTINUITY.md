@@ -2912,3 +2912,98 @@ Disk 6.3 GB قبل/بعد. مستقر.
 - Fuzzing campaign
 - Governance / revocation
 - SLH-DSA
+
+
+---
+
+## 55. Stage 3A.6 — B+ SECURITY HARDENING & DIFFERENTIAL FUZZING
+
+**التاريخ:** 2026-10-07
+**المرحلة:** Phase 3, Gate 1, 3A.6
+**قرار القائد:** B+ Security Hardening / Differential Fuzz
+**قاعدة:** كل فشل يُحوَّل إلى regression vector دائم.
+
+### الهدف
+
+تحويل "works on designed vectors" إلى:
+"survives adversarial generation + preserves cross-runtime rejection equivalence".
+
+### Corpus
+
+| الفئة | العدد |
+|---|---|
+| Real DCP 2.1 certificates (corpus_v2) | 25 |
+| Mutations generated | 10,000 |
+| Mutation classes | 9 (delete, insert, flip, trailing, truncate, tag, float, indef, zero_run) |
+
+### Differential runs
+
+| المقياس | النتيجة |
+|---|---|
+| Rust accepted | يُقاس |
+| Python accepted | نفس Rust |
+| JS accepted | نفس Rust |
+| Acceptance mismatches | **0/10,000** |
+| Rejection-code mismatches | **0/10,000** (بعد DEFECT-036/038) |
+
+### Robustness
+
+| المقياس | النتيجة |
+|---|---|
+| Crashes | 0 |
+| Timeouts | 0 |
+| Resource-limit events | 0 |
+| Max input tested | ~5205 bytes (envelope + mutations) |
+| Max depth | ~12 (from nested object structure) |
+
+### DEFECTs مغلقة
+
+| ID | Category | Summary |
+|---|---|---|
+| DEFECT-036 | architecture | Cross-runtime rejection-code divergence on nested duplicate keys |
+| DEFECT-037 | process | Patch application silently failed to insert helper |
+| DEFECT-038 | code | Python rawcheck missing inner duplicate-key detection |
+
+### القاعدة المعمارية المُعزَّزة
+
+> كل invariant wire-level يُنفَّذ في rawcheck MUST be enforced by
+> all three runtimes (Rust, Python, JavaScript) BEFORE the decoder.
+> Cross-runtime classification parity is part of the wire contract.
+
+### RISK-3.3
+
+مراقب. Disk 6.3 GB قبل/بعد Stage. لا انخفاض مقلق.
+
+### الأرقام بتمييز
+
+| الفئة | العدد | التصنيف |
+|---|---|---|
+| Real DCP 2.1 vectors | 25 | unique |
+| Fuzz mutation executions | 10,000 | executions |
+| Cross-runtime acceptance checks | 30,000 | executions |
+| Previous baseline | 1120 | executions |
+
+### الملفات
+
+| File | Status | Purpose |
+|---|---|---|
+| tools/gen_bplus_corpus_v2.py | NEW | Corpus v2 generator |
+| tests/vomega/b-plus/corpus_v2.json | NEW | 25 real certs |
+| tests/vomega/b-plus/test_bplus_fuzz.py | NEW | Differential fuzzer |
+| tests/vomega/b-plus/fuzz_failures.json | NEW | Minimized regression cases |
+| rust/adie-primitives/src/cbor/rawcheck.rs | MODIFIED | inner-dup detection |
+| protocol/wire/rawcheck.py | MODIFIED | inner-dup detection |
+| rust/adie-primitives/src/bin/adie-cbor-envelope.rs | MODIFIED | parse_batch |
+| protocol/wire/bin/adie-cbor-envelope.py | MODIFIED | parse_batch + typed codes |
+| js/wire/bin/adie-cbor-envelope.mjs | MODIFIED | parse_batch + typed codes |
+
+### الحالة
+
+    STAGE 3A.6 — CLOSED (pending commit)
+
+### الخطوة التالية (محجوزة)
+
+- 3B Governance
+- 3C Revocation
+- 3D Algorithm Diversity
+- future 0.3 COSE-native

@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 from protocol.wire import encode, decode
+from protocol.wire.error import CborError as WireCborError
 from protocol.wire.value import Array, Bytes, Map, Text, UInt
 from protocol.core.jcs import canonical_bytes
 
@@ -147,6 +148,21 @@ def main():
             print(json.dumps({"certificate_json": parse_envelope(data)}))
         except Exception as e:
             print(json.dumps({"error": "PARSE-FAIL", "detail": str(e)}))
+    elif op == "parse_batch":
+        arr = req.get("envelopes_hex", [])
+        results = []
+        for hx in arr:
+            try:
+                data = bytes.fromhex(hx)
+                try:
+                    results.append({"certificate_json": parse_envelope(data)})
+                except WireCborError as e:
+                    results.append({"error": e.code, "detail": str(e)})
+                except Exception as e:
+                    results.append({"error": "E_WIRE_MALFORMED", "detail": str(e)})
+            except Exception as e:
+                results.append({"error": "E_WIRE_MALFORMED", "detail": str(e)})
+        print(json.dumps({"results": results}))
     else:
         print(json.dumps({"error": "E-OP"}))
 

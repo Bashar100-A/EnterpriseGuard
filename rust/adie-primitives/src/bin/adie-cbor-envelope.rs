@@ -45,6 +45,28 @@ fn main() {
                 Err(e) => println!("{}", json!({"error": e.code(), "detail": e.to_string()})),
             }
         }
+        Some("parse_batch") => {
+            let arr = match req.get("envelopes_hex").and_then(|v| v.as_array()) {
+                Some(a) => a,
+                None => { println!("{}", json!({"error":"E-MISSING-ARRAY"})); return; }
+            };
+            let mut results = Vec::with_capacity(arr.len());
+            for h in arr {
+                let hx = match h.as_str() {
+                    Some(s) => s,
+                    None => { results.push(json!({"error":"E-NOT-STR"})); continue; }
+                };
+                let bytes = match hex_decode(hx) {
+                    Ok(b) => b,
+                    Err(_) => { results.push(json!({"error":"E-HEX"})); continue; }
+                };
+                match parse_envelope(&bytes) {
+                    Ok(json_str) => results.push(json!({"certificate_json": json_str})),
+                    Err(e) => results.push(json!({"error": e.code(), "detail": e.to_string()})),
+                }
+            }
+            println!("{}", json!({"results": results}));
+        }
         _ => println!("{}", json!({"error":"E-OP"})),
     }
 }

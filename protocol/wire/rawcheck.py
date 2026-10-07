@@ -17,7 +17,7 @@ scanner does.
 from __future__ import annotations
 
 from protocol.wire.error import (
-    CborError, Float, Indefinite, InvalidUtf8, Malformed,
+    CborError, DuplicateKey, Float, Indefinite, InvalidUtf8, Malformed,
     NonCanonicalInt, Tag, Trailing,
 )
 
@@ -136,11 +136,22 @@ def _scan_item(data: bytes, offset: int, depth: int):
             cursor, _ = _scan_item(data, cursor, depth + 1)
         return cursor, depth
 
-    # Major type 5: map
+    # Major type 5: map. Duplicate keys (byte-identical encoded keys)
+    # are rejected here at the wire level, per DEFECT-027/038. This
+    # must happen before cbor2, because cbor2 collapses duplicate keys
+    # into a single entry (last wins), losing the wire-level fact.
     if major == 5:
         count, cursor = _read_length(data, offset, additional)
+        key_ranges: list[bytes] = []
         for _ in range(count):
+            k_start = cursor
             cursor, _ = _scan_item(data, cursor, depth + 1)
+            k_end = cursor
+            kb = data[k_start:k_end]
+            for prev in key_ranges:
+                if len(prev) == len(kb) and prev == kb:
+                    raise DuplicateKey()
+            key_ranges.append(kb)
             cursor, _ = _scan_item(data, cursor, depth + 1)
         return cursor, depth
 

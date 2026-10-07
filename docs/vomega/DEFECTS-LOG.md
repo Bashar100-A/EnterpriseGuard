@@ -1521,3 +1521,112 @@ lesson:
 Rust enum variants differ in shape (unit, tuple, struct). Every
 construction must match the declared shape. The defect is
 compile-time only; no runtime behavior was affected.
+
+
+---
+
+## DEFECT-036 — Cross-runtime rejection-code divergence on nested duplicate keys
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.6
+commit_found: uncommitted, during 3A.6 fuzz pilot
+commit_fixed: this stage commit
+suite: tests/vomega/b-plus/test_bplus_fuzz.py
+category: architecture
+failure_mode: classification-divergence
+invariant_at_risk: When multiple wire-level violations are present in
+one input, all three runtimes MUST report the same ADIE error code,
+or the protocol MUST declare which check has priority.
+
+symptom (pilot 100):
+  case=26 mut=zero_run: Rust=E_WIRE_TRAILING Py=E_WIRE_TRAILING JS=E_WIRE_DUP_KEY
+  case=53 mut=zero_run: Rust=E_WIRE_MALFORMED Py=E_WIRE_MALFORMED JS=E_WIRE_DUP_KEY
+  case=98 mut=zero_run: Rust=E_WIRE_MALFORMED Py=E_WIRE_MALFORMED JS=E_WIRE_DUP_KEY
+
+root_cause:
+JS rawcheck.mjs detected inner duplicate keys (per DEFECT-027).
+Rust rawcheck.rs and Python rawcheck.py did NOT: they only detected
+top-level duplicates (via the re-encode comparison in the decoder).
+When the input contained both an inner duplicate key AND trailing
+bytes, JS aborted at the duplicate (inside the map) while Rust/Py
+walked to the end and aborted at trailing.
+
+fix:
+Extend both Rust scan_item (major=5 branch) and Python _scan_item
+(major=5 branch) to detect byte-identical inner keys before walking
+the value. This aligns them with JS rawcheck.
+
+lesson:
+An architectural decision (DEFECT-027: rawcheck owns duplicate-key
+detection) must be enforced in every implementation, not just the
+one that discovered it. Drift between runtimes is only visible under
+adversarial inputs that combine multiple violations.
+
+invariant_statement:
+Rawcheck enforces duplicate-key rejection at wire level in every
+runtime before the decoder runs. Classification priority is therefore
+identical across Rust, Python, and JavaScript.
+
+
+---
+
+## DEFECT-037 — Patch application silently failed to insert helper
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.6
+commit_found: uncommitted, during 3A.6 fix of DEFECT-036
+commit_fixed: this stage commit
+suite: rust/adie-primitives/src/cbor/rawcheck.rs
+category: process
+failure_mode: verification-gap
+invariant_at_risk: none (process only)
+
+root_cause:
+The first attempt to insert `scan_map_body` into Rust rawcheck used
+a string-replace that printed "OK helper inserted" but did not
+actually write the helper. The subsequent build failed with E0425
+(scan_map_body not found). A safer approach was then used: explicit
+grep verification after the write, followed by build check.
+
+fix:
+Second insertion attempt used `raise SystemExit(0)` on already-present
+check, `grep -n` verification, and post-build verification. The
+helper was confirmed present before build.
+
+lesson:
+Every patch script that reports success MUST be followed by a
+verification step (grep, file size, or build) before declaring the
+patch effective. Silent no-op is worse than an explicit failure.
+
+
+---
+
+## DEFECT-038 — Python rawcheck missing inner duplicate-key detection
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.6
+commit_found: uncommitted, during 3A.6 fix of DEFECT-036
+commit_fixed: this stage commit
+suite: protocol/wire/rawcheck.py
+category: code
+failure_mode: missing-check
+invariant_at_risk: Wire-level inner duplicate keys MUST be rejected
+at rawcheck in all runtimes.
+
+root_cause:
+protocol/wire/rawcheck.py `_scan_item` major==5 branch walked keys
+and values without recording key byte ranges. Inner duplicates were
+left to the decoder (cbor2 + re-encode comparison). When trailing
+bytes were also present, rawcheck aborted at trailing before the
+decoder could detect the duplicate, producing E_WIRE_TRAILING instead
+of E_WIRE_DUP_KEY.
+
+fix:
+Extend the major==5 branch to record each key's byte range and
+reject byte-identical duplicates with DuplicateKey, matching the
+Rust and JS rawcheck behavior.
+
+lesson:
+This is the same class as DEFECT-036. Any invariant enforced by one
+runtime's rawcheck MUST be enforced by all, otherwise cross-runtime
+classification parity is silently broken.
