@@ -8,3 +8,4 @@ pub mod acl;
 pub mod verifier;
 pub mod mldsa;
 pub mod rsa_verify;
+pub mod cbor;

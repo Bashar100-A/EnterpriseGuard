@@ -36,6 +36,24 @@ def run_js(path):
     return None
 
 
+def run_cargo_lib_tests(crate_dir, filter_str):
+    """Run cargo test --lib with a filter and return (n, pass, fail)."""
+    r = subprocess.run(
+        ["cargo", "test", "--release", "--lib", filter_str],
+        capture_output=True, text=True,
+        cwd=str(ROOT / crate_dir), timeout=600)
+    for line in r.stdout.splitlines():
+        if line.startswith("test result:"):
+            parts = line.replace(",", "").split()
+            try:
+                n_pass = int(parts[3])
+                n_fail = int(parts[5])
+                return n_pass + n_fail, n_pass, n_fail
+            except (IndexError, ValueError):
+                return 0, 0, 0
+    return 0, 0, 0
+
+
 def run_kats():
     """Run ACVP KAT across three languages."""
     py = subprocess.run([VPY, str(ROOT / "tests/vomega/mldsa/kat/run_python.py")],
@@ -118,6 +136,14 @@ for s in phase3_py:
         p3_fail += f
         print(f"  {s:45s} {p}/{n}")
 print(f"  PHASE3_GATE0 = {p3_total}  (pass={p3_pass}, fail={p3_fail})")
+print()
+
+# ─── Phase 3, Gate 1, 3A.2: CBOR reference implementation ───
+cbor_total, cbor_pass, cbor_fail = run_cargo_lib_tests(
+    "rust/adie-primitives", "cbor::")
+print("PHASE 3 Gate 1 / 3A.2 (Rust CBOR unit tests):")
+print(f"  cargo test --release --lib cbor::          {cbor_pass}/{cbor_total}")
+print(f"  PHASE3_3A2_CBOR = {cbor_total}  (pass={cbor_pass}, fail={cbor_fail})")
 print()
 
 # JS suite (Phase 2)

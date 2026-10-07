@@ -1307,3 +1307,83 @@ Specification approved and frozen for implementation.
 
 لا يبدأ 3A.2 حتى يرد أمر مستقل. القاعدة السارية:
 Specification precedes implementation.
+
+
+---
+
+## 39. Phase 3 / Gate 1 / 3A.2 — Rust Reference CBOR Implementation
+
+**التاريخ:** 2026-10-07
+
+### الـArtifacts
+
+- `rust/adie-primitives/src/cbor/mod.rs` — public API
+- `rust/adie-primitives/src/cbor/error.rs` — 14 codes, 5 tests
+- `rust/adie-primitives/src/cbor/value.rs` — AdieValue + RFC 8949 sorting, 8 tests
+- `rust/adie-primitives/src/cbor/profile.rs` — validate() authority, 22 tests
+- `rust/adie-primitives/src/cbor/rawcheck.rs` — byte-level pre-check, 33 tests
+- `rust/adie-primitives/src/cbor/encoder.rs` — canonical serializer, 14 tests
+- `rust/adie-primitives/src/cbor/decoder.rs` — full pipeline, 29 tests
+- **المجموع: 111 unit tests، كلها PASS**
+
+### الـdependency المعتمد
+
+    ciborium = "=0.2.2"
+
+- codec primitive فقط
+- ADIE profile يفرض WIRE-FORMAT-0.2 §7–§9 فوقه
+- موثق في CBOR-LIB-EVAL-001
+
+### المعمارية
+
+    Bytes
+      → rawcheck::scan_top_level   (trailing, indefinite, floats, tags, non-shortest)
+      → ciborium::de::from_reader  → Value
+      → profile::validate          → AdieValue (int keys, sorted, dedup)
+      → encoder::encode            → canonical bytes
+      → bytewise comparison        → E_WIRE_NONCANONICAL_MAP if diff
+
+- **encoder** = serializer، ليس authority
+- **profile** = authority
+- **rawcheck** = يكشف ما يفقد ciborium
+- **decoder** = pipeline
+
+### القيود المطبقة (أمر القائد)
+
+| # | القيد | التحقق |
+|---|---|---|
+| §2 | No trailing bytes | dec_trailing_rejected |
+| §3 | Duplicate keys reject | dec_duplicate_keys_rejected |
+| §4 | Canonicality ≠ validation | decoder pipeline خطوات 3+5 منفصلة |
+| §5 | AdieValue = profile types | profile::validate — 14 rejection codes |
+| §6 | RFC 8949 bytewise order | rfc_order_full_boundary_sweep |
+| §8 | profile = authority | profile.rs قلب البنية |
+
+### الأرقام بعد 3A.2
+
+| الدلو | العدد |
+|---|---|
+| REGRESSION_TOTAL (Phase 1) | 633 |
+| PHASE2_ADIE_PYTHON | 59 |
+| PHASE2_ADIE_JAVASCRIPT | 11 |
+| PHASE3_GATE0_PARITY | 13 |
+| **PHASE3_3A2_CBOR** | **111** |
+| ACVP_UNIQUE_VECTORS | 55 |
+| **المجموع الفريد** | **882** |
+
+### DEFECTs مغلقة في 3A.2
+
+- DEFECT-018: ciborium non_exhaustive wildcard
+- DEFECT-019: test byte-count error (5 not 6)
+- RISK-3.3: بيئة البناء ضيقة المساحة
+
+### الحالة
+
+    GATE 1 / 3A.2 — CLOSED
+    Rust reference CBOR implementation: 111/111
+    Awaiting Commander order for 3A.3 (Python adapter)
+
+### القاعدة المحورية
+
+> The codec is not the protocol.
+> ADIE owns the profile; ciborium owns the primitive.

@@ -646,3 +646,71 @@ minicbor adoption) requires touching only that module.
 - ciborium does not provide canonical encoding.
 - Selection of ciborium does not imply it satisfies WIRE-FORMAT-0.2.
   The spec and the profile layer do.
+
+
+---
+
+## DEFECT-018 — ciborium::Value is #[non_exhaustive]
+
+date: 2026-10-07
+commit_found: <uncommitted, during 3A.2 D.3>
+commit_fixed: <this commit>
+suite: rust/adie-primitives build
+test_id: n/a
+test_phase: Phase 3, Gate 1, 3A.2
+category: code
+language_pair: n/a
+failure_mode: structural
+invariant_at_risk: none (compile-time only)
+root_cause: ciborium::value::Value is marked #[non_exhaustive].
+The exhaustively-written match in profile::validate_depth failed to
+compile with E0004 (non-exhaustive patterns: `&_` not covered).
+fix: Added a wildcard `_ =>` arm returning CborError::Malformed.
+An unrecognised variant must be rejected, not silently accepted.
+lesson: non_exhaustive enums from external crates require explicit
+wildcard handling. Under a rejection policy, the wildcard itself
+must reject.
+
+---
+
+## DEFECT-019 — Test byte count error in rawcheck::valid_nested
+
+date: 2026-10-07
+commit_found: <uncommitted, during 3A.2 D.4>
+commit_fixed: <this commit>
+suite: cargo test --release --lib cbor::rawcheck
+test_id: cbor::rawcheck::tests::valid_nested
+test_phase: Phase 3, Gate 1, 3A.2
+category: test
+language_pair: n/a
+failure_mode: structural
+invariant_at_risk: none (test bug, not code bug)
+root_cause: The test asserted 6 bytes for {1:[true,null]}. Correct
+count is 5: a1 + 01 + 82 + f5 + f6. Hand counting was wrong; the
+rawcheck scanner was correct.
+fix: Assertion updated to 5 with the byte-by-byte count written
+literally into the test as a comment.
+lesson: byte-count assertions must include the byte-by-byte derivation
+in the test body. Hand-counting without a written trace is a recurring
+source of noise.
+
+---
+
+## RISK-3.3 — Build environment is space-constrained
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.2
+observation: Development disk is 38 GB with 36 GB used at peak,
+leaving ~450 MB free. One `cargo build --release` required ~240 MB.
+When the disk filled, the build failed with OS error 28
+(No space left on device).
+mitigation:
+  - Removed ~6.7 GB of cache: ~/.cache/trunk (4.5 GB),
+    ~/.npm/_cacache (1.2 GB), ~/.cache/pip (642 MB),
+    mozilla cache (301 MB), node-gyp (56 MB), stale /tmp.
+  - Rule: after each `cargo build --release`, check `df -h /home`.
+    If free space < 1 GB, run `cargo clean` before continuing.
+consequence: Development is functional but constrained.
+not hidden: recorded as an active operational constraint.
+
+---
