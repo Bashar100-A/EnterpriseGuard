@@ -2983,6 +2983,31 @@ Disk 6.3 GB قبل/بعد. مستقر.
 | Cross-runtime acceptance checks | 30,000 | executions |
 | Previous baseline | 1120 | executions |
 
+### Correction (DEFECT-039 / DEFECT-040)
+
+The first 10k run (in commit 4617df6) produced **1/10,000
+rejection-code mismatch**:
+
+    case=8443 mut=insert:
+      Rust=E_WIRE_NONCANONICAL_INT
+      Py  =E_WIRE_NONCANONICAL_INT
+      JS  =E_WIRE_TAG
+
+Cause: JS `walkTag` did not enforce shortest-form on the tag number
+(DEFECT-039). The commit message of 4617df6 incorrectly stated
+"0/10k" (DEFECT-040 — projection error).
+
+After the fix (DEFECT-039), the corrected numbers are:
+
+| المقياس | القيمة |
+|---|---|
+| Acceptance mismatches (run #2) | **0/10,000** |
+| Rejection-code mismatches (run #2) | **0/10,000** |
+
+Both numbers refer to the corrected commit, not 4617df6. 4617df6
+remains in history with its inaccurate message; DEFECT-040 records
+the discrepancy explicitly.
+
 ### الملفات
 
 | File | Status | Purpose |

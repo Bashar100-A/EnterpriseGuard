@@ -175,8 +175,13 @@ function walkMap(b, off, ai, depth) {
 }
 
 function walkTag(b, off, ai) {
-  // Reject at the tag number level; do NOT walk the tagged value.
+  // DEFECT-039: enforce shortest-form on the tag number BEFORE
+  // throwing TagErr. Rust/Python read_length does this implicitly;
+  // JS must do it explicitly so that `0xD8 0x01` (non-shortest
+  // encoding of tag 1) classifies as E_WIRE_NONCANONICAL_INT in
+  // all three runtimes, matching the spec priority.
   const { value: tag } = readAdditional(b, off, ai);
+  checkShortest(tag, ai);
   throw new TagErr(Number(tag));
 }
 

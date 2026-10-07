@@ -1630,3 +1630,97 @@ lesson:
 This is the same class as DEFECT-036. Any invariant enforced by one
 runtime's rawcheck MUST be enforced by all, otherwise cross-runtime
 classification parity is silently broken.
+
+
+---
+
+## DEFECT-039 — JS walkTag skipped shortest-form check on tag number
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.6
+commit_found: 4617df6 (during 3A.6 fuzz campaign, case 8443)
+commit_fixed: <this commit>
+suite: js/wire/rawcheck.mjs
+category: code
+failure_mode: missing-check
+invariant_at_risk: The ADIE rejection priority for a tag with a
+non-shortest argument MUST be E_WIRE_NONCANONICAL_INT (shortest-form
+rule) before E_WIRE_TAG, matching Rust and Python.
+
+symptom:
+  case=8443 mut=insert: R=E_WIRE_NONCANONICAL_INT P=E_WIRE_NONCANONICAL_INT J=E_WIRE_TAG
+
+minimal reproducer:
+  envelope_hex = "d801"
+  Rust / Python: E_WIRE_NONCANONICAL_INT
+  JavaScript:    E_WIRE_TAG        (before fix)
+
+root_cause:
+js/wire/rawcheck.mjs `walkTag` read the tag number via `readAdditional`
+and immediately threw `TagErr`. `readAdditional` does NOT enforce
+shortest form (unlike Rust's read_length and Python's _read_length,
+both of which check `b < 24` / `n < 256` / etc. before returning).
+So the tag arm skipped the shortest-form rule that all other arms
+enforce via `checkShortest`.
+
+fix:
+Insert `checkShortest(tag, ai)` inside `walkTag` before throwing
+`TagErr`. This restores priority: non-shortest → NonCanonicalInt,
+otherwise → Tag.
+
+lesson:
+Every CBOR arm that reads a length via `readAdditional` MUST either
+call `checkShortest` explicitly or use a helper that does. The
+tag arm was the only one without it. This kind of omission is only
+visible when a fuzzer generates a byte sequence whose class depends
+on which check runs first. Hand-authored vectors had tag and
+non-shortest cases separately; the combined case was not covered.
+
+regression vector:
+tests/vomega/b-plus/fuzz_case_8443.json (saved). The minimal
+reproducer `d801` should also be retained as a regression case in
+the rawcheck tests.
+
+invariant_statement:
+Classification priority is part of the wire contract. If two
+violations are present, all runtimes MUST pick the same one, in
+the same order defined by WIRE-FORMAT-0.2 §9.
+
+---
+
+## DEFECT-040 — Commit message claimed 0/10k mismatch while 1/10k existed
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.6
+commit_found: 4617df6
+commit_fixed: <this commit>
+category: process
+failure_mode: inaccurate-reporting
+invariant_at_risk: The commit record is part of the audit trail.
+It MUST reflect the exact measured result, not the intended result.
+
+description:
+Commit 4617df6 has the message:
+  "... 0/10k rejection-code mismatches across Rust/Python/JS ..."
+The measured result of that commit's fuzz run was:
+  rejection code mismatch: 1
+  case=8443 mut=insert: R=E_WIRE_NONCANONICAL_INT P=E_WIRE_NONCANONICAL_INT J=E_WIRE_TAG
+
+The "0/10k" text was a projection from the 100-case pilot, written
+before the 10k run completed. The actual result of the 10k run was
+captured in the same shell output but not reflected back into the
+commit message before the commit was pushed.
+
+fix:
+No code change. This defect is logged to make the record honest.
+The correction is the current commit, whose message describes the
+actual progression:
+  10k run #1 (4617df6): 1 mismatch → fixed in this commit.
+  10k run #2 (this commit): 0 mismatch (expected).
+
+lesson:
+A commit message is a claim. It must be derived from the exact
+terminal output of the command that produced the result, not from
+a prior intermediate run. The rule established in DEFECT-037
+(verify after patch) extends to commit messages: verify the number
+you are about to write into the permanent record.
