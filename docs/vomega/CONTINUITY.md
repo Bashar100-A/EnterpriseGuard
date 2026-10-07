@@ -2174,3 +2174,390 @@ WASM = portable execution of Rust reference (ليس لغة تحقق ثالثة).
 Rust native == Rust WASM يجب إثباته. Node.js + Browser targets.
 
 **لا شيء من 3A.4B قبل أمر صريح.**
+
+
+---
+
+## 48. Stage 3A.4B-WASM — Plan (APPROVED by Commander)
+
+**التاريخ:** 2026-10-07
+**Gate:** Phase 3, Gate 1, 3A.4B
+**Status:** PLAN APPROVED — pending execution order
+**قرار القائد:** approve-with-modifications
+
+### العلاقة الكنسية (لا تُغيَّر)
+
+    Rust Reference (rust/adie-primitives/)
+          ↓ path dependency
+    rust/adie-wasm/          ← Delivery wrapper (NOT a new implementation)
+          ↓ wasm-bindgen
+    WASM module
+          ↓
+    Node.js  +  Firefox
+
+**القاعدة الثابتة:**
+
+> Rust remains the cryptographic and wire-format authority.
+> WASM is its portable execution boundary, NOT a new implementation.
+
+### القرارات الخمسة المعتمدة
+
+#### 1. wasm32-unknown-unknown target
+
+```
+rustup target add wasm32-unknown-unknown
+```
+
+الهدف القياسي. لا بديل.
+
+#### 2. Toolchain binaries — prebuilt + pinned
+
+**ممنوع:** `cargo install` لأي من `wasm-bindgen-cli` / `wasm-pack`.
+**مطلوب:** تنزيل prebuilt releases من GitHub + تثبيت النسخة.
+
+- **`wasm-bindgen-cli`:** يُحدَّد إصداره من `Cargo.lock` بعد إضافة
+  `wasm-bindgen` كاعتماد. **CLI version MUST equal crate version.**
+- **`wasm-pack`:** prebuilt، نسخة مثبَّتة (0.15.0 هو الإصدار الحالي
+  الظاهر).
+- **`wasm-opt`:** غير مطلوب للـclosure. لا يُثبَّت إلا إذا احتجناه
+  لقياس حجم.
+
+**سجل ما بعد التثبيت (إلزامي):**
+
+    which wasm-bindgen && wasm-bindgen --version
+    which wasm-pack     && wasm-pack --version
+
+#### 3. rust/adie-wasm/ — crate منفصل
+
+**ممنوع:** إضافة `cdylib` إلى `rust/adie-primitives/`.
+**مطلوب:** crate جديد:
+
+    rust/adie-wasm/
+    ├── Cargo.toml           (path dep → ../adie-primitives)
+    └── src/lib.rs           (wasm-bindgen surface)
+
+هذا يحافظ على الفاصل:
+
+    Reference implementation  ≠  Delivery wrapper
+
+#### 4. Firefox + geckodriver — التحقق من التوافق أولاً
+
+**ممنوع:** تثبيت geckodriver عشوائياً.
+**مطلوب قبل التثبيت:**
+
+    which firefox && firefox --version
+
+ثم اختيار نسخة geckodriver المتوافقة مع إصدار Firefox المثبَّت.
+
+**سجل ما بعد التثبيت (إلزامي):**
+
+    which firefox     && firefox --version
+    which geckodriver && geckodriver --version
+    which wasm-pack   && wasm-pack --version
+    which wasm-bindgen && wasm-bindgen --version
+
+#### 5. u64/i64 WASM ABI — Lossless Integer Boundary
+
+**تسمية صحيحة:** هذا **WASM ABI/serialization boundary**، وليس
+"DCP 2.1 JSON schema". DCP 2.1 نفسه لا يتغير بسبب JavaScript.
+
+**التمثيل الإلزامي عبر WASM:**
+
+    {"t": "uint", "v": "18446744073709551615"}     ← string
+    {"t": "int",  "v": "-9223372036854775808"}     ← string
+
+**ممنوع صراحةً:**
+
+    {"t": "uint", "v": 18446744073709551615}       ← JSON Number (lossy)
+
+Rust يقرأ `v` كـstring ثم يحوّلها إلى `u64`/`i64` مباشرة (بعد التحقق
+من الحدود). JavaScript لا يمررها عبر `Number`.
+
+### DEFECT-029-WASM — Lossless Integer Boundary Invariant
+
+**امتداد لـDEFECT-029 على حدود WASM.**
+
+**الاختبار الإلزامي:**
+
+    Forward:  u64::MAX (Rust)
+                 ↓  WASM JSON boundary (v: string)
+              "18446744073709551615"
+                 ↓  Rust parse
+              u64::MAX
+                 ↓  CBOR encode
+              0x1bffffffffffffffff
+
+    Reverse:  0x1bffffffffffffffff
+                 ↓  CBOR decode (Rust)
+              u64::MAX
+                 ↓  WASM JSON boundary
+              {"t":"uint","v":"18446744073709551615"}
+                 ↓  JS read
+              (no Number round-trip at any point)
+
+**الحد الأدنى من القيم للاختبار:**
+
+    0, 23, 24, 255, 256, 65535, 65536,
+    u32::MAX (4_294_967_295),
+    u32::MAX+1 (4_294_967_296),
+    u64::MAX (18_446_744_073_709_551_615)
+
+**التحقق:** كل قيمة تصل إلى Rust كـ`u64` مطابقة، وكل قيمة تعود إلى
+JS كـstring مطابق. لا مرور واحد عبر JS `Number`.
+
+### WASM API Surface (minimal)
+
+```rust
+#[wasm_bindgen]
+pub fn encode(value_json: &str) -> Result<Vec<u8>, JsValue>;
+// value_json: AdieValue JSON with v as string for uint/int
+
+#[wasm_bindgen]
+pub fn decode(cbor: &[u8]) -> Result<String, JsValue>;
+// returns AdieValue JSON with v as string for uint/int
+```
+
+**مبادئ:**
+- Byte-oriented: `&[u8]` / `Vec<u8>` عبر `Uint8Array` في JS.
+- لا JSON للـCBOR bytes. الـCBOR bytes تمر كـbyte array.
+- JSON فقط لتمثيل AdieValue (لأن الحقول semantic، ليس wire).
+- الأخطاء تُعاد كـ`{code: "E_WIRE_*"}` في JSON، بنفس taxonomy
+  `error.mjs`/`error.py`/`error.rs` — لا taxonomy جديد.
+
+### Test plan (عند التنفيذ)
+
+| المستوى | الاختبار |
+|---|---|
+| Native Rust | `cargo test --release --lib cbor::` (يجب أن يبقى 111/111) |
+| WASM unit | اختبارات Rust على crate adie-wasm (target wasm32-unknown-unknown) |
+| Node.js | `wasm-pack test --node` — encode/decode/negative |
+| Firefox | `wasm-pack test --headless --firefox` — نفس الاختبارات |
+| Precision | 10 قيم u64 عبر WASM boundary (لا `Number`) |
+| Parity | native Rust bytes == WASM bytes على نفس الـ44 vectors |
+| Regression | 1120/1120 (previous baseline) |
+
+### Scope (احترام صريح)
+
+- ❌ لا COSE, لا Hybrid E2E, لا SLH-DSA, لا fuzzing
+- ❌ لا تعديل `WIRE-FORMAT-0.2.md`
+- ❌ لا تعديل Rust reference behavior
+- ❌ لا تعديل Python wire
+- ❌ لا تغيير JS wire semantics
+- ✅ فقط: WASM delivery path + parity proof
+
+### Security claim boundary
+
+WASM completion **لا يعني**:
+- constant-time execution
+- side-channel resistance
+- cryptographic audit
+- production certification
+
+الادعاء الصحيح:
+
+> The Rust DCP 2.1 reference implementation is reproducibly
+> deployable through WebAssembly with verified behavioral parity
+> across the tested Node.js and Firefox targets.
+
+### الحالة
+
+**PLAN APPROVED. لا كود. لا `rustup target add`. لا تنزيل.
+بانتظار أمر التنفيذ الكامل للمرحلة من القائد.**
+
+
+---
+
+## 49. Stage 3A.4B-WASM — Browser Target Decision (APPROVED)
+
+**التاريخ:** 2026-10-07
+**قرار القائد:** OPTION A
+**geckodriver:** NO
+**Firefox ESR:** NO
+**Additional Firefox:** NO
+
+### القرار
+
+Browser target = **Firefox headless + HTML test page**، بدون geckodriver.
+
+**القيد الإلزامي:**
+
+> Screenshot not sufficient as proof.
+> The test page MUST execute WASM vectors and produce a machine-readable
+> result in DOM: `PASS=<n> FAIL=0`.
+> Failure MUST be clearly visible, not a pretty picture.
+
+### التحقق الإلزامي لاحقاً
+
+- WASM artifact executed inside real Firefox.
+- DOM read after Firefox headless run → parse `PASS=N FAIL=0`.
+- Failures appear as `[FAIL]` lines in DOM/console.
+- Not relying on WebDriver integration.
+
+### Firefox المثبَّت
+
+    /usr/bin/firefox → Mozilla Firefox 155.0.1
+
+### القاعدة المعمارية
+
+> Rust remains the cryptographic and wire-format authority.
+> WASM is its portable execution boundary, NOT a new implementation.
+
+### الحالة
+
+**EXECUTION APPROVED.** Range: toolchain → adie-wasm → build → Node
+→ Firefox → lossless u64/i64 → native↔WASM parity → 1120 regression
+→ commit → STOP. لا توقف لطلب قرار آخر حتى Closure Report.
+
+
+---
+
+## 50. Stage 3A.4B-WASM — CLOSED
+
+**التاريخ:** 2026-10-07
+**Gate:** Phase 3, Gate 1, 3A.4B
+**Commit:** <this commit>
+
+### الهدف
+
+WASM delivery path للـRust DCP 2.1 reference. **ليس implementation
+جديدة.** كان الهدف إثبات أن نفس reference implementation قابلة
+للنشر عبر WebAssembly بسلوك متطابق.
+
+    Rust Reference
+          ↓ path dependency
+    rust/adie-wasm/       ← delivery wrapper (لا semantics جديدة)
+          ↓ wasm-bindgen
+    WASM module (232,431 bytes adie_wasm_bg.wasm)
+          ↓
+    Node.js + Firefox
+
+### Toolchain (مثبَّت، موثَّق)
+
+| الأداة | الإصدار | المصدر |
+|---|---|---|
+| rustc | 1.99.0 | rustup |
+| cargo | 1.99.0 | rustup |
+| rustup | 1.29.1 | rustup |
+| wasm32-unknown-unknown | (target) | rustup target add |
+| wasm-bindgen-cli | **0.2.129** | gh-proxy.com mirror (prebuilt musl) |
+| wasm-pack | **0.15.0** | gh-proxy.com mirror (prebuilt musl) |
+| Firefox | **155.0.1** | /usr/bin/firefox (system) |
+| Node.js | v20.20.2 | /usr/bin/node |
+
+**ملاحظة:** gh-proxy.com هي مرآة طرف ثالث لـGitHub releases.
+استُخدمت لأن release-assets.githubusercontent.com محجوب شبكياً.
+الـbinaries تحقّقت عبر `--version` وطابقت إصدارات Cargo.lock.
+
+### الملفات الجديدة
+
+- `rust/adie-wasm/Cargo.toml` — crate مستقل، path dep على adie-primitives
+- `rust/adie-wasm/Cargo.lock` — locked deps
+- `rust/adie-wasm/.cargo/config.toml` — getrandom rustc cfg (DEFECT-031)
+- `rust/adie-wasm/src/lib.rs` — 148 lines، WASM API
+- `js/wasm-pkg-node/` — Node.js target (wasm-bindgen output + package.json)
+- `tools/wasm/browser-test/` — HTML test page + HTTP server + pkg/
+- `tests/vomega/wasm/test_wasm_node.mjs` — 45 assertions
+- `tests/vomega/wasm/test_wasm_precision.mjs` — 31 assertions
+
+### WASM ABI Contract (DEFECT-029-WASM)
+
+**هذا ليس DCP 2.1 JSON schema.** هذا WASM ABI/serialization boundary.
+
+    uint/int VALUES AND MAP KEYS cross as decimal STRINGS:
+      {"t":"uint","v":"18446744073709551615"}
+      {"t":"int", "v":"-9223372036854775808"}
+      {"t":"map", "v":[["18446744073709551615", ...]]}
+
+    CBOR bytes cross as Uint8Array.
+
+    JavaScript Number is FORBIDDEN on the u64/i64 boundary.
+
+**ملاحظة CBOR wire:** الترميز لا يحفظ `t:'int'` للأعداد الموجبة
+(both uint and positive-int encode as major type 0). Decoder يُرجع
+`t:'uint'` للقيم غير السالبة. تطبيع semantic صحيح.
+
+### Acceptance Evidence
+
+| Metric | Required | Actual |
+|---|---|---|
+| WASM build | success | ✅ 232,431 bytes bg.wasm |
+| Native Rust ↔ WASM parity (encode) | 14 | 14/14 |
+| Native Rust ↔ WASM parity (decode) | 12 | 12/12 |
+| Native Rust ↔ WASM parity (negative) | 18 | 18/18 |
+| WASM architectural (A01) | 1 | 1/1 |
+| Node.js WASM | all pass | **45/45** |
+| Precision (u64/i64 boundary) | full | **31/31** |
+| Browser (Firefox headless) | machine-readable | **29/29** |
+| Previous 1120 baseline | 1120/1120 | 1120/1120 |
+| Spec changes | 0 | 0 |
+
+### Cross-implementation continuity
+
+    Rust native == Rust WASM  (byte-for-byte على 44 vectors)
+    Same Node.js test suite passes on WASM exactly as on JS native.
+    Same HTML test suite passes in Firefox headless.
+
+### Security claim boundary
+
+WASM completion **لا يعني**:
+- ❌ constant-time execution
+- ❌ side-channel resistance
+- ❌ cryptographic audit
+- ❌ production certification
+- ❌ sandbox security of the host application
+
+**الادعاء الصحيح:**
+
+> The Rust DCP 2.1 reference implementation is reproducibly
+> deployable through WebAssembly with verified behavioral parity
+> across the tested Node.js 20.20.2 and Firefox 155.0.1 targets.
+
+### DEFECTs مغلقة في Stage
+
+| ID | Category | Summary |
+|---|---|---|
+| DEFECT-029-WASM | architecture | Lossless Integer Boundary Invariant |
+| DEFECT-031 | dependency | getrandom wasm32 backend explicit opt-in |
+| DEFECT-032 | dependency | wasm-bindgen nodejs under ESM parent |
+
+### GAPs جديدة
+
+| ID | Status | Summary |
+|---|---|---|
+| GAP-3.4B-01 | open (by design) | wasm-bindgen nodejs CWD-relative wasm path |
+
+### RISK-3.3
+
+مراقب. Disk 6.9 GB → 6.4 GB. استُهلك ~500 MB (rust build + tools + pkg).
+
+### الأرقام بتمييز صريح
+
+| الفئة | العدد | التصنيف |
+|---|---|---|
+| WASM unique vectors | 44 | unique |
+| Node WASM executions | 45 | executions |
+| Node precision executions | 31 | executions |
+| Browser executions | 29 | executions |
+| **WASM executions subtotal** | **105** | executions |
+| Previous baseline | 1120 | executions |
+| **Cumulative executions** | **1225** | executions |
+
+### القاعدة المعمارية النهائية
+
+> Rust remains the cryptographic and wire-format authority.
+> WASM is its portable execution boundary, NOT a new implementation.
+
+### الحالة
+
+    3A.4A — CLOSED (JS adapter, 253+90 = 343 execs)
+    3A.4B — CLOSED (WASM delivery, 105 execs)
+    ─────────────────────────────────────────
+    Cumulative: 1225 execs
+
+### الخطوة التالية (بانتظار أمر القائد)
+
+- 3A.5 — COSE + Hybrid Wire Integration
+- Fuzzing campaign
+- Governance / revocation
+
+**لا شيء من هذه قبل أمر صريح.**

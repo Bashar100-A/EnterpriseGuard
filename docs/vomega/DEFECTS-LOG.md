@@ -1249,3 +1249,158 @@ invariant_statement:
 Every JSON boundary in the ADIE toolchain must preserve the full
 u64 range as integers. Numbers of 16+ digits must be handled as
 BigInt end-to-end, never routed through JavaScript's Number type.
+
+
+---
+
+## DEFECT-029-WASM — Lossless Integer Boundary Invariant (WASM ABI)
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.4B
+commit_found: <uncommitted, during 3A.4B>
+commit_fixed: <this stage commit>
+suite: rust/adie-wasm/src/lib.rs, tests/vomega/wasm/test_wasm_precision.mjs
+category: architecture
+failure_mode: potential-information-loss
+invariant_at_risk: Wire-protocol u64/i64 values MUST NOT transit the
+JavaScript Number type (IEEE-754) at any point in the WASM delivery
+boundary.
+
+root_cause:
+DCP 2.1 wire format encodes uint (major type 0) and int (major type 1)
+in the range [0, 2^64-1] and [-2^63, 2^63-1] respectively. JSON's
+Number is IEEE-754 double-precision (safe integer range ±2^53-1).
+Any JSON boundary that serializes u64/i64 as a bare Number is lossy.
+This is the same class of hazard as DEFECT-029 (JSON Number precision
+boundary), but on a different surface — the WASM ABI.
+
+fix:
+The WASM ABI contract (WASM ABI/serialization boundary, NOT DCP 2.1
+JSON schema) is:
+
+  uint/int VALUES AND MAP KEYS cross the boundary as decimal STRINGS:
+
+    {"t":"uint","v":"18446744073709551615"}
+    {"t":"int", "v":"-9223372036854775808"}
+    {"t":"map", "v":[["18446744073709551615", ...]]}
+
+The Rust side parses these with u64::from_str / i64::from_str and
+range-checks immediately. The JavaScript side receives them as
+strings from the WASM return value. No Number ever touches a wire
+integer.
+
+Proof artifacts:
+  - rust/adie-wasm/src/lib.rs: read_u64/read_i64 prefer string form
+  - test_wasm_precision.mjs: 10 u64 + 3 i64 boundaries, all lossless
+  - test_wasm_node.mjs: 44-vector corpus, WASM ≡ native Rust
+  - tools/wasm/browser-test/index.html: 29 assertions in Firefox headless
+
+Note: CBOR wire does NOT preserve t:'int' vs t:'uint' for positive
+values. Both encode as major type 0 (unsigned). The decoder returns
+t:'uint' for non-negative, and t:'int' for negative. This is correct
+semantic normalization, not information loss. Documented in the
+precision test (i64::MAX → t:'uint' on decode).
+
+invariant_statement:
+The WASM ABI is a decimal-string boundary for u64/i64.
+JavaScript Number is forbidden on that boundary.
+
+---
+
+## DEFECT-031 — getrandom wasm32 backend requires explicit opt-in
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.4B
+commit_found: <uncommitted, during 3A.4B build>
+commit_fixed: <this stage commit>
+suite: rust/adie-wasm/Cargo.toml, rust/adie-wasm/.cargo/config.toml
+category: dependency
+failure_mode: build-failure
+invariant_at_risk: none (build-time only)
+
+root_cause:
+The transitive dependency graph of adie-primitives includes getrandom
+in two major lines:
+  - getrandom 0.2.x (pulled by some crypto dependency)
+  - getrandom 0.4.x (pulled by a newer crypto dependency)
+
+Neither backend is enabled by default on wasm32-unknown-unknown. Each
+major line uses a DIFFERENT opt-in mechanism:
+  - 0.2.x: crate feature "js"
+  - 0.4.x: crate feature "wasm_js" AND rustc cfg
+           --cfg getrandom_backend="wasm_js"
+
+fix:
+- rust/adie-wasm/Cargo.toml declares both under
+  [target.'cfg(target_arch = "wasm32")'.dependencies]:
+    getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
+    getrandom_04 = { package = "getrandom", version = "0.4", features = ["wasm_js"] }
+- rust/adie-wasm/.cargo/config.toml declares the rustc cfg:
+    [target.wasm32-unknown-unknown]
+    rustflags = ['--cfg', 'getrandom_backend="wasm_js"']
+
+The reference crate rust/adie-primitives is UNCHANGED. The delivery
+wrapper owns the target-specific adaptation.
+
+lesson:
+Cargo features are additive and graph-wide. A path-dependency crate
+can activate features on shared transitive dependencies without
+modifying the parent. This is the correct place for target-specific
+adaptation: the delivery wrapper, not the reference.
+
+---
+
+## DEFECT-032 — wasm-bindgen nodejs output under ESM parent
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.4B
+commit_found: <uncommitted, during 3A.4B Node probe>
+commit_fixed: <this stage commit>
+suite: js/wasm-pkg-node/package.json
+category: dependency
+failure_mode: structural
+invariant_at_risk: none (module loading only)
+
+root_cause:
+wasm-bindgen --target nodejs generates CommonJS output
+(module.exports = ...). Node.js resolves module type from the
+nearest package.json. js/package.json declares "type": "module",
+which propagates to js/wasm-pkg-node/ (no local override). Node
+therefore attempts to load adie_wasm.js as ESM, sees no export
+statements in the CJS form, and returns an empty namespace object
+(`exports: []`).
+
+fix:
+Added js/wasm-pkg-node/package.json with:
+  { "type": "commonjs", "main": "adie_wasm.js" }
+
+This is a loader hint. It does not modify the artifact. The
+require('...') form works, exports become visible, and the same
+binary is exercised end-to-end.
+
+lesson:
+When wasm-bindgen writes into a subtree under a "type":"module"
+parent, the subtree MUST be pinned to CommonJS explicitly. This is
+the fifth DEFECT in the family "library defaults that do not match
+protocol/repo defaults" (DEFECT-021/025/026/028/032).
+
+---
+
+## GAP-3.4B-01 — wasm-bindgen nodejs CWD-relative wasm path
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.4B
+category: documentation
+status: open (by design — known behavior)
+
+description:
+wasm-bindgen --target nodejs emits adie_wasm.js that loads the
+companion wasm via a CWD-relative path ('./adie_wasm_bg.wasm').
+Consumers must either run Node from within js/wasm-pkg-node/, or use
+a path-resolving shim. This is a known limitation of the nodejs
+target; not a defect in our wrapper. Documented here so future
+integrators do not mistake the ENOENT for an ADIE failure.
+
+impact: low. No protocol semantics affected. Delivery consumers
+(applications) will typically use --target bundler or
+--target web with a proper module resolution setup.

@@ -1,0 +1,91 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>ADIE WASM Browser Test</title>
+<pre id="log"></pre>
+<pre id="result">RUNNING</pre>
+<script src="./pkg/adie_wasm.js"></script>
+<script>
+const log = (s) => { document.getElementById('log').textContent += s + '\n'; };
+let pass = 0, fail = 0;
+function check(name, cond, detail = '') {
+  if (cond) { pass++; log(`[PASS] ${name}`); }
+  else { fail++; log(`[FAIL] ${name}: ${detail}`); }
+}
+function hx(b) { return Array.from(b).map(x => x.toString(16).padStart(2,'0')).join(''); }
+
+async function run() {
+  await wasm_bindgen('./pkg/adie_wasm_bg.wasm');
+  const W = wasm_bindgen;
+  log('=== ADIE WASM Browser Test ===');
+
+  // Encode boundary u64s
+  const U64 = [
+    ['0','00'], ['23','17'], ['24','1818'], ['255','18ff'],
+    ['256','190100'], ['65535','19ffff'], ['65536','1a00010000'],
+    ['4294967295','1affffffff'], ['4294967296','1b0000000100000000'],
+    ['18446744073709551615','1bffffffffffffffff'],
+  ];
+  for (const [dec, hex] of U64) {
+    try {
+      const bytes = W.encode(JSON.stringify({t:'uint', v:dec}));
+      check(`encode u64 ${dec}`, hx(bytes) === hex, `got=${hx(bytes)}`);
+      const back = JSON.parse(W.decode(new Uint8Array(bytes)));
+      check(`decode u64 ${dec} lossless`, back.t === 'uint' && back.v === dec);
+    } catch (e) { check(`u64 ${dec}`, false, String(e)); }
+  }
+
+  // i64 MIN
+  try {
+    const bytes = W.encode(JSON.stringify({t:'int', v:'-9223372036854775808'}));
+    check('i64::MIN encode', hx(bytes) === '3b7fffffffffffffff', `got=${hx(bytes)}`);
+  } catch (e) { check('i64::MIN', false, String(e)); }
+
+  // Decode positive
+  try {
+    const out = W.decode(new Uint8Array([0xa1, 0x01, 0x61, 0x78]));
+    check('decode a1016178', out === '{"t":"map","v":[["1",{"t":"text","v":"x"}]]}', out);
+  } catch (e) { check('decode a1016178', false, String(e)); }
+
+  // Rejections
+  const REJ = [
+    ['tag c101', [0xc1, 0x01], 'E_WIRE_TAG'],
+    ['float64', [0xfb,0x3f,0xf0,0,0,0,0,0,0], 'E_WIRE_FLOAT'],
+    ['indefinite 9f01ff', [0x9f, 0x01, 0xff], 'E_WIRE_INDEFINITE'],
+    ['trailing 00ff', [0x00, 0xff], 'E_WIRE_TRAILING'],
+    ['non-shortest 1801', [0x18, 0x01], 'E_WIRE_NONCANONICAL_INT'],
+    ['dup a2016161016162', [0xa2,0x01,0x61,0x61,0x01,0x61,0x62], 'E_WIRE_DUP_KEY'],
+  ];
+  for (const [name, bytes, want] of REJ) {
+    try {
+      W.decode(new Uint8Array(bytes));
+      check(`reject ${name}`, false, 'accepted');
+    } catch (e) {
+      check(`reject ${name}`, String(e) === want, `got=${e} want=${want}`);
+    }
+  }
+
+  // A01
+  try {
+    W.decode(new Uint8Array([0x01]));
+    check('A01 uint 01 accepted', true);
+  } catch (e) { check('A01 uint 01 accepted', false, String(e)); }
+
+  const result = `PASS=${pass} FAIL=${fail}`;
+  document.getElementById('result').textContent = result;
+  log('=== ' + result + ' ===');
+
+  // POST to server (machine-readable capture)
+  try {
+    await fetch('/result', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: result + '\n' + document.getElementById('log').textContent,
+    });
+  } catch (e) { log('POST failed: ' + e); }
+}
+
+run().catch(e => {
+  document.getElementById('result').textContent = `PASS=0 FAIL=1 CRASH=${e}`;
+  fetch('/result', { method:'POST', body: `PASS=0 FAIL=1 CRASH=${e}` }).catch(()=>{});
+});
+</script>

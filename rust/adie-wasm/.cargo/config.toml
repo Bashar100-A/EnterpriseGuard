@@ -1,0 +1,5 @@
+# DEFECT-031: getrandom 0.4.x requires an explicit rustc cfg on
+# wasm32-unknown-unknown to select the JS backend.
+# Reference: https://docs.rs/getrandom/0.4.3/#webassembly-support
+[target.wasm32-unknown-unknown]
+rustflags = ['--cfg', 'getrandom_backend="wasm_js"']

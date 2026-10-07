@@ -1,0 +1,7 @@
+{
+  "name": "adie-wasm-node",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "adie_wasm.js"
+}
