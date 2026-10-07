@@ -931,3 +931,163 @@ rawcheck runs BEFORE cbor2 and is authoritative for tag rejection.
 - Its behavior differences from the Rust reference (ciborium)
   are documented and compensated by the ADIE profile layer.
 - It is not audited; treated as a primitive, not as an oracle.
+
+
+---
+
+## DEFECT-025 — CommonJS interop: named exports not visible in ESM
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.4A
+commit_found: probe during Block B
+commit_fixed: <this 3A.4 commit>
+suite: /tmp/adie-js-cbor-test/probe.mjs, probe_cbor.mjs
+category: dependency
+language_pair: n/a
+failure_mode: structural
+invariant_at_risk: none (build-time integration)
+root_cause: cbor@10.0.12 and cbor@9.0.2 are CommonJS modules. When
+imported via `import * as CBOR from 'cbor'`, Node.js does not surface
+the module's runtime properties (encode, encodeCanonical,
+decodeFirstSync) as named exports. The full module object lives at
+CBOR.default. Additionally, cbor@10.x rewrote its public API and no
+longer ships the encode/decode/encodeCanonical helpers at all; only
+low-level Encoder/Decoder classes remain.
+fix: (1) Use `import CBOR from 'cbor'` (default import) to access the
+CommonJS object. (2) Select cbor@9.0.2 (last major line with classic
+helper API). (3) Document that callers MUST use the default-import
+form.
+lesson: ESM/CJS interop is not transparent. Every JS dependency's
+import style must be verified at the probe stage, not at integration
+time. This is a specific case of the general rule: "codec behavior
+!= protocol behavior" (DEFECT-021), extended to "module shape !=
+namespace shape".
+
+---
+
+## CBOR-LIB-EVAL-003 — cbor 9.0.2 selected for JavaScript adapter (3A.4A)
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.4A
+category: dependency-selection
+library: cbor
+version: 9.0.2
+license: MIT
+npm: https://www.npmjs.com/package/cbor
+
+### Candidates surveyed
+
+| library | version | license | deps | deterministic map sort | trailing reject | status |
+|---|---|---|---|---|---|---|
+| cbor-x | 1.6.6 | MIT | native (cbor-extract, node-gyp-build) | **NO** | YES | REJECTED |
+| cbor | 10.0.12 | MIT | nofilter | API removed | n/a | REJECTED |
+| cbor | 9.0.2 | MIT | nofilter | **YES** | **YES** | **SELECTED** |
+| cbor2 | 2.4.0 | MIT | @cto.af/wtf8 | (not probed) | (not probed) | fallback |
+
+### Rationale for cbor@9.0.2
+
+- Exposes classic helper API: encode, encodeCanonical,
+  decodeFirstSync, decodeAllSync.
+- encodeCanonical produces byte-identical output to ciborium
+  (Rust) and cbor2 (Python) on our probe cases, including map key
+  sorting and integer boundaries.
+- Rejects trailing bytes at decodeFirstSync.
+- Round-trip stability confirmed empirically.
+- Single non-native dependency (nofilter).
+
+### Rejected candidates (evidence)
+
+- **cbor-x 1.6.6:** canonical option does not sort map keys
+  (`T1 canonical: false`); round-trip not byte-stable; interprets
+  known tags as Date. Also pulls native bindings (cbor-extract,
+  node-gyp-build), which would be a first for the project's
+  pure-JS dependency tree.
+- **cbor 10.0.12:** API rewrite. encode/decode/encodeCanonical are
+  not exported; only low-level Encoder/Decoder classes with
+  push/pull interfaces. Not a suitable codec primitive for a
+  protocol that requires a single canonical function.
+
+### cbor@9.0.2 behavior to be compensated by ADIE layer
+
+Same pattern as DEFECT-021 (cbor2, Python):
+
+| Case | cbor@9 | Compensated by |
+|---|---|---|
+| tag 0 (date string) | decoded to Date | rawcheck rejects major type 6 |
+| tag 1 (epoch) | decoded to Date | rawcheck rejects major type 6 |
+| unknown tag | decoded to Tagged | rawcheck rejects major type 6 |
+| overlong int | accepted | rawcheck rejects non-shortest |
+| indefinite | accepted | rawcheck rejects |
+| duplicate keys | accepted | rawcheck + cbor preferredSerialization |
+
+### Import form (mandatory)
+
+    import CBOR from 'cbor';   // default import — NOT * as CBOR
+
+See DEFECT-025.
+
+### Trust boundary
+
+- cbor@9.0.2 is a third-party CommonJS dependency.
+- It is a codec primitive, not an authority for the ADIE profile.
+- Its behavior differences from Rust/Python are documented and
+  compensated by protocol/wire-js/rawcheck.js and profile.js.
+- It is not audited; treated as a primitive.
+
+
+---
+
+## DEFECT-026 — JS profile coercion of non-integral Number values
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.4A
+commit_found: <uncommitted, during 3A.4A D.3>
+commit_fixed: <this D.3 commit>
+suite: tests/vomega/wire-js/test_profile.mjs
+test_ids: T13, T14, T17 (all failed with 28/31)
+category: code
+language_pair: n/a
+failure_mode: semantic-coercion
+invariant_at_risk: A JavaScript Number that is not a mathematical
+integer MUST NEVER be silently coerced into an integer ADIE value.
+
+root_cause:
+intToAdie() in js/wire/profile.mjs performed `BigInt(n)` on any
+incoming `number` without first verifying integer-ness. JavaScript's
+BigInt() constructor truncates fractional values
+(BigInt(1.5) === 1n), and throws a native RangeError for
+Infinity/NaN. The result was:
+  - 1.5       → {t:'uint', v:1n}    (silent truncation, no error)
+  - Infinity  → native RangeError   (not an ADIE typed rejection)
+  - [1.5]     → same as above inside arrays
+All three cases violated the profile contract: the validator is the
+authority on semantic admissibility, and it must never normalize.
+
+fix:
+Insert explicit Number.isInteger() and Number.isSafeInteger() guards
+inside intToAdie() BEFORE any BigInt() conversion. Non-integral
+Numbers throw FloatErr. Unsafe integers throw NonCanonicalInt.
+BigInt inputs bypass the guards and are range-checked directly
+against U64_MAX / I64_MIN.
+
+lesson:
+BigInt() is not a validator; it is a coercion primitive. Any
+language-level numeric conversion MUST be preceded by an explicit
+type/integer check when the value may originate from an untrusted
+decode path.
+
+architectural_note:
+Wire-level float/integer ambiguity is OUTSIDE profile authority once
+decoding has erased the original CBOR major type. Two distinct CBOR
+encodings —
+    0x01                 (unsigned integer 1)
+    0xfb3ff0000000000000 (float64 1.0)
+— decode to the SAME JavaScript value (Number 1) via cbor@9. Once
+that erasure has occurred, profile.validate() has no information to
+distinguish them. Therefore rawcheck.mjs MUST reject forbidden float
+encodings at the byte level BEFORE cbor@9 runs. This is the
+architectural invariant that T32 documents.
+
+invariant_statement:
+Profile validates semantic values.
+Rawcheck validates information that semantic decoding may erase.

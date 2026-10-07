@@ -11,6 +11,7 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "@noble/post-quantum": "^0.7.1"
+    "@noble/post-quantum": "^0.7.1",
+    "cbor": "9.0.2"
   }
 }

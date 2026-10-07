@@ -1608,3 +1608,144 @@ Python = **adapter**، ليس مصدر حقيقة ثانياً.
 ### البوابة التالية
 
 **3A.4 — JavaScript/WASM interoperability** — بانتظار أمر القائد.
+
+
+---
+
+## 43. أمر القائد — 3A.4_GO (JS + WASM)
+
+**التاريخ:** 2026-10-07
+**Gate:** Phase 3, Gate 1, 3A.4
+**Status:** GO
+
+### فلسفة القسمين
+
+- **3A.4A**: JavaScript = **independent interoperability proof**.
+  يجب أن يكون implementation حقيقي، **لا** wrapper على WASM.
+- **3A.4B**: WASM = **portable execution of the Rust reference**،
+  **ليس** implementation ثالثة مستقلة.
+  - Rust native == Rust WASM (يجب إثباته).
+  - Node.js + browser targets.
+
+### القاعدة المعمارية
+
+    Rust        = reference
+    Python      = interoperability proof
+    JavaScript  = independent interoperability proof
+    WASM        = portable execution of Rust reference
+
+### ممنوع
+
+- ❌ تعديل WIRE-FORMAT-0.2
+- ❌ تغيير TBS
+- ❌ تغيير ADIE-SIG-V2\0
+- ❌ COSE
+- ❌ Hybrid E2E
+- ❌ SLH-DSA
+- ❌ fuzz campaign الكاملة
+- ❌ استخدام WASM لإخفاء فشل JS parity
+- ❌ ادعاءات side-channel / constant-time / performance بدون أدلة
+
+### Acceptance Gate
+
+| Metric | Minimum |
+|---|---|
+| JS unit tests | ≥ 100 |
+| JS positive differential | ≥ 10 |
+| JS decode differential | ≥ 10 |
+| JS negative differential | ≥ 10 |
+| Rust native ↔ WASM parity | demonstrated |
+| Node.js WASM path | demonstrated |
+| Browser WASM path | demonstrated |
+| Existing 1120 regression | 1120/1120 |
+| Spec changes | 0 |
+
+### Mandatory negative coverage (JS)
+
+TAG, DUPLICATE, INDEFINITE, TRAILING, NON-SHORTEST, FLOAT, NON-UTF8, INVALID-KEY, INVALID-TYPE, UNKNOWN-CRITICAL.
+
+### عند mismatch
+
+STOP — لا تعديل للمواصفة للحصول على parity.
+
+### RISK-3.3
+
+ACTIVE. فحص `df` قبل/بعد كل block.
+
+
+---
+
+## 44. Phase 3 / Gate 1 / 3A.4A — JavaScript Adapter (D.1-D.3)
+
+**التاريخ:** 2026-10-07
+**Gate:** Phase 3, Gate 1, 3A.4A
+**النطاق:** D.1 → D.3 (من أصل D.1 → D.10)
+
+### القرار المعماري
+
+    Rust        = reference
+    Python      = interoperability proof
+    JavaScript  = independent interoperability proof
+    WASM        = portable execution of Rust reference
+
+JavaScript adapter هو **implementation مستقل**. لا استدعاء WASM.
+لا استدعاء Rust. لا استدعاء Python. يستورد فقط `cbor@9.0.2` (codec
+primitive).
+
+### التبعية
+
+    cbor@9.0.2
+    license: MIT
+    deps:    nofilter ^3.0.2 (non-native)
+    import:  `import CBOR from 'cbor'` (CommonJS default — see DEFECT-025)
+    rationale: CBOR-LIB-EVAL-003
+
+### الـArtifacts (D.1-D.3)
+
+- `js/wire/error.mjs` — 14 codes (mirror of `protocol/wire/error.py`)
+- `js/wire/value.mjs` — AdieValue tagged form + RFC 8949 sort
+- `js/wire/profile.mjs` — `validate()` authority + `intToAdie`
+- `tests/vomega/wire-js/test_error.mjs` — 20 tests
+- `tests/vomega/wire-js/test_value.mjs` — 28 tests
+- `tests/vomega/wire-js/test_profile.mjs` — 32 tests
+
+### الاختبارات
+
+| Suite | Required | Actual |
+|---|---|---|
+| test_error.mjs | ≥ 20 | 20/20 |
+| test_value.mjs | ≥ 28 | 28/28 |
+| test_profile.mjs | ≥ 32 | 32/32 |
+| **Subtotal** | ≥ 80 | **80/80** |
+
+### DEFECTs مغلقة في D.1-D.3
+
+| ID | Category | Summary |
+|---|---|---|
+| DEFECT-025 | dependency | CommonJS interop: `import *` vs `import default` |
+| DEFECT-026 | code | JS profile coercion of non-integral Number values |
+
+### DEFECT-026 — القاعدة المعمارية المثبَّتة
+
+**Profile validates semantic values. Rawcheck validates information
+that semantic decoding may erase.**
+
+التفصيل:
+- CBOR `0x01` (uint 1) و CBOR `0xfb3ff0000000000000` (float64 1.0)
+  يُفكَّان إلى نفس القيمة في JavaScript: `Number 1`.
+- بعد الفك، `profile.validate()` لا يملك معلومات للتمييز بينهما.
+- لذلك `rawcheck.mjs` (D.4) **يجب** أن يرفض float encodings على
+  البايتات قبل تشغيل cbor@9.
+
+T32 في `test_profile.mjs` يُثبّت هذا الحد ويحميه من الحذف المستقبلي.
+
+### الحالة
+
+    D.1 — CLOSED  (error:    20/20)
+    D.2 — CLOSED  (value:    28/28)
+    D.3 — CLOSED  (profile:  32/32, DEFECT-026 fixed)
+
+### الخطوة التالية
+
+D.4 — `rawcheck.mjs` (byte-level gate). أول هدف: إثبات أن wire-level
+type distinctions (خاصة float vs integer) لا تُفقد عند عبور JS decoder.
