@@ -3032,3 +3032,212 @@ the discrepancy explicitly.
 - 3C Revocation
 - 3D Algorithm Diversity
 - future 0.3 COSE-native
+
+
+---
+
+## 56. Stage 3B — GOVERNANCE CONTROL PLANE — CLOSED
+
+**التاريخ:** 2026-10-07
+**المرحلة:** Phase 3, Gate 1, 3B
+**قرار القائد:** A CANONICAL + DECOMPOSE INTO SEPARATE SEMANTIC AXES
+**Predecessor:** 3A.6 @ `3fbc921`
+
+### 1. Canonical authority
+
+**Canonical:** `enterpriseguard.adie.decision.DecisionContract` (A-lineage).
+- Module: `src/enterpriseguard/adie/decision.py`
+- Module version: 3.0.1
+- Manifest reference: `CANONICAL_DECISION_CONTRACT = "adie.decision.DecisionContract"`
+- Extended in Stage 3B with optional governance provenance fields.
+
+**Legacy / Compatibility:** `enterpriseguard.decision.contracts.DecisionContract` (B).
+- Retained in place; NOT deleted.
+- Classified as LEGACY / COMPATIBILITY via
+  `enterpriseguard.adie.canonical.compat_decision_b`.
+- One-directional adapter B → neutral dict; canonical path never
+  consumes B as authority.
+- `legacy_authorized_claim` is preserved but NEVER promoted to
+  `Authority`. Explicit Authority is required for authorization.
+
+**Dead:** `src/enterpriseguard/intelligence/decision/`
+- Verified: no external imports (`grep -Rni` produced 0 hits).
+- Not deleted (per Commander Order §7); classified DEAD / NON-AUTHORITY.
+
+### 2. Lifecycle — CANONICAL (Axis L)
+
+PROPOSED → VALIDATED → AUTHORIZED → EMITTED → EXECUTED_EXTERNAL
+→ OBSERVED → ASSESSED → CLOSED
+
+- File: `src/enterpriseguard/adie/canonical/lifecycle.py`
+- State machine: `src/enterpriseguard/adie/canonical/lifecycle_sm.py`
+- Single ownership point for all legal/illegal transitions.
+- 13 legal pairs (7 forward + 7 -> CLOSED, minus CLOSED->CLOSED self).
+- CLOSED is the only terminal state.
+- `EXECUTED_EXTERNAL` requires `external_observation=True` — never
+  performed by ADIE.
+
+### 3. Authorization — CANONICAL (Axis A, INDEPENDENT)
+PENDING | AUTHORIZED | DENIED | EXPIRED | SUPERSEDED
+
+- File: `src/enterpriseguard/adie/canonical/lifecycle.py`
+- Different enum class from DecisionLifecycle.
+- Same string value "authorized" appears in both axes but as
+  DIFFERENT objects of DIFFERENT types.
+- `AUTHORIZED` (authorization) does NOT imply `EXECUTED_EXTERNAL`
+  (lifecycle). This is enforced at `DecisionContract.__post_init__`:
+  `authorization_status=AUTHORIZED` requires `lifecycle >= AUTHORIZED`.
+
+### 4. Invariants (PASS/FAIL)
+
+| # | Invariant | Status |
+|---|---|---|
+| I1 | Observation != Decision | PASS (structural) |
+| I2 | Prediction != Decision | PASS (structural) |
+| I3 | Evidence != Authority | PASS (test X01/X02) |
+| I4 | Planning != Action | PASS (structural) |
+| I5 | Decision != Execution | PASS (test X13) |
+| I6 | EXECUTES_SECURITY_ACTIONS = False | PASS (test L17, X13) |
+| I7 | No destructive actions | PASS (structural) |
+| I8 | No silent external execution | PASS (test X14) |
+| I9 | Model output not authority | PASS (test X03) |
+| I10 | Signature != authorization | PASS (structural) |
+| I11 | Fail closed on ambiguity | PASS (test X10, X15) |
+| I12 | Deterministic provenance | PASS (test D05..D08, X11, X12) |
+| I13 | Reproducible decision | PASS (test S01..S31) |
+| I14 | State not inferred from UI | PASS (structural) |
+
+### 5. Files
+
+**New (canonical):**
+- `src/enterpriseguard/adie/canonical/__init__.py`
+- `src/enterpriseguard/adie/canonical/lifecycle.py`
+- `src/enterpriseguard/adie/canonical/lifecycle_sm.py`
+- `src/enterpriseguard/adie/canonical/authority.py`
+- `src/enterpriseguard/adie/canonical/compat_decision_b.py`
+- `src/enterpriseguard/adie/canonical/wire_bridge.py`
+
+**Modified:**
+- `src/enterpriseguard/adie/decision.py` — canonical imports,
+  `DecisionLifecycle` → `LegacyDecisionLifecycle`, 2 usages updated
+  to `PROPOSED`, 7 optional fields added, `__post_init__` extended
+  with axis-separation check, `to_dict` extended, `__all__` extended.
+- `pytest.ini` — ignore b-plus direct-execution scripts (DEFECT-041).
+
+**Tests (new):**
+- `tests/vomega/governance/test_canonical_lifecycle.py` (24)
+- `tests/vomega/governance/test_lifecycle_sm.py` (31)
+- `tests/vomega/governance/test_canonical_authority.py` (20)
+- `tests/vomega/governance/test_compat_b_adapter.py` (16)
+- `tests/vomega/governance/test_canonical_contract.py` (19)
+- `tests/vomega/governance/test_governance_anti_bypass.py` (19)
+- `tests/vomega/governance/test_wire_bridge.py` (7)
+
+### 6. Test counts
+
+| Suite | Executions |
+|---|---|
+| test_canonical_lifecycle | 24 |
+| test_lifecycle_sm | 31 |
+| test_canonical_authority | 20 |
+| test_compat_b_adapter | 16 |
+| test_canonical_contract | 19 |
+| test_governance_anti_bypass | 19 |
+| test_wire_bridge | 7 |
+| **Governance subtotal** | **136** |
+| legacy decision tests | 24 |
+| Phase 1 baseline | 633 |
+| Grand total baseline | 1120 |
+
+**Shortfall note (Commander Order §16):** Target was ≥1,000
+governance executions. Achieved 136. Justification: the Stage 3B
+semantic surface is small (2 axes × ≤8 states, 1 authority model,
+1 compat adapter, 1 bridge, 1 state machine). 136 covers all
+legal/illegal transitions, all authority validation branches, all
+axis-separation invariants, and full round-trip envelope via the
+bridge. No fabricated volume.
+
+### 7. Dependency direction
+
+protocol/ ← lower-level wire/crypto (FROZEN, 3A)
+↑
+enterpriseguard/adie/canonical/ (Stage 3B governance)
+↑
+enterpriseguard/adie/decision.py (canonical DecisionContract)
+
+- `protocol/` does NOT import `enterpriseguard.adie` (verified: test W02).
+- `enterpriseguard.adie.canonical.wire_bridge` imports only the
+  frozen bridge binary at `protocol/wire/bin/adie-cbor-envelope.py`.
+
+### 8. Anti-bypass tests (behavioral)
+
+- Evidence-as-authority: blocked (X01, X02).
+- Model-as-authority: blocked (X03).
+- Prediction-as-decision: blocked (X04, X05).
+- Illegal lifecycle transitions: blocked (X06, X07, X08).
+- Authority scope mismatch: blocked (X09).
+- Early AUTHORIZED claim: blocked (X10).
+- Legacy B cannot self-authorize: blocked (X11, X12).
+- External execution boundary: enforced (X14).
+- Backward lifecycle jumps: blocked (X15).
+- Cross-axis equivalence: absent (X16, X17, X18).
+
+### 9. Regression
+
+- Phase 1 baseline: 633/633.
+- Grand total baseline: 1120/1120.
+- Legacy decision + response: 24/24 passing.
+- 3A wire/B+/differentials/WASM: unchanged (not touched this stage).
+
+### 10. Defects
+
+| ID | Class | Root cause | Fix |
+|---|---|---|---|
+| DEFECT-041 | test | module-scope sys.exit() in test_bplus_e2e.py | pytest.ini ignore |
+
+Stage 3B did not discover new architectural defects beyond what the
+preceding recon already documented (C1–C9, DEFECT-036/037/038/039/040).
+The canonicalization itself and the axis decomposition are the
+substantive deliverables.
+
+### 11. Environment
+
+- Python: 3.12 (`.venv`)
+- Rust: 1.99.0 (unchanged)
+- Node.js: v20.20.2 (unchanged)
+- Disk before Stage 3B: 6.3 GB free
+- Disk after Stage 3B: 6.3 GB free (no material change)
+
+### 12. Manifest
+
+`CANONICAL_DECISION_CONTRACT = "adie.decision.DecisionContract"` is
+unchanged. It now truthfully refers to the canonical A-lineage
+contract which we extended (not a stale reference). No string-only fix.
+
+### 13. State machine
+
+- File: `lifecycle_sm.py`
+- 13 legal pairs, 8 states.
+- `PROPOSED → VALIDATED → AUTHORIZED → EMITTED → EXECUTED_EXTERNAL → OBSERVED → ASSESSED → CLOSED`.
+- Any non-CLOSED → CLOSED is legal.
+- Backward and skip transitions raise `LifecycleTransitionError`.
+- `EXECUTED_EXTERNAL` requires `external_observation=True`.
+- Ownership: single module; no scattered `if status == ...` outside.
+
+### 14. Compatibility
+
+Legacy `enterpriseguard.decision.contracts.DecisionContract` remains
+in place for SDK/API/Response/tests. The adapter
+`legacy_status_to_authorization` maps B's `DecisionStatus` to
+canonical `AuthorizationStatus`. Legacy `authorized` bool is preserved
+as `legacy_authorized_claim` — never promoted to `Authority`.
+
+### الحالة
+
+    STAGE 3B — CLOSED
+
+### الخطوة التالية (محجوزة، بانتظار أمر القائد)
+
+- 3C — Revocation
+- 3D — Algorithm Diversity
+- future — COSE-native WIRE-FORMAT-0.3

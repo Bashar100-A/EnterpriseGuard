@@ -1724,3 +1724,36 @@ terminal output of the command that produced the result, not from
 a prior intermediate run. The rule established in DEFECT-037
 (verify after patch) extends to commit messages: verify the number
 you are about to write into the permanent record.
+
+
+---
+
+## DEFECT-041 — pytest --collect-only breaks on test_bplus_e2e.py
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3B
+commit_found: uncommitted, during 3B Phase 7 recon
+commit_fixed: (this commit — via pytest ignore)
+suite: tests/vomega/b-plus/test_bplus_e2e.py
+category: test
+failure_mode: collection-crash
+invariant_at_risk: none (test harness only)
+
+root_cause:
+tests/vomega/b-plus/test_bplus_e2e.py calls sys.exit(0) at module
+scope (line 171). When pytest discovers this file with `pytest
+--collect-only`, the SystemExit propagates and breaks the entire
+collection (INTERNALERROR), preventing discovery of any other tests.
+
+fix:
+Add tests/vomega/b-plus/test_bplus_e2e.py to pytest.ini addopts
+--ignore list, matching the existing pattern used for
+test_aaac_cli.py / test_alerts_monitor.py. The test still runs when
+invoked directly via .venv/bin/python tests/vomega/b-plus/test_bplus_e2e.py.
+
+lesson:
+Scripts that mix `if __name__ == "__main__"` with module-level
+`sys.exit()` must be either (a) guarded by the __main__ check, or
+(b) explicitly excluded from pytest collection. This project uses
+both direct-execution and pytest-style test files; the two styles
+must not collide.

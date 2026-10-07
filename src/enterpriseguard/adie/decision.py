@@ -61,6 +61,11 @@ from types import MappingProxyType
 from typing import Any, Mapping
 import json
 
+from enterpriseguard.adie.canonical.lifecycle import (
+    DecisionLifecycle,
+    AuthorizationStatus,
+)
+
 
 
 # ============================================================================
@@ -137,9 +142,11 @@ class DecisionIntent(str, Enum):
 
 
 
-class DecisionLifecycle(str, Enum):
-    """
-    Decision lifecycle state.
+class LegacyDecisionLifecycle(str, Enum):
+    """DEPRECATED (Stage 3B). Use canonical DecisionLifecycle.
+
+    Kept only for backward compatibility. The canonical governance
+    lifecycle axis is defined in enterpriseguard.adie.canonical.lifecycle.
     """
 
     GENERATED = "generated"
@@ -533,6 +540,22 @@ class DecisionContract:
 
     executes_security_actions: bool = False
 
+    # ── Stage 3B governance provenance (all optional; backward compatible) ──
+
+    evidence_set_id: str | None = None
+
+    state_id: str | None = None
+
+    authority_id: str | None = None
+
+    checkpoint_id: str | None = None
+
+    execution_manifest_id: str | None = None
+
+    outcome_id: str | None = None
+
+    authorization_status: AuthorizationStatus = AuthorizationStatus.PENDING
+
 
     def __post_init__(self) -> None:
 
@@ -568,6 +591,38 @@ class DecisionContract:
             raise DecisionContractError(
                 "Decision layer cannot execute actions"
             )
+
+
+        if not isinstance(
+            self.authorization_status,
+            AuthorizationStatus,
+        ):
+
+            raise DecisionValidationError(
+                "authorization_status must be AuthorizationStatus"
+            )
+
+
+        # ── Stage 3B axis-separation invariant ──
+        # Authorization and Lifecycle are independent axes. AUTHORIZED
+        # (authorization axis) does NOT imply EXECUTED_EXTERNAL (lifecycle
+        # axis). But a contract cannot claim authorization before it has
+        # reached the AUTHORIZED lifecycle state.
+        if self.authorization_status is AuthorizationStatus.AUTHORIZED:
+
+            if self.lifecycle not in (
+                DecisionLifecycle.AUTHORIZED,
+                DecisionLifecycle.EMITTED,
+                DecisionLifecycle.EXECUTED_EXTERNAL,
+                DecisionLifecycle.OBSERVED,
+                DecisionLifecycle.ASSESSED,
+                DecisionLifecycle.CLOSED,
+            ):
+
+                raise DecisionContractError(
+                    "authorization=AUTHORIZED requires lifecycle "
+                    ">= AUTHORIZED"
+                )
 
 
         object.__setattr__(
@@ -626,6 +681,27 @@ class DecisionContract:
 
             "executes_security_actions":
                 False,
+
+            "evidence_set_id":
+                self.evidence_set_id,
+
+            "state_id":
+                self.state_id,
+
+            "authority_id":
+                self.authority_id,
+
+            "checkpoint_id":
+                self.checkpoint_id,
+
+            "execution_manifest_id":
+                self.execution_manifest_id,
+
+            "outcome_id":
+                self.outcome_id,
+
+            "authorization_status":
+                self.authorization_status.value,
         }
 
 
@@ -680,7 +756,7 @@ class DecisionEngine:
             intent = DecisionIntent.DEFER
 
             lifecycle = (
-                DecisionLifecycle.DEFERRED
+                DecisionLifecycle.PROPOSED
             )
 
             reasons = (
@@ -697,7 +773,7 @@ class DecisionEngine:
             )
 
             lifecycle = (
-                DecisionLifecycle.GENERATED
+                DecisionLifecycle.PROPOSED
             )
 
 
@@ -1018,6 +1094,10 @@ __all__ = [
     "DecisionIntent",
 
     "DecisionLifecycle",
+
+    "LegacyDecisionLifecycle",
+
+    "AuthorizationStatus",
 
     "DecisionEvidence",
 
