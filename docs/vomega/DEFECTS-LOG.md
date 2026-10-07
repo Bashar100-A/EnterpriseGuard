@@ -746,3 +746,188 @@ can still ship an incorrect number.
 follow-up rule: after any change to tests/account.py, the immediate
 next step is to run it and read its stdout. No commit until the
 displayed total matches the expected sum.
+
+
+---
+
+## DEFECT-021 — cbor2 silently interprets known semantic tags
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.3
+commit_found: probe during Block B
+commit_fixed: <this commit>
+suite: /tmp/adie-cbor2-test/probe.py
+test_id: T6
+category: dependency
+language_pair: py/py-reference (asymmetry vs Rust reference)
+failure_mode: semantic
+invariant_at_risk: I19 (finite universe), I34 (identifier immutability)
+
+root_cause:
+  cbor2 6.1.5 does not reject CBOR tags by default. Tag 1
+  (`0xc1 0x01` = epoch timestamp) is decoded to
+  datetime.datetime(1970,1,1,0,0,1,tzinfo=UTC). The ADIE profile
+  (WIRE-FORMAT-0.2 §7) forbids major type 6 entirely. A naive
+  decoder using cbor2.loads() would silently accept a forbidden
+  type and reinterpret it as a Python object.
+  cbor2's tag_hook parameter is documented to apply only to
+  semantic tags not covered by a built-in decoder; built-in
+  tags such as 0, 1, 2, 3 (date, timestamp, bignum) bypass the
+  hook. tag_hook alone is therefore NOT sufficient.
+
+fix_plan (to be implemented in 3A.3):
+  1. rawcheck.py runs BEFORE cbor2.loads(). It rejects any byte
+     whose major type is 6 (0xC0..0xDF) before cbor2 sees it.
+  2. cbor2.loads() is called with explicit hardened parameters:
+       allow_indefinite=False,
+       allow_duplicate_keys=False,
+       max_depth=32,
+       tag_hook=raise_on_tag  (defense-in-depth)
+  3. The hardened parameters are mandatory and documented in the
+     decoder. They are not optional.
+
+lesson:
+  "Codec behavior ≠ protocol behavior." A general-purpose CBOR
+  library, by design, accepts a wider input universe than any
+  given protocol profile. When the profile is stricter (forbids
+  tags, floats, indefinite lengths, duplicate keys), the protocol
+  layer MUST enforce its own constraints on raw bytes and MUST
+  configure the codec explicitly where the codec allows it.
+  This is the same architectural pattern as DEFECT-012 (Rust
+  decode semantics) and DEFECT-006 (Rust error code formatting):
+  the external library is a primitive, not an authority.
+
+
+---
+
+## DEFECT-022 — Test harness ROOT path off by one
+
+date: 2026-10-07
+commit_found: <uncommitted, during 3A.3 D.1>
+commit_fixed: <this commit>
+suite: tests/vomega/wire/test_error.py
+category: test
+language_pair: n/a
+failure_mode: structural
+invariant_at_risk: none (test infrastructure only)
+root_cause: The test file lives at tests/vomega/wire/test_error.py.
+Four path components from repo root. HERE.parents[2] is the repo
+root (wire -> vomega -> tests -> ROOT); HERE.parents[3] is one level
+above the repo. The test used parents[3], so `sys.path` pointed at
+the wrong directory and `import protocol` failed.
+fix: Changed to HERE.parents[2]. Also reordered mkdir before touch
+in the test file creation script.
+lesson: The N in HERE.parents[N] equals the number of directory
+levels between the test file and the project root. Every new test
+directory should include a comment with its depth derivation.
+
+---
+
+## DEFECT-023 — cbor2 raises CBORDecodeError for duplicate keys
+
+date: 2026-10-07
+commit_found: <uncommitted, during 3A.3 D.6>
+commit_fixed: <this commit>
+suite: tests/vomega/wire/test_decoder.py
+test_id: T25
+category: code
+language_pair: py/py-library
+failure_mode: structural
+invariant_at_risk: none (mapping bug)
+root_cause: The decoder's exception handler caught CBORDecodeError
+before checking for "duplicate" in the message, converting it to
+Malformed. cbor2 6.1.5 raises CBORDecodeError (not ValueError) for
+allow_duplicate_keys violations, with message
+"error decoding map: Duplicate map key: 1".
+fix: Moved the "duplicate" / "indefinite" message inspection into
+the CBORDecodeError handler. Both CBORDecodeError and ValueError
+paths now check the message first.
+lesson: Error class assumptions for external libraries must be
+verified by probe, not by documentation memory. cbor2 uses
+CBORDecodeError for both its optional strict-mode rejections.
+
+---
+
+## DEFECT-024 — Hand-written JSON vector file had invalid syntax
+
+date: 2026-10-07
+commit_found: <uncommitted, during 3A.3 D.9b>
+commit_fixed: <this commit>
+suite: tests/vomega/wire/differential_vectors.json
+category: process
+language_pair: n/a
+failure_mode: structural
+invariant_at_risk: none (tooling)
+root_cause: The vectors file was hand-written with placeholder
+replacements like
+    "cbor_hex": "a201616101616 2".replace(" ", "")
+embedded directly in the JSON source. Python's json module rejects
+this as invalid. The intent was to make long hex strings readable,
+but the mechanism was a Python expression, not JSON syntax.
+fix: Regenerated the file entirely from Python (json.dumps of a
+Python dict). Long hex strings are now written as single literals.
+Lesson: JSON files must be generated by a program. Hand-written
+JSON with embedded "workarounds" is fragile and error-prone.
+This is the third instance (DEFECT-009, DEFECT-014, DEFECT-020,
+DEFECT-024) of the same pattern: a text artifact that "looks right"
+but is not machine-valid.
+
+---
+
+## CBOR-LIB-EVAL-002 — cbor2 6.1.5 selected for Python adapter (3A.3)
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.3
+category: dependency-selection
+library: cbor2
+version: 6.1.5
+license: MIT
+pypi: https://pypi.org/project/cbor2/6.1.5/
+
+### Rationale
+
+- Pinned exact version.
+- Provides CBOR encoder and decoder primitives.
+- Exposes explicit strict-mode flags:
+    allow_indefinite=False
+    allow_duplicate_keys=False
+    max_depth=<n>
+    tag_hook=<callable>
+- canonical=True produces shortest-form, definite-length,
+  sorted-map output. Verified empirically against RFC 8949
+  integer-boundary vectors (test_encoder T27-T31).
+
+### Probe findings (sandbox)
+
+| # | Behavior | cbor2 6.1.5 |
+|---|---|---|
+| T1 | canonical map order | YES with canonical=True |
+| T2 | overlong integer | ACCEPTED by default |
+| T3 | indefinite map | ACCEPTED by default |
+| T4 | duplicate keys | ACCEPTED by default (last wins) |
+| T5 | float64 | ACCEPTED |
+| T6 | tag 1 (epoch) | INTERPRETED as datetime |
+| T7 | trailing bytes | ACCEPTED (ignored) |
+
+### Required hardening (Commander order §3-§5)
+
+- allow_indefinite=False (explicit)
+- allow_duplicate_keys=False (explicit)
+- max_depth=32 (explicit)
+- tag_hook=raise_on_tag (defense-in-depth only)
+
+rawcheck runs BEFORE cbor2 and is authoritative for tag rejection.
+
+### What cbor2 is not
+
+- cbor2 is not an authority for the ADIE profile.
+- It is a codec primitive. The profile is enforced by
+  protocol/wire/rawcheck.py, protocol/wire/profile.py, and the
+  decoder's canonical re-encode comparison.
+
+### Trust boundary
+
+- cbor2 is a third-party dependency.
+- Its behavior differences from the Rust reference (ciborium)
+  are documented and compensated by the ADIE profile layer.
+- It is not audited; treated as a primitive, not as an oracle.

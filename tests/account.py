@@ -112,6 +112,16 @@ phase2_py = [
 phase3_py = [
     "tests/vomega/hybrid/test_rust_parity.py",
 ]
+
+phase3_wire = [
+    "tests/vomega/wire/test_error.py",
+    "tests/vomega/wire/test_value.py",
+    "tests/vomega/wire/test_profile.py",
+    "tests/vomega/wire/test_rawcheck.py",
+    "tests/vomega/wire/test_encoder.py",
+    "tests/vomega/wire/test_decoder.py",
+]
+phase3_wire_diff = "tests/vomega/wire/test_differential.py"
 p2_total = p2_pass = p2_fail = 0
 print("PHASE 2 ADIE (Python):")
 for s in phase2_py:
@@ -144,6 +154,27 @@ cbor_total, cbor_pass, cbor_fail = run_cargo_lib_tests(
 print("PHASE 3 Gate 1 / 3A.2 (Rust CBOR unit tests):")
 print(f"  cargo test --release --lib cbor::          {cbor_pass}/{cbor_total}")
 print(f"  PHASE3_3A2_CBOR = {cbor_total}  (pass={cbor_pass}, fail={cbor_fail})")
+print()
+
+# ─── Phase 3, Gate 1, 3A.3: Python wire adapter ───
+wire_total = wire_pass = wire_fail = 0
+print("PHASE 3 Gate 1 / 3A.3 (Python wire unit tests):")
+for s_ in phase3_wire:
+    res = run_py(s_, VPY)
+    if res:
+        n, p, f = res
+        wire_total += n
+        wire_pass += p
+        wire_fail += f
+        print(f"  {s_:45s} {p}/{n}")
+print(f"  PHASE3_3A3_PY_WIRE = {wire_total}  (pass={wire_pass}, fail={wire_fail})")
+print()
+
+diff_res = run_py(phase3_wire_diff, VPY)
+diff_total, diff_pass, diff_fail = diff_res if diff_res else (0, 0, 0)
+print("PHASE 3 Gate 1 / 3A.3 (Python-Rust differential):")
+print(f"  {phase3_wire_diff:45s} {diff_pass}/{diff_total}")
+print(f"  PHASE3_3A3_DIFF = {diff_total}  (pass={diff_pass}, fail={diff_fail})")
 print()
 
 # JS suite (Phase 2)
@@ -179,10 +210,12 @@ print(f"  PHASE2_ADIE_PYTHON:                {p2_total}")
 print(f"  PHASE2_ADIE_JAVASCRIPT:            {js_total}")
 print(f"  PHASE3_GATE0_PARITY:               {p3_total}")
 print(f"  PHASE3_3A2_CBOR:                   {cbor_total}")
+print(f"  PHASE3_3A3_PY_WIRE:                {wire_total}")
+print(f"  PHASE3_3A3_DIFF:                   {diff_total}")
 print(f"  ACVP_VECTOR_EXECUTIONS (3 langs):  {acvp_total}")
 print(f"  ACVP_UNIQUE_VECTORS:               55")
 print()
-print(f"Grand total (unique, non-overlapping) = {reg_total + p2_total + js_total + p3_total + cbor_total + 55}")
+print(f"Grand total (unique, non-overlapping) = {reg_total + p2_total + js_total + p3_total + cbor_total + wire_total + diff_total + 55}")
 print(f"  (regression + phase2 + ACVP unique)")
 print()
 print("Claim form approved for external use:")

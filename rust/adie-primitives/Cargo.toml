@@ -34,6 +34,11 @@ path = "src/bin/adie-mldsa.rs"
 name = "adie-hybrid-verify"
 path = "src/bin/adie-hybrid-verify.rs"
 
+
+[[bin]]
+name = "adie-cbor"
+path = "src/bin/adie-cbor.rs"
+
 [dependencies]
 serde_json = "1.0"
 ml-dsa = "=0.1.1"

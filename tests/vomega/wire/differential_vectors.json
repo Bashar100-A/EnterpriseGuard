@@ -1,0 +1,277 @@
+{
+  "version": "3A.3-DIFF-1",
+  "encode_vectors": [
+    {
+      "id": "E01",
+      "value": {
+        "t": "uint",
+        "v": 0
+      }
+    },
+    {
+      "id": "E02",
+      "value": {
+        "t": "uint",
+        "v": 23
+      }
+    },
+    {
+      "id": "E03",
+      "value": {
+        "t": "uint",
+        "v": 24
+      }
+    },
+    {
+      "id": "E04",
+      "value": {
+        "t": "uint",
+        "v": 256
+      }
+    },
+    {
+      "id": "E05",
+      "value": {
+        "t": "uint",
+        "v": 65536
+      }
+    },
+    {
+      "id": "E06",
+      "value": {
+        "t": "uint",
+        "v": 18446744073709551615
+      }
+    },
+    {
+      "id": "E07",
+      "value": {
+        "t": "int",
+        "v": -1
+      }
+    },
+    {
+      "id": "E08",
+      "value": {
+        "t": "int",
+        "v": -25
+      }
+    },
+    {
+      "id": "E09",
+      "value": {
+        "t": "text",
+        "v": ""
+      }
+    },
+    {
+      "id": "E10",
+      "value": {
+        "t": "text",
+        "v": "hello"
+      }
+    },
+    {
+      "id": "E11",
+      "value": {
+        "t": "bytes",
+        "v": ""
+      }
+    },
+    {
+      "id": "E12",
+      "value": {
+        "t": "array",
+        "v": [
+          {
+            "t": "bool",
+            "v": true
+          },
+          {
+            "t": "bool",
+            "v": false
+          },
+          {
+            "t": "null"
+          }
+        ]
+      }
+    },
+    {
+      "id": "E13",
+      "value": {
+        "t": "map",
+        "v": [
+          [
+            1,
+            {
+              "t": "text",
+              "v": "a"
+            }
+          ],
+          [
+            2,
+            {
+              "t": "text",
+              "v": "b"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "E14",
+      "value": {
+        "t": "map",
+        "v": [
+          [
+            1,
+            {
+              "t": "array",
+              "v": [
+                {
+                  "t": "bool",
+                  "v": true
+                },
+                {
+                  "t": "null"
+                }
+              ]
+            }
+          ],
+          [
+            256,
+            {
+              "t": "text",
+              "v": "x"
+            }
+          ]
+        ]
+      }
+    }
+  ],
+  "decode_vectors": [
+    {
+      "id": "D01",
+      "cbor_hex": "f6"
+    },
+    {
+      "id": "D02",
+      "cbor_hex": "f5"
+    },
+    {
+      "id": "D03",
+      "cbor_hex": "00"
+    },
+    {
+      "id": "D04",
+      "cbor_hex": "190100"
+    },
+    {
+      "id": "D05",
+      "cbor_hex": "20"
+    },
+    {
+      "id": "D06",
+      "cbor_hex": "626869"
+    },
+    {
+      "id": "D07",
+      "cbor_hex": "43010203"
+    },
+    {
+      "id": "D08",
+      "cbor_hex": "80"
+    },
+    {
+      "id": "D09",
+      "cbor_hex": "a0"
+    },
+    {
+      "id": "D10",
+      "cbor_hex": "a101f5"
+    },
+    {
+      "id": "D11",
+      "cbor_hex": "a10182f5f6"
+    },
+    {
+      "id": "D12",
+      "cbor_hex": "a30182f5f60262686919010043010203"
+    }
+  ],
+  "negative_vectors": [
+    {
+      "id": "N01",
+      "cbor_hex": "f600"
+    },
+    {
+      "id": "N02",
+      "cbor_hex": "a0ff"
+    },
+    {
+      "id": "N03",
+      "cbor_hex": "bf016178ff"
+    },
+    {
+      "id": "N04",
+      "cbor_hex": "9f01ff"
+    },
+    {
+      "id": "N05",
+      "cbor_hex": "f93c00"
+    },
+    {
+      "id": "N06",
+      "cbor_hex": "fb3ff0000000000000"
+    },
+    {
+      "id": "N07",
+      "cbor_hex": "c101"
+    },
+    {
+      "id": "N08",
+      "cbor_hex": "c06a323032362d31302d3037"
+    },
+    {
+      "id": "N09",
+      "cbor_hex": "c24101"
+    },
+    {
+      "id": "N10",
+      "cbor_hex": "a2016161016162"
+    },
+    {
+      "id": "N11",
+      "cbor_hex": "1801"
+    },
+    {
+      "id": "N12",
+      "cbor_hex": "190001"
+    },
+    {
+      "id": "N13",
+      "cbor_hex": "a2026162016161"
+    },
+    {
+      "id": "N14",
+      "cbor_hex": "a1616101"
+    },
+    {
+      "id": "N15",
+      "cbor_hex": "a1416101"
+    },
+    {
+      "id": "N16",
+      "cbor_hex": "62fffe"
+    },
+    {
+      "id": "N17",
+      "cbor_hex": "f7"
+    },
+    {
+      "id": "N18",
+      "cbor_hex": "430102"
+    }
+  ]
+}

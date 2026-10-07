@@ -1436,3 +1436,175 @@ Awaiting Commander order for 3A.3
 | **المجموع الفريد** | **882** |
 
 ACVP_VECTOR_EXECUTIONS: 150 (بلا زيادة في المجموع — إعادة تنفيذ الـ55 في 3 لغات)
+
+
+---
+
+## 41. أمر القائد — 3A.3 Block C APPROVED WITH HARDENING
+
+**التاريخ:** 2026-10-07
+**Gate:** Phase 3, Gate 1, 3A.3
+**Status:** GO
+
+### فلسفة 3A.3
+
+Python = **adapter**، ليس مصدر حقيقة ثانياً.
+- Rust reference = السلوك المعياري.
+- WIRE-FORMAT-0.2 = المصدر المعياري.
+- Python يتطابق، لا يُعيد تعريف semantics.
+
+### التسع تعديلات الإلزامية
+
+| # | القيد |
+|---|---|
+| 1 | **rawcheck هو authoritative for tags**. أي major type 6 → REJECT قبل cbor2. |
+| 2 | `tag_hook=raise_on_tag` = defense-in-depth فقط. cbor2's tag_hook لا يلتقط كل semantic tags المضمّنة. |
+| 3 | `allow_indefinite=False` صريحاً. |
+| 4 | `allow_duplicate_keys=False` صريحاً. |
+| 5 | `max_depth=32` صريحاً. |
+| 6 | **duplicate keys → REJECT، ليس dedup**. لا يُعدَّل input. |
+| 7 | **canonical=True ليس دليلاً** — نتحقق تجريبياً من تطابق cbor2 مع RFC 8949 على حدود الترميز. |
+| 8 | trailing bytes → REJECT في rawcheck. |
+| 9 | WIRE-FORMAT-0.2 لا يُعدَّل. |
+
+### Pipeline المُعتمد
+
+    rawcheck
+       ↓  (رفض tags، indefinite، trailing، non-shortest)
+    cbor2.loads(
+       allow_indefinite=False,
+       allow_duplicate_keys=False,
+       max_depth=32,
+       tag_hook=raise_on_tag  # defense-in-depth
+    )
+       ↓
+    profile::validate
+       ↓  (int keys, sorted, dup rejection)
+    encoder::encode
+       ↓
+    bytewise comparison
+       ↓  E_WIRE_NONCANONICAL_MAP if diff
+
+### acceptance gate
+
+| Metric | Minimum |
+|---|---|
+| Python unit tests | ≥ 100 |
+| Positive differential | ≥ 10 |
+| Decode differential | ≥ 10 |
+| Negative differential | ≥ 10 |
+| Full regression (882) | unchanged |
+
+**Mandatory coverage:** TAG، DUPLICATE، INDEFINITE، TRAILING، NON-SHORTEST، FLOAT، NON-UTF8، DEPTH، MAP-ORDER، INVALID-TYPE.
+
+### cbor2 == 6.1.5
+
+- نُثبّت `=6.1.5` (من 1 أكتوبر 2026، يتضمن decoder/security fixes حديثة).
+- ليست audited — نعاملها كـdependency خارجية.
+- 6.x مبني على Rust safe-mode داخلياً.
+- لا يُغيِر هذا من كون طبقة ADIE الصارمة ضرورية.
+
+### قاعدة عند الاستئناف
+
+- قبل أي material toolchain change: `which X && X --version` + تسجيل في CONTINUITY.
+- فحص `df -h /home` قبل/بعد كل block (RISK-3.3).
+- توقف فوري عند أي mismatch.
+
+
+---
+
+## 42. Phase 3 / Gate 1 / 3A.3 — Python Interoperability Adapter
+
+**التاريخ:** 2026-10-07
+**Gate:** Phase 3, Gate 1, 3A.3
+
+### الـArtifacts
+
+- `protocol/wire/__init__.py` — public API
+- `protocol/wire/error.py` — 14 codes, 20 tests
+- `protocol/wire/value.py` — AdieValue + RFC 8949 sort, 28 tests
+- `protocol/wire/profile.py` — validate() authority, 31 tests
+- `protocol/wire/rawcheck.py` — byte-level gate (authoritative for tags), 44 tests
+- `protocol/wire/encoder.py` — canonical serializer (cbor2), 32 tests
+- `protocol/wire/decoder.py` — full pipeline, 39 tests
+- `tests/vomega/wire/test_differential.py` — Python ↔ Rust, 44 vectors
+- `requirements.txt` — cbor2==6.1.5 pinned
+- `rust/adie-primitives/src/bin/adie-cbor.rs` — Rust differential endpoint
+
+### الـdependency
+
+    cbor2 == 6.1.5
+    license: MIT
+
+- pinned in requirements.txt
+- rationale in CBOR-LIB-EVAL-002
+
+### المعمارية
+
+    rawcheck
+       ↓  (trailing, indefinite, floats, tags, non-shortest)
+    cbor2.loads(
+       allow_indefinite=False,
+       allow_duplicate_keys=False,
+       max_depth=32,
+       tag_hook=raise_on_tag
+    )
+       ↓
+    profile::validate
+       ↓  (int keys, sorted, dup rejection, types)
+    encoder::encode
+       ↓
+    bytewise comparison
+
+### القيود المطبَّقة (تسع)
+
+| # | القيد | الحالة |
+|---|---|---|
+| 1 | rawcheck authoritative for tags | ✅ DEC-021 |
+| 2 | tag_hook = defense-in-depth only | ✅ |
+| 3 | allow_indefinite=False | ✅ |
+| 4 | allow_duplicate_keys=False | ✅ |
+| 5 | max_depth=32 explicit | ✅ |
+| 6 | duplicate keys REJECT, never dedup | ✅ |
+| 7 | canonical=True empirical at boundaries | ✅ T27-T31 |
+| 8 | trailing bytes rejected in rawcheck | ✅ |
+| 9 | WIRE-FORMAT-0.2 untouched | ✅ |
+
+### Acceptance Evidence
+
+| Metric | Required | Actual |
+|---|---|---|
+| Python unit tests | ≥ 100 | 194 |
+| Positive differential | ≥ 10 | 14 |
+| Decode differential | ≥ 10 | 12 |
+| Negative differential | ≥ 10 | 18 |
+| Full regression | 882/882 | 882/882 |
+| Total unique | — | 1120 |
+
+**Positive parity:** 14/14
+**Decode parity:** 12/12
+**Negative parity:** 18/18
+
+### DEFECTs مغلقة في 3A.3
+
+| ID | Category | Summary |
+|---|---|---|
+| DEFECT-021 | dependency | cbor2 interprets known semantic tags |
+| DEFECT-022 | test | ROOT path off by one |
+| DEFECT-023 | code | CBORDecodeError vs ValueError for dup keys |
+| DEFECT-024 | process | Hand-written JSON vector file invalid |
+
+### RISK-3.3
+
+مراقبة. Disk 6.9 GB free قبل/بعد كل block.
+
+### الحالة
+
+    GATE 1 / 3A.3 — CLOSED
+    Python wire adapter: 194/194
+    Python ↔ Rust differential: 44/44
+    Grand total (unique): 1120
+
+### البوابة التالية
+
+**3A.4 — JavaScript/WASM interoperability** — بانتظار أمر القائد.
