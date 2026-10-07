@@ -57,10 +57,13 @@ h.check("H04 inactive authority rejected",
 
 # ACCEPT: known authority + empty trust history -> governed initial ACTIVE
 # (DEFECT-043, Commander decision A)
+# 3D-R1 (FINDING-3D-02): supply manifest_context so real ExecutionManifest
+# is emitted by the production contract (not a parallel dict).
 r = evaluate_end_to_end(
     certificate=cert, evidence=evidence, authority=authority, scope="decide",
     trust_assertions=[], at=T1, target_resource_id="res-1",
-    require_wire_roundtrip=False)
+    require_wire_roundtrip=False,
+    manifest_context=make_manifest_context("happy-1"))
 h.check("H05 known + empty history -> ACCEPTED (governed initial state)",
         r.outcome is E2EOutcome.ACCEPTED, r.rejection_reason)
 h.check("H05b decision not None", r.decision is not None)

@@ -4,6 +4,8 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
+# `protocol/` lives at repo root; add both so imports work everywhere.
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from enterpriseguard.adie.decision import DecisionEvidence
@@ -122,3 +124,46 @@ class Harness:
         print(f"\nTOTAL: {self.P + self.F} | PASS: {self.P} | FAIL: {self.F}")
         import sys
         sys.exit(0 if self.F == 0 else 1)
+
+
+# ─── 3D-R1 real-signature fixtures ─────────────────────────────────
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
+from dilithium_py.ml_dsa import ML_DSA_65 as _DLP65
+
+from protocol.hybrid.certificate import attach_signatures
+from protocol.hybrid.sign import sign_hybrid
+
+
+def make_signed_fixture(claim_id="e2e-signed-001"):
+    """Return (cert, rsa_pub_pem, rsa_priv_pem, mldsa_pk, mldsa_sk)."""
+    rsa_priv = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    rsa_pub_pem = rsa_priv.public_key().public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo)
+    rsa_priv_pem = rsa_priv.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption())
+    seed = b"\x33" * 32
+    mldsa_pk, mldsa_sk = _DLP65.key_derive(seed)
+
+    payload = make_cert(claim_id)
+    payload.pop("signatures", None)
+    sigs = sign_hybrid(payload, rsa_pub_pem, rsa_priv_pem, mldsa_pk, mldsa_sk)
+    cert = attach_signatures(payload, sigs)
+    return cert, rsa_pub_pem, rsa_priv_pem, mldsa_pk, mldsa_sk
+
+
+def make_manifest_context(claim_id="e2e-signed-001"):
+    return {
+        "event_id": "ev-1",
+        "policy_evaluation_id": "peval-1",
+        "policy_version": "1.0",
+        "playbook_id": "pb-1",
+        "playbook_version": "1.0",
+        "state_id": "st-1",
+        "state_version": "1.0",
+        "tenant_id": "t-1",
+        "environment_id": "env-1",
+    }

@@ -3606,3 +3606,133 @@ branches.
 - 3D-Algorithm Diversity (تأتي فقط بعد قرار بحاجة تشغيلية/أمنية)
 - COSE-native WIRE-FORMAT-0.3 (مستقبلي)
 - Fuzz expansion
+
+
+---
+
+## 59. Stage 3D-R1 — END-TO-END TRUST DECISION ASSURANCE REMEDIATION — CLOSED
+
+**التاريخ:** 2026-10-07
+**المرحلة:** Phase 3, Gate 1, 3D-R1
+**Predecessor:** 3D @ `7c0c36a`
+**السبب:** DeepSeek adversarial review found 1 CRITICAL + 3 HIGH + 4 MEDIUM + 3 LOW gaps between claims and code paths.
+
+### 1. Three blocking findings closed
+
+| Finding | DEFECT | Fix |
+|---|---|---|
+| F-01 crypto verification | DEFECT-044 | E2E now calls `protocol.hybrid.verify.verify_hybrid`; new `REJECTED_CRYPTO` outcome |
+| F-02 manifest was dict | DEFECT-045 | E2E now instantiates real `ExecutionManifest.from_intent` when context supplied; no dict fallback |
+| F-03 store not in E2E | DEFECT-046 | E2E accepts `trust_store`; store's `_integrity_gate` participates; tampered chain → UNKNOWN → REJECT |
+
+### 2. F-04 documented as assumption
+
+> Authority establishment is an external / bootstrap trust root. No global Authority registry exists. The caller supplying an Authority is not, by itself, evidence that the enterprise trust root is established.
+
+Logged; not implemented as a new subsystem.
+
+### 3. Runtime path now actually exercised
+
+Certificate (input)
+│
+▼ wire_bridge (subprocess → protocol/wire/bin/adie-cbor-envelope.py)
+B+ envelope round-trip — claim_id preserved
+│
+▼ protocol.hybrid.verify.verify_hybrid ← 3A production verifier
+RS256 + ML-DSA-65 signature verification → REJECTED_CRYPTO on failure
+│
+▼ DecisionEvidence (3B)
+│
+▼ Authority + scope check (3B)
+│
+▼ TrustStatusStore.resolve_at (3C) ← production store
+with known_authority_ids; _integrity_gate active
+│
+▼ DecisionEngine → DecisionContract (3B canonical)
+│
+▼ lifecycle sm (3B): PROPOSED → VALIDATED → AUTHORIZED
+│
+▼ ExecutionManifest.from_intent (3B real contract)
+— no parallel dict; emits ManifestStatus.DRAFT +
+ExecutionEligibility.NOT_ELIGIBLE
+│
+▼
+EXTERNAL EXECUTION BOUNDARY (not crossed)
+
+
+### 4. Test counts — 3D-R1
+
+| Suite | Executions |
+|---|---|
+| test_e2e_crypto_verification (NEW) | 12 |
+| test_e2e_trust_store_real (NEW) | 12 |
+| test_e2e_manifest_boundary (rewritten) | 19 |
+| test_e2e_happy_path (updated) | 14 |
+| test_e2e_trust_matrix | 18 |
+| test_e2e_lifecycle_sm | 28 |
+| test_e2e_crypto_gov_mismatch | 9 |
+| test_e2e_provenance | 11 |
+| test_e2e_legacy_bypass | 11 |
+| test_e2e_replay_deterministic | 72 |
+| test_e2e_failure_injection | 11 |
+| test_e2e_no_mutation | 8 |
+| **3D-R1 E2E subtotal** | **225** |
+
+New tests added in 3D-R1: 24 (crypto + trust store).
+
+### 5. Regression
+
+| Suite | Result |
+|---|---|
+| Phase 1 baseline | 633/633 |
+| Grand total | 1120/1120 |
+| Legacy decision + response | 24/24 |
+| 3B governance | 136/136 |
+| 3C trust (9 suites) | 193/193 |
+| B+ negative | 15/15 |
+| B+ E2E | 10/10 |
+| 3D + 3D-R1 E2E | 225/225 |
+
+### 6. DeepSeek findings disposition
+
+| Finding | Status |
+|---|---|
+| F-01 CRITICAL | CLOSED (DEFECT-044) |
+| F-02 HIGH | CLOSED (DEFECT-045) |
+| F-03 HIGH | CLOSED (DEFECT-046) |
+| F-04 HIGH | Documented assumption (not a defect) |
+| F-05 MEDIUM | Documented (chain-of-trust assumption) |
+| F-06 MEDIUM | Documented (EXPIRED dual-use terminology) |
+| F-07 MEDIUM | Documented (EXECUTED_EXTERNAL unowned) |
+| F-08 MEDIUM | Documented (O(N) integrity — scaling note) |
+| F-09 LOW | Accepted (test volume) |
+| F-10 LOW | Documented (JS/Rust governance future) |
+| F-11 LOW | Documented (subprocess bridge) |
+
+### 7. Invariants preserved
+
+All 3D invariants (E1–E18) plus:
+| E19 | Real ExecutionManifest on accept path | ✅ PASS |
+| E20 | Real TrustStatusStore participates | ✅ PASS |
+| E21 | Tampered store → fail-closed | ✅ PASS |
+| E22 | Invalid crypto → REJECTED_CRYPTO, no decision | ✅ PASS |
+| E23 | Missing crypto keys → REJECTED_CRYPTO | ✅ PASS |
+| E24 | Cross-layer separation: crypto ≠ authz | ✅ PASS |
+
+### 8. Frozen contracts
+
+| Artifact | Status |
+|---|---|
+| WIRE-FORMAT-0.2 | untouched |
+| Amendments 1/2 | untouched |
+| TBS / domain separation | untouched |
+| B+ semantics | untouched |
+| protocol/ | untouched |
+| 3A verifier contract | untouched (consumed, not modified) |
+| 3B canonical | additive only (via E2E glue) |
+| 3C trust model | additive only (store participation) |
+
+### 9. الحالة
+
+    STAGE 3D-R1 — CLOSED
+    STAGE 3D — ASSURANCE ACCEPTED (post-remediation)

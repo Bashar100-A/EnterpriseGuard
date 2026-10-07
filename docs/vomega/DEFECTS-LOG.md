@@ -1840,3 +1840,133 @@ A closed enum in one axis (TrustStatus) and an open enum in another
 (RevocationKind) can silently make some states unreachable. The
 mismatch surfaced only under E2E integration. This is the same class
 as the earlier "cross-axis drift" observations (DEFECT-036).
+
+
+---
+
+## DEFECT-044 — E2E did not perform cryptographic verification (FINDING-3D-01)
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3D-R1
+commit_found: DeepSeek adversarial review of 7c0c36a
+commit_fixed: this stage commit
+suite: src/enterpriseguard/adie/canonical/integration/e2e.py
+category: architecture
+failure_mode: missing-assurance-step
+invariant_at_risk: Commander Order §2 requires "cryptographic identity
+remains unchanged"; §10 Case B requires "invalid signature -> no
+authorized decision". Neither was enforced.
+
+root_cause:
+The 3D E2E glue verified only structural wire round-trip (claim_id
+preserved) and governance/trust. It never invoked the 3A
+protocol.hybrid.verify.verify_hybrid() path. A certificate with
+structurally valid but cryptographically invalid signatures (e.g.,
+correct length, garbage bytes) would reach ACCEPTED.
+
+fix:
+evaluate_end_to_end now accepts require_crypto_verification plus
+rs256_pub_pem and mldsa65_pub_raw. When enabled, it invokes
+protocol.hybrid.verify.verify_hybrid on the certificate (minus
+signatures) and returns E2EOutcome.REJECTED_CRYPTO on any failure.
+E2EOutcome has a new REJECTED_CRYPTO member. Twelve tests
+(test_e2e_crypto_verification.py) cover: valid hybrid, corrupted RS256,
+RS-only downgrade, corrupted ML-DSA-65, PQ-only downgrade, both-tampered,
+missing signatures, malformed base64, wrong sig bytes, valid-crypto
+with revoked trust (-> REJECTED_TRUST not CRYPTO), and missing keys.
+
+regression: test_e2e_crypto_verification.py (12 tests, all PASS).
+
+---
+
+## DEFECT-045 — E2E emitted a plain dict instead of real ExecutionManifest (FINDING-3D-02)
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3D-R1
+commit_found: DeepSeek adversarial review of 7c0c36a
+commit_fixed: this stage commit
+suite: src/enterpriseguard/adie/canonical/integration/e2e.py
+category: code
+failure_mode: shadow-contract
+invariant_at_risk: Stage 3D §7 claimed to verify the production
+ExecutionManifest contract; it verified a hand-rolled dict instead.
+
+root_cause:
+e2e.py imported ExecutionManifest and DecisionReference but built a
+plain dict for the manifest output. MANIFEST_CONTRACT_VERSION,
+from_intent, to_dict, lineage_fingerprint, capability,
+adapter_reference — none exercised.
+
+fix:
+When manifest_context is supplied, evaluate_end_to_end now constructs
+an ExecutionIntent and calls ExecutionManifest.from_intent(...) to
+produce the production contract. When manifest_context is absent, no
+manifest is emitted (no parallel dict shape). test_e2e_manifest_boundary
+was rewritten to assert isinstance(manifest, ExecutionManifest) and
+to verify production fields (decision_reference.contract_type,
+decision_reference.contract_version, status=DRAFT,
+eligibility=NOT_ELIGIBLE, governance_metadata).
+
+regression: test_e2e_manifest_boundary.py (19 tests, all PASS).
+
+---
+
+## DEFECT-046 — E2E bypassed TrustStatusStore (FINDING-3D-03)
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3D-R1
+commit_found: DeepSeek adversarial review of 7c0c36a
+commit_fixed: this stage commit
+suite: src/enterpriseguard/adie/canonical/integration/e2e.py
+category: architecture
+failure_mode: missing-integration
+invariant_at_risk: Stage 3D §14 claimed "governance and trust events
+remain chronologically and cryptographically auditable"; the E2E path
+passed an in-memory list to the resolver and never touched the
+append-only store with its integrity gate.
+
+root_cause:
+e2e.py accepted trust_assertions as a plain list and passed it
+directly to TrustStatusResolver.resolve_at. TrustStatusStore's
+persistence, hash chain, and _integrity_gate were never exercised
+during E2E.
+
+fix:
+evaluate_end_to_end now accepts trust_store (a TrustStatusStore).
+When supplied, trust status is resolved via store.resolve_at(..., 
+known_authority_ids=...); the store's _integrity_gate participates in
+resolution; a tampered persisted chain produces UNKNOWN -> 
+REJECTED_TRUST. When trust_store is absent, behaviour falls back to
+the in-memory list (backward compatible). The rejection_reason now
+propagates resolved.reason so callers can see "integrity_check_failed".
+
+regression: test_e2e_trust_store_real.py (12 tests, all PASS).
+
+---
+
+## Non-blocking review findings (DeepSeek 3D review)
+
+Logged, not fixed in 3D-R1:
+
+- FINDING-3D-04: Authority establishment is external / bootstrap trust
+  root. No global Authority registry exists. Documented as an explicit
+  assumption, not implemented as a new subsystem.
+- FINDING-3D-05: Chain-of-trust is not cryptographically anchored
+  (Authority is not signed by a root). Architectural assumption.
+- FINDING-3D-06: "EXPIRED" and "SUPERSEDED" appear in both
+  AuthorizationStatus and TrustStatus with different semantics.
+  Naming overlap only; distinct enum classes.
+- FINDING-3D-07: EXECUTED_EXTERNAL transition has no runtime owner.
+  Reserved for a future executor integration stage.
+- FINDING-3D-08: TrustStatusStore.resolve_* runs verify_integrity()
+  on each call (O(N)). Known scaling limit.
+- FINDING-3D-09: Test volume target 500 not met (dense orthogonal
+  coverage used instead). Accepted by Commander.
+- FINDING-3D-10: 3B/3C/3D governance is Python-only. JS/Rust
+  governance path is a future GAP.
+- FINDING-3D-11: wire_bridge is subprocess-based. Dependency direction
+  preserved; coupling method noted as known.
+
+Report discrepancy: DeepSeek executive summary said "4 High", detail
+listed 3 (F-02, F-03, F-04). F-04 was reclassified as a documented
+assumption, not a defect. Recorded for audit consistency.
