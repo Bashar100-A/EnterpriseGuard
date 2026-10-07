@@ -1749,3 +1749,109 @@ T32 في `test_profile.mjs` يُثبّت هذا الحد ويحميه من ال�
 
 D.4 — `rawcheck.mjs` (byte-level gate). أول هدف: إثبات أن wire-level
 type distinctions (خاصة float vs integer) لا تُفقد عند عبور JS decoder.
+
+
+---
+
+## 45. Phase 3 / Gate 1 / 3A.4A — D.4 rawcheck.mjs
+
+**التاريخ:** 2026-10-07
+**Gate:** Phase 3, Gate 1, 3A.4A / D.4
+**Commit:** <this commit>
+
+### الهدف
+
+حارس على البايتات يعمل **قبل** `cbor@9.0.2`. لا يستدعي decoder.
+لا يستدعي profile. يرجع `{ok:true, consumed:N}` أو يرمي أحد أخطاء
+`error.mjs`.
+
+### المسار الرسمي
+
+    Raw CBOR bytes
+          ↓
+    rawcheck.mjs          ← Wire authority
+          ↓
+    cbor@9.0.2 decode
+          ↓
+    profile.mjs           ← Semantic authority
+          ↓
+    AdieValue
+
+### القاعدة المعمارية المُثبَّتة (DEFECT-026 / T32)
+
+    Profile validates semantic values.
+    Rawcheck validates information that semantic decoding may erase.
+
+CBOR `0x01` (uint 1) و CBOR `0xfb3ff0000000000000` (float64 1.0)
+يُفكَّان إلى نفس `Number 1` في JavaScript. `profile.mjs` لا يستطيع
+التمييز بينهما. `rawcheck.mjs` وحده يحتفظ بهذا الحد على البايتات.
+اختبار A01 يحمي هذا الحد من الحذف المستقبلي.
+
+### الـArtifacts
+
+- `js/wire/rawcheck.mjs` — 184 lines
+- `tests/vomega/wire-js/test_rawcheck.mjs` — 58 tests
+
+### Acceptance Evidence
+
+| Metric | Required | Actual |
+|---|---|---|
+| rawcheck unit tests | ≥ 40 | 58 |
+| valid vectors | ≥ 20 | 28 |
+| rejection vectors | ≥ 20 | 29 |
+| architectural vectors | ≥ 1 | 1 (A01) |
+| T32 (profile) invariant | true | true |
+| boundary vectors (0,23,24,255,256,65535,65536,u32::MAX) | full | full |
+| cumulative regression | 1200/1200 | 1200/1200 |
+| spec changes | 0 | 0 |
+
+### Rejection coverage (WIRE-FORMAT-0.2 §9)
+
+| فئة | الاختبارات |
+|---|---|
+| tag (major type 6) | R01, R02, R03 |
+| float16 / float32 / float64 | R04, R05, R06 |
+| indefinite bytes/text/array/map | R07, R08, R09, R10 |
+| non-shortest int (uint + negint) | R11–R13, R18 |
+| non-shortest length (bytes/text/array/map) | R14–R17 |
+| trailing bytes | R19, R20 |
+| reserved additional-info (ai28-30) | R21, R22, R23 |
+| forbidden simples (0xf7 undefined, 0xff break) | R24, R25 |
+| malformed / truncated | R26, R27, R28 |
+| invalid UTF-8 | R29 |
+
+### المسؤوليات (لا تكرار)
+
+- **rawcheck** → wire invariants (tag, float, indefinite, canonical
+  int, trailing, reserved AI, malformed head, invalid UTF-8).
+- **profile** → semantic invariants (integer keys, sorted keys,
+  depth, types, numeric range, float rejection of decoded values).
+
+لا تكرار: rawcheck لا يفحص ترتيب المفاتيح ولا أنواع القيم؛ profile
+لا يفحص البايتات ولا canonical forms.
+
+### الحالة
+
+    D.1 — CLOSED  (error:     20/20)
+    D.2 — CLOSED  (value:     28/28)
+    D.3 — CLOSED  (profile:   32/32, DEFECT-026 fixed)
+    D.4 — CLOSED  (rawcheck:  58/58, A01 boundary enforced)
+    ─────────────────────────────────────────
+    Subtotal:  138/138
+    Previous:  1120
+    Cumulative: 1258
+
+### القرارات والتبعيات
+
+- `cbor@9.0.2` مثبَّت (MIT). لم يتغير.
+- لا dependencies جديدة في D.4.
+- RISK-3.3 مراقب: 6.9 GB free قبل وبعد.
+
+### DEFECTs / GAPs
+
+لا جديدة في D.4. DEFECT-025 و DEFECT-026 مُغلقان في D.1–D.3.
+
+### الخطوة التالية
+
+D.5 — `encoder.mjs` (cbor@9 `encodeCanonical` wrapper فوق rawcheck
++ profile). **بانتظار أمر القائد.**
