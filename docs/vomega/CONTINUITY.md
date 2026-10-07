@@ -1855,3 +1855,137 @@ CBOR `0x01` (uint 1) و CBOR `0xfb3ff0000000000000` (float64 1.0)
 
 D.5 — `encoder.mjs` (cbor@9 `encodeCanonical` wrapper فوق rawcheck
 + profile). **بانتظار أمر القائد.**
+
+
+---
+
+## 46. Phase 3 / Gate 1 / 3A.4A — Stage Core (D.5 + D.6 + D.7)
+
+**التاريخ:** 2026-10-07
+**Gate:** Phase 3, Gate 1, 3A.4A / Stage Core
+**Commit:** <this commit>
+
+### نطاق Stage
+
+D.5 encoder.mjs → D.6 decoder.mjs → D.7 index.mjs — كوحدة واحدة.
+
+### المعمارية النهائية للـJS wire adapter
+
+    AdieValue (tagged)
+          ↓ encode
+    encoder.mjs   (validate + cbor@9.encodeCanonical)
+          ↓
+    canonical CBOR bytes
+
+    canonical CBOR bytes
+          ↓ decode
+    rawcheck.mjs   (wire authority)
+          ↓
+    cbor@9.0.2     (codec primitive, {preferMap: true})
+          ↓
+    profile.mjs    (semantic authority)
+          ↓
+    AdieValue (tagged)
+          ↓ re-encode
+    canonical CBOR bytes
+          ↓ byte-compare with input
+    accept OR E_WIRE_NONCANONICAL_MAP
+
+### الـArtifacts
+
+| الملف | السطور | الاختبارات |
+|---|---|---|
+| js/wire/encoder.mjs | 121 | — |
+| js/wire/decoder.mjs | 55 | — |
+| js/wire/index.mjs | 31 | — |
+| tests/vomega/wire-js/test_encoder.mjs | 112 | 43 |
+| tests/vomega/wire-js/test_decoder.mjs | 107 | 40 |
+| tests/vomega/wire-js/test_index.mjs | 68 | 30 |
+
+### Acceptance Evidence (Stage)
+
+| Metric | Required | Actual |
+|---|---|---|
+| D.1 error | ≥ 20 | 20/20 |
+| D.2 value | ≥ 28 | 28/28 |
+| D.3 profile | ≥ 32 | 32/32 |
+| D.4 rawcheck (مع duplicate) | ≥ 40 | 60/60 |
+| D.5 encoder | — | 43/43 |
+| D.6 decoder | — | 40/40 |
+| D.7 index | — | 30/30 |
+| **JS subtotal** | — | **253/253** |
+| Previous regression | 1120 | 1120/1120 |
+| **Cumulative** | — | **1373** |
+
+### Determinism / Canonicality
+
+- `encode(x) == encode(x)` byte-for-byte: ✅ E31
+- `decode(encode(x)) == x` semantic: ✅ D01-D21
+- `re-encode(decode(y)) == y` bytewise: ✅ D01-D21
+- Noncanonical → correct rejection code: ✅ D29-D40
+
+### Rejection coverage (full DCP 2.1 §9)
+
+| الفئة | covered by |
+|---|---|
+| tag | D22, rawcheck R01-R03 |
+| float | D23-D25, rawcheck R04-R06, A01 |
+| indefinite | D26-D27, rawcheck R07-R10 |
+| trailing | D28, rawcheck R19-R20 |
+| non-shortest int | D29-D30, rawcheck R11-R18 |
+| invalid UTF-8 | D31, rawcheck R29 |
+| undefined / break | D32-D33, rawcheck R24-R25 |
+| duplicate keys | **D36 (wire level via rawcheck DEFECT-027)** |
+| unsorted map | D37, D38 (re-encode compare) |
+| text / negint key | D39, D40 (profile) |
+
+### DEFECTs مغلقة في Stage
+
+| ID | Category | Summary |
+|---|---|---|
+| DEFECT-027 | architecture | rawcheck must reject duplicate keys at wire level |
+| DEFECT-028 | dependency | cbor@9 mixed Map/object output for maps |
+
+### القاعدة المعمارية (المجموعة الكاملة)
+
+    DEFECT-021:  cbor2 interprets tags → rawcheck authoritative
+    DEFECT-025:  CJS interop          → default import mandatory
+    DEFECT-026:  Number coercion      → T32 boundary preserved
+    DEFECT-027:  Map dedup            → rawcheck duplicate detection
+    DEFECT-028:  mixed Map/object     → {preferMap: true} mandatory
+
+**القاعدة الموحدة:** مكتبات codec هي primitives، سلوكها الافتراضي
+ليس عقداً. كل default يؤثر على تمثيل القيم أو المعلومات يجب تسجيله
+وتصحيحه صراحةً، لا تركه للسلوك الافتراضي.
+
+### التبعية
+
+    cbor@9.0.2  (MIT, nofilter ^3.0.2)
+    import CBOR from 'cbor';
+    decodeFirstSync(bytes, {preferMap: true})
+
+### RISK-3.3
+
+مراقب. Disk 6.9 GB free قبل وبعد Stage.
+
+### الحالة
+
+    3A.4A / D.1 — CLOSED (error:     20/20)
+    3A.4A / D.2 — CLOSED (value:     28/28)
+    3A.4A / D.3 — CLOSED (profile:   32/32)
+    3A.4A / D.4 — CLOSED (rawcheck:  60/60, +DEFECT-027)
+    3A.4A / D.5 — CLOSED (encoder:   43/43)
+    3A.4A / D.6 — CLOSED (decoder:   40/40, +DEFECT-028)
+    3A.4A / D.7 — CLOSED (index:     30/30)
+    ─────────────────────────────────────────────
+    JS Core:    253/253
+    Previous:   1120
+    Cumulative: 1373
+
+### الخطوة التالية (بانتظار أمر القائد)
+
+D.8 — JavaScript ↔ Rust differential (نفس vectors D.9b في 3A.3).
+D.9 — JavaScript ↔ Python differential.
+D.10 — Stage 3A.4A closure.
+
+**لا شيء من هذه قبل أمر صريح.**

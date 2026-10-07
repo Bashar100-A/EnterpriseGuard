@@ -16,7 +16,7 @@
 
 import {
   Malformed, Trailing, Indefinite, Float as FloatErr, Tag as TagErr,
-  NonCanonicalInt, InvalidUtf8,
+  NonCanonicalInt, InvalidUtf8, DuplicateKey,
 } from './error.mjs';
 
 export const MAX_DEPTH = 32;
@@ -149,8 +149,26 @@ function walkMap(b, off, ai, depth) {
   const { value: n, off: next } = readAdditional(b, off, ai);
   checkShortest(n, ai);
   let cur = next;
+  // Duplicate-key detection at wire level (RFC 8949 §5.6).
+  // cbor@9.0.2 decodes CBOR maps into JS Map objects, silently
+  // deduplicating duplicate keys. Therefore rawcheck MUST reject
+  // duplicates BEFORE cbor@9 runs. See DEFECT-027.
+  const keyRanges = [];
   for (let i = 0n; i < n; i++) {
+    const kStart = cur;
     cur = walkItem(b, cur, depth + 1);   // key
+    const kEnd = cur;
+    const kB = b.subarray(kStart, kEnd);
+    for (const prev of keyRanges) {
+      if (prev.length === kB.length) {
+        let eq = true;
+        for (let j = 0; j < kB.length; j++) {
+          if (prev[j] !== kB[j]) { eq = false; break; }
+        }
+        if (eq) throw new DuplicateKey();
+      }
+    }
+    keyRanges.push(kB);
     cur = walkItem(b, cur, depth + 1);   // value
   }
   return cur;

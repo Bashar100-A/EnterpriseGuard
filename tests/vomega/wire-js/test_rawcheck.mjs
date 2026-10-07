@@ -4,7 +4,7 @@
 import { rawcheck, MAX_DEPTH } from '../../../js/wire/rawcheck.mjs';
 import {
   Malformed, Trailing, Indefinite, Float as FloatErr, Tag as TagErr,
-  NonCanonicalInt, InvalidUtf8,
+  NonCanonicalInt, InvalidUtf8, DuplicateKey,
 } from '../../../js/wire/error.mjs';
 
 let PASS_N = 0, FAIL_N = 0;
@@ -106,6 +106,10 @@ expectRej('R26 truncated bytes',      '430102', Malformed);
 expectRej('R27 truncated text',       '6261', Malformed);
 expectRej('R28 truncated array',      '8201', Malformed);
 expectRej('R29 invalid UTF-8',        '62fffe', InvalidUtf8);
+
+// ─── Reject: duplicate keys at wire level (DEFECT-027) ───────────
+expectRej('R30 duplicate keys simple',  'a2016161016162', DuplicateKey);
+expectRej('R31 duplicate keys nested',  'a101a2016162016162', DuplicateKey);
 
 // ─── Architectural: T32 invariant at wire level ──────────────────
 // DEFECT-026 / T32:

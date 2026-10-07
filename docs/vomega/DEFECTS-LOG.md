@@ -1091,3 +1091,93 @@ architectural invariant that T32 documents.
 invariant_statement:
 Profile validates semantic values.
 Rawcheck validates information that semantic decoding may erase.
+
+
+---
+
+## DEFECT-027 — rawcheck must reject duplicate keys at wire level
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.4A / D.4-D.6
+commit_found: <uncommitted, during 3A.4A stage>
+commit_fixed: <this stage commit>
+suite: js/wire/rawcheck.mjs
+category: architecture
+failure_mode: information-loss
+invariant_at_risk: Wire-level duplicate keys MUST be rejected before
+any semantic decoding step that could deduplicate them.
+
+root_cause:
+cbor@9.0.2 decodes CBOR maps into JavaScript Map objects. When two
+entries share the same key, the JS Map silently overwrites the first
+value with the second. This loses the wire-level fact that a
+duplicate existed. Therefore rawcheck MUST detect and reject
+duplicates at the byte level, BEFORE cbor@9 runs. D.4 rawcheck
+initially left duplicate detection to profile.mjs; testing revealed
+that this placed the check too late in the pipeline.
+
+fix:
+Extend walkMap() in rawcheck.mjs to record each key's byte range and
+reject identical byte sequences with DuplicateKey. This is bytewise
+identity, which is the correct DCP 2.1 rule (RFC 8949 §5.6).
+
+architectural_note:
+This is the same principle as DEFECT-026 (T32): the semantic layer
+must not be trusted to detect information that the codec erases.
+The rawcheck's responsibility list therefore grows by one wire-level
+invariant, WITHOUT pulling semantic logic (integer-only keys, sorted
+order, depth) into rawcheck. Those remain profile responsibilities.
+
+invariant_statement:
+Rawcheck's mandate covers every wire-level distinction that would
+be lost by cbor@9's structural normalization. Duplicate keys are
+one such distinction. Sorting order is another (compensated at the
+re-encode step in decoder.mjs). Type-erasure is a third (DEFECT-026).
+
+---
+
+## DEFECT-028 — cbor@9 mixed Map/object output for maps
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3A.4A / D.6
+commit_found: <uncommitted, during D.6 test_decoder run>
+commit_fixed: <this stage commit>
+suite: tests/vomega/wire-js/test_decoder.mjs
+test_ids: D17 (empty map), D39 (text-key map)
+category: dependency
+language_pair: n/a
+failure_mode: structural
+invariant_at_risk: profile.validate must receive a consistent
+representation of CBOR maps, independent of the key types present.
+
+root_cause:
+cbor@9.0.2's default decode behavior (`preferMap: false`) returns:
+  - integer-keyed maps -> JS Map
+  - string-keyed maps  -> JS Object
+  - empty maps         -> JS Object
+This mixed representation caused:
+  D17 (a0): profile.validate saw {} (plain Object) and threw
+      Malformed instead of accepting an empty map.
+  D39 (a1616b01 = {"k":1}): profile.validate saw {k:1} (plain
+      Object) and threw Malformed instead of TypeMismatch on the
+      non-integer key.
+
+fix:
+Pass `{ preferMap: true }` to CBOR.decodeFirstSync in decoder.mjs.
+This forces ALL CBOR maps to be decoded as JavaScript Map objects,
+giving profile.validate a single, consistent shape to inspect.
+Semantic rejection of non-integer keys then happens naturally in
+profile.mjs with the correct error code (TypeMismatch).
+
+lesson:
+Default codec options are not neutral. Every decoder setting that
+affects JS value shape MUST be examined, documented, and either
+accepted or overridden explicitly. This is the fourth DEFECT in
+the family: DEFECT-021 (cbor2 tags), DEFECT-025 (CJS interop),
+DEFECT-026 (Number coercion), DEFECT-028 (preferMap). All four are
+"library defaults that do not match protocol authority defaults".
+
+invariant_statement:
+The semantic authority (profile.mjs) must receive CBOR maps in
+exactly one JS representation. Cross-language parity requires it.
+Rawcheck does not address this; it is a decoder-config concern.
