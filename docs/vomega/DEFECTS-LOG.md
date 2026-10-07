@@ -1757,3 +1757,36 @@ Scripts that mix `if __name__ == "__main__"` with module-level
 (b) explicitly excluded from pytest collection. This project uses
 both direct-execution and pytest-style test files; the two styles
 must not collide.
+
+
+---
+
+## DEFECT-042 — Test harness time-semantics error in H13
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3C
+commit_found: uncommitted, during 3C Block C
+commit_fixed: this stage commit
+suite: tests/vomega/trust/test_history.py
+category: test
+failure_mode: incorrect-expectation
+invariant_at_risk: none (test harness only)
+
+root_cause:
+The test asserted that resolve_current() returns SUSPENDED after two
+assertions (p1=REVOKE effective at now, p2=SUSPEND effective at
+now+1h). The resolver correctly returned REVOKED because p2 is not
+yet effective at the current time. The test's expectation was
+incorrect; the resolver behavior is correct and enforces the
+historical/time semantics of Amendment Stage 3C.
+
+fix:
+Replace H13 with two checks:
+  H13a: resolve_current() at now == REVOKED (p2 not yet effective).
+  H13b: resolve_at(now + 2h) == SUSPENDED (both effective).
+
+lesson:
+Tests that exercise time-dependent code must specify the query
+time explicitly. The failure surfaced a genuine property of the
+resolver (assertions with effective_at in the future do not apply
+retroactively) rather than a code defect.

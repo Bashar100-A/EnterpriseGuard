@@ -65,6 +65,9 @@ from enterpriseguard.adie.canonical.lifecycle import (
     DecisionLifecycle,
     AuthorizationStatus,
 )
+from enterpriseguard.adie.canonical.trust.status import (
+    TrustStatus,
+)
 
 
 
@@ -556,6 +559,12 @@ class DecisionContract:
 
     authorization_status: AuthorizationStatus = AuthorizationStatus.PENDING
 
+    # ── Stage 3C historical trust-at-authorization (never overwritten) ──
+
+    authority_status_at_authorization: TrustStatus | None = None
+
+    authority_status_at_authorization_time: datetime | None = None
+
 
     def __post_init__(self) -> None:
 
@@ -624,6 +633,21 @@ class DecisionContract:
                     ">= AUTHORIZED"
                 )
 
+
+        if self.authority_status_at_authorization is not None:
+            if not isinstance(self.authority_status_at_authorization, TrustStatus):
+                raise DecisionValidationError(
+                    "authority_status_at_authorization must be TrustStatus or None"
+                )
+        if self.authority_status_at_authorization_time is not None:
+            object.__setattr__(
+                self,
+                "authority_status_at_authorization_time",
+                _validate_datetime(
+                    self.authority_status_at_authorization_time,
+                    "authority_status_at_authorization_time",
+                ),
+            )
 
         object.__setattr__(
             self,
@@ -702,6 +726,14 @@ class DecisionContract:
 
             "authorization_status":
                 self.authorization_status.value,
+
+            "authority_status_at_authorization":
+                (self.authority_status_at_authorization.value
+                 if self.authority_status_at_authorization is not None else None),
+
+            "authority_status_at_authorization_time":
+                (_iso(self.authority_status_at_authorization_time)
+                 if self.authority_status_at_authorization_time is not None else None),
         }
 
 
@@ -1098,6 +1130,8 @@ __all__ = [
     "LegacyDecisionLifecycle",
 
     "AuthorizationStatus",
+
+    "TrustStatus",
 
     "DecisionEvidence",
 
