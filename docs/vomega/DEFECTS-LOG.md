@@ -1790,3 +1790,53 @@ Tests that exercise time-dependent code must specify the query
 time explicitly. The failure surfaced a genuine property of the
 resolver (assertions with effective_at in the future do not apply
 retroactively) rather than a code defect.
+
+
+---
+
+## DEFECT-043 — Missing governed initial ACTIVE state for trust resolver
+
+date: 2026-10-07
+phase: Phase 3, Gate 1, 3D
+commit_found: uncommitted, during 3D Block B
+commit_fixed: this stage commit
+suite: src/enterpriseguard/adie/canonical/trust/resolver.py
+category: architecture
+failure_mode: missing-domain-invariant
+invariant_at_risk: E2E ACCEPT path unreachable; either happy path
+unprovable OR fail-closed would be silently weakened.
+
+root_cause:
+Stage 3C defined TrustStatus with five states (ACTIVE, SUSPENDED,
+REVOKED, EXPIRED, SUPERSEDED) but RevocationKind only exposes four
+kinds (SUSPEND, REVOKE, SUPERSEDE, EXPIRE). None of them yields
+TrustStatus.ACTIVE. The resolver's only outcomes for no applicable
+assertion were UNKNOWN (fail-closed). Therefore the E2E glue (which
+requires ACTIVE) could never accept any input, and no happy-path
+acceptance test was possible.
+
+The contradiction surfaced when the E2E acceptance glue was first
+exercised. Two resolutions were available:
+  (A) declare a governed initial state = ACTIVE for known authorities
+  (B) introduce RevocationKind.ACTIVATE
+Option A was chosen (Commander decision): it preserves 3C §10's
+"unknown -> fail-closed" invariant while making the initial state
+explicit.
+
+fix:
+The resolver accepts an optional known_authority_ids: frozenset. When
+the subject is known AND no applicable assertion exists, the resolver
+returns ResolutionOutcome.RESOLVED with TrustStatus.ACTIVE and
+reason == GOVERNED_INITIAL_STATE. This is a domain invariant, not a
+fallback: it does NOT trigger on unknown subjects, malformed history,
+or conflicting assertions (those remain UNKNOWN/CONFLICT fail-closed).
+
+The E2E glue passes known_authority_ids = {authority.authority_id} for
+the Authority it receives. This preserves the semantics: the Authority
+object IS the explicit establishment of a known authority.
+
+lesson:
+A closed enum in one axis (TrustStatus) and an open enum in another
+(RevocationKind) can silently make some states unreachable. The
+mismatch surfaced only under E2E integration. This is the same class
+as the earlier "cross-axis drift" observations (DEFECT-036).

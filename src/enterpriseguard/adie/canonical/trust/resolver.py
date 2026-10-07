@@ -25,6 +25,10 @@ from .status import TrustStatus
 from .assertion import TrustStatusAssertion
 
 
+# Stage 3D, DEFECT-043: explicit domain invariant reason code.
+GOVERNED_INITIAL_STATE = "GOVERNED_INITIAL_STATE"
+
+
 class ResolutionOutcome(str, Enum):
     RESOLVED = "resolved"
     UNKNOWN = "unknown"       # no applicable assertion
@@ -63,13 +67,44 @@ class TrustStatusResolver:
         subject_id: str,
         query_time: datetime,
         assertions: list[TrustStatusAssertion],
+        *,
+        known_authority_ids: frozenset[str] | None = None,
     ) -> ResolvedStatus:
         qt = _ensure_aware(query_time)
+
+        # Defensive (DEFECT-043): any non-assertion object in history is
+        # treated as malformed -> fail closed.
+        for a in assertions:
+            if not isinstance(a, TrustStatusAssertion):
+                return ResolvedStatus(
+                    outcome=ResolutionOutcome.UNKNOWN,
+                    status=None,
+                    at=qt,
+                    subject_id=subject_id,
+                    reason="malformed_assertion_input",
+                )
+
         relevant = [
             a for a in assertions
             if a.subject_id == subject_id and a.effective_at <= qt
         ]
         if not relevant:
+            # DEFECT-043 governed initial state:
+            # A KNOWN authority with no applicable assertion is ACTIVE.
+            # This is an explicit domain invariant, NOT a fallback.
+            # An UNKNOWN authority still fails closed.
+            if (
+                known_authority_ids is not None
+                and subject_id in known_authority_ids
+            ):
+                return ResolvedStatus(
+                    outcome=ResolutionOutcome.RESOLVED,
+                    status=TrustStatus.ACTIVE,
+                    at=qt,
+                    subject_id=subject_id,
+                    source_assertion_id=None,
+                    reason=GOVERNED_INITIAL_STATE,
+                )
             return ResolvedStatus(
                 outcome=ResolutionOutcome.UNKNOWN,
                 status=None,
@@ -113,12 +148,17 @@ class TrustStatusResolver:
         assertions: list[TrustStatusAssertion],
         *,
         now: datetime | None = None,
+        known_authority_ids: frozenset[str] | None = None,
     ) -> ResolvedStatus:
         n = now if now is not None else datetime.now(timezone.utc)
-        return self.resolve_at(subject_id, n, assertions)
+        return self.resolve_at(
+            subject_id, n, assertions,
+            known_authority_ids=known_authority_ids,
+        )
 
 
 __all__ = [
+    "GOVERNED_INITIAL_STATE",
     "ResolutionOutcome",
     "ResolvedStatus",
     "TrustStatusResolver",

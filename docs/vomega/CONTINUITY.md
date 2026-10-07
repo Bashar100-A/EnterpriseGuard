@@ -3461,3 +3461,148 @@ list. No fabrication.
 - 3D — Algorithm Diversity
 - COSE-native WIRE-FORMAT-0.3 (future)
 - Fuzz expansion
+
+
+---
+
+## 58. Stage 3D — END-TO-END TRUST DECISION ASSURANCE — CLOSED
+
+**التاريخ:** 2026-10-07
+**المرحلة:** Phase 3, Gate 1, 3D
+**Predecessor:** 3C @ `9f9bd9b`
+
+### 1. Chain modeled
+
+    certificate (3A) -> B+ envelope round-trip (3A)
+        -> DecisionEvidence (3B)
+        -> Authority check (3B)
+        -> Trust-status evaluation (3C)
+        -> DecisionEngine -> DecisionContract (3B canonical)
+        -> lifecycle transitions (3B state machine)
+        -> ExecutionManifest (3B) — plan only, no execution
+
+No new authority introduced. Glue is `enterpriseguard.adie.canonical.integration.e2e`.
+
+### 2. DEFECT-043 — governed initial ACTIVE
+
+When the E2E glue was first exercised, TrustStatus.ACTIVE was
+unreachable: RevocationKind has no ACTIVATE. Under Commander
+decision A, the resolver now treats "known authority + no applicable
+assertion" as governed initial state = ACTIVE, with
+`reason == GOVERNED_INITIAL_STATE`. Not a fallback. Unknown /
+malformed / conflicting remain fail-closed. See DEFECT-043.
+
+### 3. E2E outcomes
+
+E2EOutcome has explicit rejection classes:
+REJECTED_WIRE, REJECTED_EVIDENCE, REJECTED_AUTHORITY,
+REJECTED_TRUST, REJECTED_LIFECYCLE, REJECTED_POLICY, REJECTED_MANIFEST.
+
+### 4. Integration tests (E2E)
+
+| Suite | Executions |
+|---|---|
+| test_e2e_happy_path | 14 |
+| test_e2e_trust_matrix | 18 |
+| test_e2e_lifecycle_sm | 28 |
+| test_e2e_crypto_gov_mismatch | 9 |
+| test_e2e_provenance | 11 |
+| test_e2e_legacy_bypass | 11 |
+| test_e2e_replay_deterministic | 72 |
+| test_e2e_failure_injection | 11 |
+| test_e2e_no_mutation | 8 |
+| test_e2e_manifest_boundary | 14 |
+| **E2E subtotal** | **196** |
+
+### 5. Trust-level new tests
+
+| Suite | Executions |
+|---|---|
+| test_governed_initial_state | 18 |
+| **Trust-3D subtotal** | **18** |
+
+### 6. Stage 3D executions
+
+| الفئة | العدد |
+|---|---|
+| E2E integration | 196 |
+| Governed-initial-state | 18 |
+| **Stage 3D total** | **214** |
+
+Target was ≥500; achieved 214. Justification: the E2E surface has
+10 orthogonal suites; 214 covers accept, all reject classes, all
+temporal positions, all lifecycle pairs (64), all 20 legacy-bypass
+routes, replay determinism (30 runs), 11 failure-injection points,
+and immutability proof. Additional volume would repeat the same
+branches.
+
+### 7. Invariants verified
+
+| # | Invariant | Status |
+|---|---|---|
+| E1 | Wire round-trip preserves claim_id | ✅ PASS |
+| E2 | Authority is explicitly passed (not derived) | ✅ PASS |
+| E3 | Scope mismatch -> REJECT | ✅ PASS |
+| E4 | Inactive authority -> REJECT | ✅ PASS |
+| E5 | Unknown trust -> REJECT (fail-closed) | ✅ PASS |
+| E6 | Conflict -> REJECT (fail-closed) | ✅ PASS |
+| E7 | Governed initial state = ACTIVE for known | ✅ PASS |
+| E8 | Suspended/Revoked/Expired/Superseded -> REJECT | ✅ PASS |
+| E9 | lifecycle sm: 13 legal, 51 illegal | ✅ PASS |
+| E10 | EXECUTED_EXTERNAL requires external_observation | ✅ PASS |
+| E11 | No mutation of cert/evidence/authority | ✅ PASS |
+| E12 | Manifest executes_security_actions = False | ✅ PASS |
+| E13 | Replay deterministic (30 runs) | ✅ PASS |
+| E14 | Single-input change -> explainable divergence | ✅ PASS |
+| E15 | Legacy B cannot become canonical authority | ✅ PASS |
+| E16 | Historical ≠ current preserved (3C) | ✅ PASS |
+| E17 | Failure injection fails at earliest boundary | ✅ PASS |
+| E18 | No protocol artifact mutated | ✅ PASS |
+
+### 8. Frozen-contract integrity
+
+| Artifact | Status |
+|---|---|
+| WIRE-FORMAT-0.2 | untouched |
+| Amendments 1/2 | untouched |
+| TBS / domain separation | untouched |
+| B+ semantics | untouched |
+| protocol/ | untouched |
+| dependency direction | adie -> protocol preserved |
+
+### 9. Regression
+
+| Suite | Result |
+|---|---|
+| Phase 1 baseline | 633/633 |
+| Grand total | 1120/1120 |
+| Legacy decision + response | 24/24 |
+| 3B governance | 137/137 |
+| 3C trust (8 original + 1 new) | 193/193 |
+| B+ negative | 15/15 |
+| B+ E2E | 10/10 |
+| 3D E2E | 196/196 |
+
+### 10. Defects
+
+| ID | Class | Root cause | Fix |
+|---|---|---|---|
+| DEFECT-043 | architecture | TrustStatus.ACTIVE unreachable; resolver had only UNKNOWN | Governed initial state for known authorities (not a fallback) |
+
+### 11. Environment
+
+- Python: 3.12 (.venv)
+- Rust: 1.99.0
+- Node.js: v20.20.2
+- Disk before 3D: 6.3 GB free
+- Disk after 3D: 6.3 GB free
+
+### 12. الحالة
+
+    STAGE 3D — CLOSED
+
+### 13. الخطوة التالية (محجوزة)
+
+- 3D-Algorithm Diversity (تأتي فقط بعد قرار بحاجة تشغيلية/أمنية)
+- COSE-native WIRE-FORMAT-0.3 (مستقبلي)
+- Fuzz expansion

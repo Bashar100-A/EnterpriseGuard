@@ -18,7 +18,7 @@ from __future__ import annotations
 import hashlib
 import json
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -125,11 +125,52 @@ class TrustStatusStore:
         with self._lock:
             return list(self._assertions)
 
-    def resolve_current(self, subject_id: str, *, now: datetime | None = None) -> ResolvedStatus:
-        return self._resolver.resolve_current(subject_id, self.assertions_for(subject_id), now=now)
+    def _integrity_gate(self, subject_id: str, at: datetime) -> ResolvedStatus | None:
+        """Return non-None fail-closed ResolvedStatus if history is malformed."""
+        if self._log_path is None:
+            return None
+        vi = self.verify_integrity()
+        if vi.get("valid") is True:
+            return None
+        from .resolver import ResolutionOutcome as _RO
+        return ResolvedStatus(
+            outcome=_RO.UNKNOWN,
+            status=None,
+            at=at,
+            subject_id=subject_id,
+            reason=f"integrity_check_failed: {vi.get('error')}",
+        )
 
-    def resolve_at(self, subject_id: str, query_time: datetime) -> ResolvedStatus:
-        return self._resolver.resolve_at(subject_id, query_time, self.assertions_for(subject_id))
+    def resolve_current(
+        self,
+        subject_id: str,
+        *,
+        now: datetime | None = None,
+        known_authority_ids: frozenset[str] | None = None,
+    ) -> ResolvedStatus:
+        n = now if now is not None else datetime.now(timezone.utc)
+        gate = self._integrity_gate(subject_id, n)
+        if gate is not None:
+            return gate
+        return self._resolver.resolve_current(
+            subject_id, self.assertions_for(subject_id),
+            now=now, known_authority_ids=known_authority_ids,
+        )
+
+    def resolve_at(
+        self,
+        subject_id: str,
+        query_time: datetime,
+        *,
+        known_authority_ids: frozenset[str] | None = None,
+    ) -> ResolvedStatus:
+        gate = self._integrity_gate(subject_id, query_time)
+        if gate is not None:
+            return gate
+        return self._resolver.resolve_at(
+            subject_id, query_time, self.assertions_for(subject_id),
+            known_authority_ids=known_authority_ids,
+        )
 
     # ── persistence ───────────────────────────────────────────
 
