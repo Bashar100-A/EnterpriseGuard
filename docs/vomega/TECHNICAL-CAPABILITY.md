@@ -3,8 +3,8 @@
 **Status:** Recovered / Staged / Pending Commander Review
 **Recovered from:** conversation transcript (not from prior disk state)
 **Evidence-reference commit:** `7683adb` (branch `vOmega`)
-**Document scope (this recovery):** Part I (E1–E8) + Part II (D1–D11)
-**Not included in this recovery:** D12, Part III (Appendices A–H)
+**Document scope (this recovery):** Part I (E1–E8) + Part II (D1–D12)
+**Not included in this recovery:** Part III (Appendices A–H)
 **Frozen upstream specifications:**
 - `spec/WIRE-FORMAT-0.2.md` — SHA-256 `b2fee085562dec275572d0ed64faa30bc0375ee9a74fe319b0af984895dcf07f`
 - `spec/WIRE-FORMAT-0.2-AMENDMENT-1.md` — SHA-256 `7cb607be51b7a5d1afbb78611d66b0db3ef3c8cdc30de15ee41b3a701e4762ab`
@@ -37,6 +37,7 @@
   - D9. Defect History — All 44 DEFECTs
   - D10. Positioning Against Adjacent Technologies
   - D11. Open GAPs and Non-Blocking Findings
+  - D12. Reproducibility: How to Verify Everything
 
 ---
 
@@ -5019,9 +5020,542 @@ The following table summarizes all open items and their cross-references within 
 
 **End of D11.**
 
-# End of Part II (D1–D11)
+## D12. Reproducibility — How to Verify Everything
 
-**D12 and Part III (Appendices A–H) are not part of this recovery.**
+**Part II, Section D12.**
+**Scope:** a consolidated verification guide — how an independent reader reproduces every material claim in this document, from environment setup through artifact-hash checks and differential corpus execution.
+**Relationship to §E7.** §E7 (Reproduction Instructions) is the executive-level guide. §D12 is the deep-level guide. D12 does **not** repeat E7; it extends it with: a consolidated artifact manifest, a per-suite command reference, a differential-corpus procedure, a worked example for a single claim, and a failure-interpretation guide.
+
+---
+
+### D12.1 Scope and Relationship to §E7
+
+#### D12.1.1 What D12 provides
+
+D12 is the **operational verification guide** for this document. It is written so that a reader who has never seen vOmega can:
+
+1. Reproduce the environment used to generate the evidence.
+2. Verify the hashes of every frozen artifact and every canonical source artifact listed in §D12.4.
+3. Run every test suite referenced in this document.
+4. Run the differential corpus and interpret the cross-runtime matrix.
+5. Verify a single claim end-to-end using a worked example.
+6. Interpret failures correctly (distinguish a real divergence from an environment mismatch).
+
+#### D12.1.2 Relationship to §E7
+
+§E7 is the **executive reproduction guide**; §D12 is the **deep verification guide**. Neither section overrides the underlying evidence. Where either section conflicts with the frozen artifacts (§D12.3) or the evidence-reference commit, **the frozen artifacts and the commit are authoritative**, and the document discrepancy must be reported. Where §E7 and §D12 differ only in level of detail, §D12 provides the deeper procedure.
+
+#### D12.1.3 The evidence-reference commit
+
+All reproduction in D12 targets commit `7683adb` (branch `vOmega`), the reproducibility baseline. `origin/vOmega` may have advanced beyond this evidence-reference commit; **the current tip is not the evidence reference** and should not be used for reproduction.
+
+---
+
+### D12.2 Environment Capture
+
+#### D12.2.1 Required environment
+
+The evidence in this document was generated under the following environment. A reader reproducing the evidence should confirm the same or a compatible environment.
+
+| Component | Version | Source |
+|---|---|---|
+| Linux kernel | 7.0.0-31-generic | `uname -r` |
+| Python | 3.12.3 | `python3 --version` |
+| Rust | 1.99.0 | `rustc --version` |
+| Cargo | 1.99.0 | `cargo --version` |
+| Node.js | 20.20.2 | `node --version` |
+| npm | 10.9.9 | `npm --version` |
+| Firefox (browser path) | 155.0.1 | `firefox --version` |
+
+The specific Linux **distribution** is not asserted; a compatible environment provides the same kernel and toolchain versions.
+
+#### D12.2.2 Environment capture command
+
+```bash
+set -euo pipefail && \
+echo "═══ Environment capture ═══" && \
+echo "Kernel:  $(uname -r)" && \
+echo "Python:  $(python3 --version)" && \
+echo "Rust:    $(rustc --version)" && \
+echo "Cargo:   $(cargo --version)" && \
+echo "Node:    $(node --version)" && \
+echo "npm:     $(npm --version)" && \
+echo "Firefox: $(firefox --version 2>/dev/null || echo 'not installed')" && \
+echo "" && \
+echo "═══ Disk state (RISK-3.3) ═══" && \
+df -h /home | tail -1
+```
+
+**Expected output shape:** version strings matching the table above (allowing patch-level differences in the OS line), followed by a disk usage line.
+
+#### D12.2.3 What a divergent environment implies
+
+A different OS may reproduce the same claims, but reproduction is **not guaranteed**; platform-specific behavior should be treated as an environment divergence until verified.
+
+Different patch or major versions of Python, Rust, or Node.js may reproduce or may introduce behavioral drift. The evidence-reference versions should therefore be preferred, and any divergence should be **investigated rather than assumed benign**.
+
+A different CBOR library version, in particular, is a known source of behavioral drift. The differential corpus (§D12.7) is designed to detect this; see §D8.4.5.
+
+---
+
+### D12.3 Frozen Artifact Verification
+
+#### D12.3.1 The five frozen specification and decision artifacts
+
+The following five artifacts are frozen. Their SHA-256 values are the canonical check for whether a reader is working with the same specification and decision artifacts the evidence was produced against.
+
+| Artifact | Size (bytes) | SHA-256 |
+|---|---|---|
+| `spec/WIRE-FORMAT-0.2.md` | 20186 | `b2fee085562dec275572d0ed64faa30bc0375ee9a74fe319b0af984895dcf07f` |
+| `spec/WIRE-FORMAT-0.2-AMENDMENT-1.md` | 8337 | `7cb607be51b7a5d1afbb78611d66b0db3ef3c8cdc30de15ee41b3a701e4762ab` |
+| `spec/WIRE-FORMAT-0.2-AMENDMENT-2.md` | 9718 | `5e02bf89cfa347b7ff4b0b798ed0e7030866dc1f2989e060e8aca54768f844ac` |
+| `docs/vomega/decisions/DECISION-0.3-COSE-ARCH.md` | 2980 | `e9c0cd35637a21b5c5bc7268b084694805a79f4c55df06d9d65859f150a36412` |
+| `docs/vomega/decisions/DECISION-0.4-CBOR-ENVELOPE.md` | 2655 | `848a52d1e027637c308e092bf5b3cee29fcbecdf8c1a179c971c4efc3dfd8ba2` |
+
+#### D12.3.2 Verification — evidence-reference snapshot
+
+Two verification forms are provided. They serve different purposes:
+
+- **`git show 7683adb:<path> | sha256sum`** — verifies the **evidence-reference snapshot itself**, regardless of the current working tree state. **Preferred when only hash verification is required.** No HEAD change is involved.
+- **`sha256sum <path>`** — verifies the **current working tree**. Use only after confirming that the working tree is clean and at commit `7683adb`.
+
+**Evidence-reference snapshot verification (preferred, HEAD-preserving):**
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+echo "═══ Frozen artifact verification (evidence-reference snapshot) ═══" && \
+for path in \
+  spec/WIRE-FORMAT-0.2.md \
+  spec/WIRE-FORMAT-0.2-AMENDMENT-1.md \
+  spec/WIRE-FORMAT-0.2-AMENDMENT-2.md \
+  docs/vomega/decisions/DECISION-0.3-COSE-ARCH.md \
+  docs/vomega/decisions/DECISION-0.4-CBOR-ENVELOPE.md; do
+  git show 7683adb:"$path" | sha256sum
+done
+```
+
+**Working-tree verification (only on a clean working tree at the reference commit):**
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+git status --short && \
+echo "═══ Verify working tree is clean (no output above = clean) ═══" && \
+git rev-parse --short HEAD && \
+echo "(must be 7683adb for this form)" && \
+sha256sum \
+  spec/WIRE-FORMAT-0.2.md \
+  spec/WIRE-FORMAT-0.2-AMENDMENT-1.md \
+  spec/WIRE-FORMAT-0.2-AMENDMENT-2.md \
+  docs/vomega/decisions/DECISION-0.3-COSE-ARCH.md \
+  docs/vomega/decisions/DECISION-0.4-CBOR-ENVELOPE.md
+```
+
+**Expected:** five SHA-256 lines matching the table in §D12.3.1 (in either form).
+
+**On any mismatch:** the snapshot (or the working tree) is not at the evidence-reference state. Do not proceed; the divergences observed would not be attributable to vOmega.
+
+---
+
+### D12.4 Source Artifact Verification
+
+#### D12.4.1 The canonical source artifacts
+
+The following source artifacts are referenced by name in D1–D11 and E1–E8. Their SHA-256 values are the primary evidence pointers for the wire, envelope, crypto, governance, trust, and E2E layers. This is a **consolidated manifest of the artifacts cited by name in this document**; it is not the definitive manifest of every source file in the repository. Appendix B (Part III) is the definitive manifest.
+
+| Artifact | SHA-256 | Referenced in |
+|---|---|---|
+| `rust/adie-primitives/src/cbor/rawcheck.rs` | `bbc9c65917ba8f4aa1758b1e8e5286e1bfc250da4d2b69dd9c0fa6659365d6f0` | §E3.3, §D3.10.2 |
+| `js/wire/rawcheck.mjs` | `c46d22bed334a53ce66d5652e300c6c93fe2a5e44f8e5c0461ae671036c35e52` | §D3.10.2 |
+| `rust/adie-primitives/src/cbor/envelope.rs` | `c2cb978dee16f6c0ae53b70dc81cf8710c9f1bb7f9392f38f9ff5aed9f93d049` | §D2.8.2 |
+| `rust/adie-primitives/src/bin/adie-cbor-envelope.rs` | `50919d5b77e100e1c7afa07041d5c3d30e52582ad81244f410fa9b848da65697` | §D2.8.2 |
+| `js/wire/bin/adie-cbor-envelope.mjs` | `5b4ba51fe790bda14a8057f0210370b0645f1aab5bb15fc464ba0126a3c907a2` | §D2.8.2 |
+| `protocol/hybrid/tbs.py` | `fe6e14d503c3f2e8d224ec058eb5744603778d5b7803fd8d6d6d612296c836e3` | §D2.8.2, §D7.6.3 |
+| `protocol/hybrid/verify.py` | `2d285fc50c43ae1c08bc7dd577657925cc08faf6deb9bbd1e3e8d5c6b48a7df5` | §D2.8.2, §D6.10.2, §D7.6.3 |
+| `src/enterpriseguard/adie/canonical/lifecycle.py` | `cf8e1a2ba7b5c7797543859006ad0c75023758c2957ea812ad08689c70aa39b3` | §D4.10.2 |
+| `src/enterpriseguard/adie/canonical/lifecycle_sm.py` | `cecfad8df33b1a354437975f21648823e2dfbb686e1c526016d47c75676438a6` | §D4.10.2 |
+| `src/enterpriseguard/adie/canonical/authority.py` | `01e60e37b6bc582ce1c41ab65ad994ba858e984ea02e623cd1bd25b74600c52a` | §D4.10.2 |
+| `src/enterpriseguard/adie/decision.py` | `532fef99c023a6275bdec0ee4cf2a174df7b724dc499fe23f5ae63c5834fcfee` | §D4.10.2 |
+| `src/enterpriseguard/adie/canonical/trust/status.py` | `a3975f7f7365dbe9029e8ec46eaa0eca9890c5a3d185c1a73ec2808eb55ceeb4` | §D5.10.2 |
+| `src/enterpriseguard/adie/canonical/trust/resolver.py` | `4a3263dbf11c8b4dcc76a74c9ebd3d7ae9e93e918907cd75d4632b403979f6f9` | §D5.10.2, §E3.6 |
+| `src/enterpriseguard/adie/canonical/trust/history.py` | `99b14a828543acb199ebb31fb6c1411ad1ee4b3c72d59c6491856897603d78a5` | §D5.10.2, §E3.6 |
+| `src/enterpriseguard/adie/canonical/integration/e2e.py` | `0f16bc2ecb04a9481f9d1950cf0c0c1d0d6aebe37ec170b0e758719e08097894` | §D6.10.2, §E3.7 |
+
+#### D12.4.2 Verification — evidence-reference snapshot
+
+**Evidence-reference snapshot verification (preferred, HEAD-preserving):**
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+echo "═══ Source artifact verification (evidence-reference snapshot) ═══" && \
+for path in \
+  rust/adie-primitives/src/cbor/rawcheck.rs \
+  js/wire/rawcheck.mjs \
+  rust/adie-primitives/src/cbor/envelope.rs \
+  rust/adie-primitives/src/bin/adie-cbor-envelope.rs \
+  js/wire/bin/adie-cbor-envelope.mjs \
+  protocol/hybrid/tbs.py \
+  protocol/hybrid/verify.py \
+  src/enterpriseguard/adie/canonical/lifecycle.py \
+  src/enterpriseguard/adie/canonical/lifecycle_sm.py \
+  src/enterpriseguard/adie/canonical/authority.py \
+  src/enterpriseguard/adie/decision.py \
+  src/enterpriseguard/adie/canonical/trust/status.py \
+  src/enterpriseguard/adie/canonical/trust/resolver.py \
+  src/enterpriseguard/adie/canonical/trust/history.py \
+  src/enterpriseguard/adie/canonical/integration/e2e.py; do
+  git show 7683adb:"$path" | sha256sum
+done
+```
+
+**Expected:** fifteen SHA-256 lines matching the table in §D12.4.1.
+
+**On any mismatch:** the snapshot has diverged from the recorded evidence. Do not proceed.
+
+---
+
+### D12.5 Test Suite Manifest — Wire Layer
+
+All command blocks in §D12.5–§D12.9 use `set -euo pipefail` so that a failure in any suite (whether in a piped command or in an intermediate loop iteration) is not masked. This makes the verification command itself **fail-closed**.
+
+#### D12.5.1 Python wire suites (194 executions)
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+for f in test_error test_value test_profile test_rawcheck test_encoder test_decoder; do
+  echo "═══ $f.py ═══" && \
+  PYTHONPATH=src .venv/bin/python tests/vomega/wire/$f.py && \
+  echo ""
+done
+```
+
+**Expected totals (per suite):** 20, 28, 31, 44, 32, 39 → **194**.
+
+#### D12.5.2 JavaScript wire suites (253 executions)
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+for f in test_error test_value test_profile test_rawcheck test_encoder test_decoder test_index; do
+  echo "═══ $f.mjs ═══" && \
+  node tests/vomega/wire-js/$f.mjs && \
+  echo ""
+done
+```
+
+**Expected totals (per suite):** 20, 28, 32, 60, 43, 40, 30 → **253**.
+
+#### D12.5.3 Rust CBOR library tests (111 executions)
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard/rust/adie-primitives && \
+cargo test --release --lib cbor:: 2>&1 | tail -5
+```
+
+**Expected:** the last five lines should include `test result: ok. 111 passed; 0 failed; 0 ignored; ...`.
+
+---
+
+### D12.6 Test Suite Manifest — Governance, Trust, E2E, B+, Hybrid
+
+#### D12.6.1 Governance suites (136 executions)
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+for f in test_canonical_lifecycle test_lifecycle_sm test_canonical_authority \
+         test_compat_b_adapter test_canonical_contract test_governance_anti_bypass \
+         test_wire_bridge; do
+  PYTHONPATH=src .venv/bin/python tests/vomega/governance/$f.py 2>&1 | grep "^TOTAL:"
+done
+```
+
+**Expected totals (per suite):** 24, 31, 20, 16, 19, 19, 7 → **136**.
+
+#### D12.6.2 Trust suites (193 executions)
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+for f in test_status_semantics test_revocation_authority test_assertion \
+         test_resolver test_history test_temporal_replay test_anti_bypass_3c \
+         test_decision_trust_integration test_governed_initial_state; do
+  PYTHONPATH=src .venv/bin/python tests/vomega/trust/$f.py 2>&1 | grep "^TOTAL:"
+done
+```
+
+**Expected totals (per suite):** 23, 21, 19, 27, 18, 41, 13, 13, 18 → **193**.
+
+#### D12.6.3 E2E suites (225 executions)
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+for f in test_e2e_happy_path test_e2e_trust_matrix test_e2e_lifecycle_sm \
+         test_e2e_crypto_gov_mismatch test_e2e_provenance test_e2e_legacy_bypass \
+         test_e2e_replay_deterministic test_e2e_failure_injection \
+         test_e2e_no_mutation test_e2e_manifest_boundary \
+         test_e2e_crypto_verification test_e2e_trust_store_real; do
+  PYTHONPATH=src .venv/bin/python tests/vomega/e2e/$f.py 2>&1 | grep "^TOTAL:"
+done
+```
+
+**Expected totals (per suite):** 14, 18, 28, 9, 11, 11, 72, 11, 8, 19, 12, 12 → **225**.
+
+#### D12.6.4 B+ envelope suites (25 executions)
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+echo "═══ B+ E2E (10) ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/b-plus/test_bplus_e2e.py && \
+echo "═══ B+ negative (15) ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/b-plus/test_bplus_negative.py
+```
+
+**Expected totals:** 10 + 15 = **25**.
+
+#### D12.6.5 Hybrid legacy suites (72 executions)
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+for f in test_tbs test_sign test_verify test_e2e test_rust_parity; do
+  PYTHONPATH=src .venv/bin/python tests/vomega/hybrid/$f.py 2>&1 | grep "^TOTAL:"
+done
+```
+
+**Expected totals (per suite):** 12, 16, 20, 11, 13 → **72**.
+
+#### D12.6.6 Category separation reminder
+
+**These subtotals are not additive into a grand total.** They are executions in distinct test contexts. See §E3.9 for the taxonomy and §D7.6 for the B+ / hybrid separation.
+
+---
+
+### D12.7 Differential Corpus — Reproduction
+
+#### D12.7.1 The three differential pairs
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+echo "═══ Python ↔ Rust (44) ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/wire/test_differential.py && \
+echo "═══ Rust ↔ JavaScript (45) ═══" && \
+node tests/vomega/wire-js/test_differential_rust.mjs && \
+echo "═══ Python ↔ JavaScript (45) ═══" && \
+node tests/vomega/wire-js/test_differential_python.mjs
+```
+
+**Expected:** each pair reports `TOTAL: <n> | PASS: <n> | FAIL: 0` with `n ∈ {44, 45}` as listed in §D3.4.
+
+**Total:** 44 + 45 + 45 = **134 executions** across three pairs.
+
+#### D12.7.2 The cross-runtime matrix
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+node tests/vomega/wire-js/diff-matrix.mjs
+```
+
+**Expected:** an 11-class × 3-language matrix in which every row is consistent across the three columns. See §D3.8 for the exact expected shape.
+
+#### D12.7.3 Interpreting a differential failure
+
+If a differential suite fails:
+
+1. **Check the environment first** (§D12.2). The most common cause of a differential failure in reproduction is a library version mismatch.
+2. **Check the frozen hashes** (§D12.3). If a source artifact diverged, the differential behavior is expected to diverge.
+3. **Compare specific vector IDs.** Each differential failure names a vector ID (e.g., `E05`, `N11`). Locate the vector in `tests/vomega/wire/differential_vectors.json` to see the exact input.
+4. **Distinguish acceptance divergence from rejection-code divergence.** The differential suites report both. An acceptance divergence is more serious than a rejection-code divergence.
+
+#### D12.7.4 WASM delivery path
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+echo "═══ WASM Node.js differential (45) ═══" && \
+node tests/vomega/wasm/test_wasm_node.mjs && \
+echo "═══ WASM precision (31) ═══" && \
+node tests/vomega/wasm/test_wasm_precision.mjs
+```
+
+**Expected:** `TOTAL: 45 | PASS: 45 | FAIL: 0` and `TOTAL: 31 | PASS: 31 | FAIL: 0`.
+
+---
+
+### D12.8 Regression Baseline
+
+#### D12.8.1 The baseline command
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+.venv/bin/python tests/account.py 2>&1 | tail -30
+```
+
+**Expected:** `Grand total (unique, non-overlapping) = 1120`, as reported by `tests/account.py` at the evidence-reference baseline.
+
+**Important.** This value **must not** be reconstructed by summing the execution subtotals in §D12.5–§D12.6. The `1120` figure is defined by the `account.py` accounting rule (unique, non-overlapping), not by any arithmetic combination of the per-suite totals listed in this section.
+
+#### D12.8.2 What the baseline covers
+
+The regression baseline is the `tests/account.py` aggregate. It reports suite groups across the pre-vOmega phases plus the Phase 2 hybrid and ACVP groups. See §E3.9 for the categorization.
+
+#### D12.8.3 Interpreting a baseline divergence
+
+A regression-baseline divergence is a category-level observation. It does not, by itself, indicate a defect. Distinguish:
+
+- **A single suite reduced in execution count.** Investigate the suite directly.
+- **A new failure within a suite.** Rerun the failing suite in isolation (`tests/vomega/.../test_X.py`) and inspect the failure message.
+- **A total count change.** Check whether the source tree matches §D12.4.1.
+
+---
+
+### D12.9 Worked Examples
+
+Three worked examples — one wire claim, one governance claim, one E2E claim.
+
+**Note on expected results.** The expected results below are stated as **qualitative outcomes** (what the command should report), not as exact literal strings. Exact output literals are environment-sensitive (message ordering, patch-level version strings) and are not frozen. An exact reproduction of the command's output is a stronger verification, but is not required for a claim to be considered reproduced; the outcome described below is.
+
+#### D12.9.1 Worked example 1 — Wire: uint `1` accepted, float64 `1.0` rejected
+
+**Claim (from §E3.3 and the frozen wire/profile artifacts referenced by §D2–§D3).** CBOR `uint 1` is accepted by the wire pipeline; CBOR `float64 1.0` is rejected with `E_WIRE_FLOAT`.
+
+**Reproduction:**
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+echo "═══ uint 01 ═══" && \
+echo '{"op":"decode","cbor_hex":"01"}' | \
+  .venv/bin/python protocol/wire/bin/adie-cbor.py && \
+echo "" && \
+echo "═══ float64 1.0 ═══" && \
+echo '{"op":"decode","cbor_hex":"fb3ff0000000000000"}' | \
+  .venv/bin/python protocol/wire/bin/adie-cbor.py
+```
+
+**Expected result:**
+
+- The first command returns a success response whose semantic value is a `uint` with value `1`.
+- The second command returns an error response whose error code is `E_WIRE_FLOAT`.
+
+**Note.** This is the same wire-level case covered by the A01 architectural boundary test in `test_rawcheck.mjs`. The commands above exercise the case through the Python CLI, not by running `test_rawcheck.mjs` itself.
+
+#### D12.9.2 Worked example 2 — Governance: evidence ≠ authority
+
+**Claim (from §D4.6.4 and §D4.9).** A `DecisionEvidence` object carries no `authority_id`, no `authorization_status`, and no `authorized` attribute. The canonical `DecisionContract` rejects `authorization_status=AUTHORIZED` when the lifecycle has not reached `AUTHORIZED`.
+
+**Reproduction:**
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+PYTHONPATH=src .venv/bin/python tests/vomega/governance/test_governance_anti_bypass.py 2>&1 | \
+  grep -E "X01|X02|X03|X10"
+```
+
+**Expected result:** the suite reports `PASS` for each of `X01`, `X02`, `X03`, and `X10` (four `[PASS]` lines matching those identifiers).
+
+**Interpretation.** X01–X03 exercise the "evidence does not carry authority" invariant. X10 exercises the axis-separation invariant (early-`AUTHORIZED` rejected).
+
+#### D12.9.3 Worked example 3 — E2E: TBS byte-identity after envelope round-trip
+
+**Claim (from §D2.5, §D7.4.3, §D7.5.1).** A full B+ envelope round-trip (certificate → envelope → certificate) preserves the TBS bytes; the cryptographic identity is unaffected by the wire transport.
+
+**Reproduction:**
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+PYTHONPATH=src .venv/bin/python tests/vomega/b-plus/test_bplus_e2e.py 2>&1 | \
+  grep -E "H03|H09|H10"
+```
+
+**Expected result:** the suite reports `PASS` for each of `H03`, `H09`, and `H10` (three `[PASS]` lines matching those identifiers).
+
+**Interpretation.** H09 is the load-bearing test for the "wire transport does not redefine cryptographic identity" invariant. H03 confirms the hybrid signature is valid; H10 confirms the domain tag is preserved.
+
+---
+
+### D12.10 Failure-Interpretation Guide
+
+#### D12.10.1 Types of divergence
+
+| Divergence class | Symptom | Likely cause | Recommended action |
+|---|---|---|---|
+| **Environment mismatch** | A specific library version is different | Different CBOR library patch | Align the environment with the versions recorded in §D12.2 and the dependency manifests actually used by the evidence-reference build; where a dependency is not pinned by a manifest, use the explicitly recorded version and investigate any divergence. |
+| **Frozen-artifact mismatch** | A SHA-256 in §D12.3.2 diverges | Snapshot or working tree is not at the evidence-reference state | Use the `git show 7683adb:<path>` form; if still diverging, do not proceed — the evidence snapshot has diverged. |
+| **Source-artifact mismatch** | A SHA-256 in §D12.4.2 diverges | The snapshot has been modified, or the working tree has drifted | Inspect `git diff`; if using the working-tree form, verify clean status and HEAD before retrying. |
+| **Acceptance divergence** | A differential suite reports that two runtimes disagree on accept/reject | Library behavior drift, or a real bug | Inspect the vector ID; compare library versions |
+| **Rejection-code divergence** | A differential suite reports different rejection codes for the same input | Classification priority drift | Inspect `WIRE-FORMAT-0.2.md` §9; check whether the input is at a boundary |
+| **Count divergence** | A suite reports a different TOTAL than expected | The suite's execution count changed | Inspect the suite source for added/removed `check()` calls |
+
+**On switching to the evidence-reference commit.** Before switching HEAD to `7683adb`, confirm `git status --short` is clean. **Do not discard local changes.** The `git show 7683adb:<path> | sha256sum` form in §D12.3.2 and §D12.4.2 is preferred when only artifact verification is required, because it does not require changing HEAD.
+
+**Two clear paths:**
+
+```
+Need only hash verification?
+        ↓
+git show 7683adb:<path>
+        ↓
+NO HEAD CHANGE
+
+
+Need full baseline reproduction?
+        ↓
+confirm clean working tree (git status --short)
+        ↓
+switch HEAD to 7683adb
+```
+
+#### D12.10.2 Failure is evidence
+
+A divergence in reproduction is itself an observation. It should be reported with:
+
+- The exact command executed.
+- The exact output received.
+- The expected result per this document.
+- The environment (per §D12.2.2).
+- The frozen-artifact and source-artifact hashes from the reader's working tree or `git show` output.
+
+Divergences from the documented evidence are treated as **documentation/evidence discrepancies requiring investigation**. If the discrepancy is attributable to the implementation rather than the environment, it may expose a defect; if it is attributable to the document, the affected claim must be corrected. See §E7.11 for the reporting protocol.
+
+#### D12.10.3 What is not a divergence
+
+A difference in an unfrozen or generated artifact that is not part of the claim under test is not, by itself, a reproduction failure. Frozen artifacts and source artifacts explicitly listed in §D12.3 and §D12.4 are governed by their recorded hashes: a change to any of them invalidates the reproduction of the affected claim and must be investigated.
+
+---
+
+### D12.11 What D12 Does Not Claim
+
+- D12 does not claim that its suite manifest is exhaustive of every test in the repository. It lists the suites referenced by name in D1–D11 and in E1–E8.
+- D12 does not claim that the reproduction will succeed on all environments. It documents the environment used and provides an environment-capture command so that divergences can be diagnosed. See §D12.2.3.
+- D12 does not claim that passing all suites constitutes a proof of security. It documents that the suites pass under the documented environment; see §E1.4 and §D8.7.
+- D12 does not claim that a single reproducer will obtain identical output on every run. Timing-related tests (e.g., in the trust layer) use explicit timestamps; the outcomes are deterministic given the same inputs, but log-level output may differ in ordering.
+- D12 does not claim that the frozen-artifact or source-artifact hashes are the only relevant hashes. They are the ones cited by name in this document; Appendix B (Part III) is the definitive manifest.
+- D12 does not claim that the D1 placeholder blocks reproduction. The D1 placeholder does **not** block reproduction of the currently evidenced wire claims covered by §D2–§D3 and the frozen wire artifacts. It remains a **documentation gap** that must not be interpreted as recovered D1 content.
+- D12 does not claim that the WASM browser path is reproducible without Firefox 155.0.1 or a compatible browser. The browser path uses `wasm-bindgen` and a Node.js HTTP server; the specific browser is documented in §D3.9.3.
+- D12 does not claim that the environment capture command in §D12.2.2 is exhaustive. It captures the versions referenced by this document; other environment properties (e.g., locale, CPU architecture) are not asserted.
+- D12 does not claim that any divergence from a documented count implies that a claim in this document is false. A divergence is an observation; whether it undermines a claim depends on which claim is affected and whether the divergence is attributable to the environment or to the source.
+- D12 does not claim that all suites are reproducible in the same order in which they are listed in §D12.5 and §D12.6. The suites are independent; ordering is a convenience.
+- D12 does not claim that `tests/account.py`'s `1120` figure is derived from the execution subtotals listed in §D12.5–§D12.6. The figure is defined by the `account.py` accounting rule; the subtotals in this section are informative, not additive.
+
+---
+
+**End of D12.**
+
+# End of Part II (D1–D12)
+
+**Part III (Appendices A–H) is not part of this recovery.**
 
 ---
 
