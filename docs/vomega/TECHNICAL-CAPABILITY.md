@@ -41,6 +41,7 @@
 - Part III — Appendices
   - Appendix A. Frozen Artifact Hashes
   - Appendix B. Source Artifact Hashes
+  - Appendix C. Full Test Execution Logs
   - Appendix F. Environment Specification and Suite Manifest
 
 ---
@@ -5850,6 +5851,128 @@ A **source artifact** in this document is a file whose SHA-256 value is cited as
 ---
 
 **End of Appendix B.**
+
+## Appendix C — Full Test Execution Logs
+
+**Part III, Appendix C.**
+**Purpose:** a **pointer** to the raw test execution logs, describing their location and structure, without reproducing them inline.
+**Reference base:** `vOmega-evidence-collection-v3-20261008-113035.md` §13; §D12.5–§D12.7; §E3.9.
+
+---
+
+### C.1 Purpose and Scope
+
+Appendix C is a **pointer appendix**. It does not reproduce the raw test execution logs. It records:
+
+1. The location of the raw logs (the evidence file).
+2. The structure of the logs (which subsections, what each contains).
+3. The relationship between the logs and the counts recorded in §E3.9 and §D12.
+4. How a reader can regenerate the logs from the evidence-reference commit.
+
+Appendix C does **not**:
+
+- reproduce any raw test output inline.
+- define the test suites (that is Appendix F).
+- provide the suite execution commands (those are in §D12.5–§D12.7).
+- provide any hash (frozen artifacts are in Appendix A; source artifacts are in Appendix B).
+- serve as a canonical count source. The counts in §E3.9 and §D12 are the canonical reference.
+
+Appendix C is a **navigation aid** for a reader who wants to inspect the raw logs.
+
+---
+
+### C.2 Location of the Raw Logs
+
+The raw logs are recorded in:
+
+```
+vOmega-evidence-collection-v3-20261008-113035.md
+```
+
+**Location on the author's disk:** `~/Desktop/vOmega-evidence-collection-v3-20261008-113035.md`.
+
+**Note on the file's status.** The evidence file is a **working artifact** of the evidence-collection process, not part of the source repository. It is not tracked by Git. It is preserved on the author's disk as the record of the fresh-rerun evidence referenced by this document. Readers who obtain the file through a documented channel (or who reproduce the runs using §D12.5–§D12.7) have access to the same raw logs.
+
+---
+
+### C.3 Structure of the Raw Logs
+
+The raw logs occupy **§13** of the evidence file, titled "Appendix — Raw Fresh Test Outputs." §13 has two subsections.
+
+#### C.3.1 §13.1 — Suite totals (parsed)
+
+**Content.** A single fenced code block containing the `TOTAL: … | PASS: … | FAIL: …` lines emitted by each of the 46 suite runs, in the order in which they were executed.
+
+**Size.** Approximately 73 lines (the code block plus header and blank lines).
+
+**Interpretation.** The lines in §13.1 correspond to the "Executions" column of the 46-suite manifest in Appendix F §F.3, in the same order. Each line is the summary line emitted by one suite's test runner.
+
+**Not a substitute for.** The manifest in Appendix F §F.3 is the canonical suite manifest. §13.1 is the raw output that produced the manifest's aggregate.
+
+#### C.3.2 §13.2 — `diff-matrix.mjs` raw output
+
+**Content.** A single fenced code block containing the complete output of `tests/vomega/wire-js/diff-matrix.mjs` — the 11-class × 3-language cross-runtime matrix.
+
+**Size.** Approximately 26 lines.
+
+**Interpretation.** This is the same matrix shape referenced by §D3.8 and §E4.3. The matrix has 11 vector classes (rows) × 3 languages (columns), and all rows are consistent across the three columns.
+
+**Not a substitute for.** §D3.8.2 provides the interpretive context. §13.2 is the raw output that §D3.8.2 summarizes.
+
+#### C.3.3 Total size of §13
+
+| Subsection | Approximate lines |
+|---|---|
+| §13 header + generation timestamp | ~5 |
+| §13.1 — Suite totals (parsed) | ~73 |
+| §13.2 — diff-matrix raw output | ~26 |
+| §13 footer | ~5 |
+| Blank lines and separators | ~120 |
+| **Total §13** | **~231** |
+
+§13 is approximately **one third** of the evidence file (231 of ~728 lines). It is retained in full in the evidence file because it is the raw trace that backs the parsed manifest.
+
+---
+
+### C.4 Relationship to §E3.9 and §D12
+
+| Reference | Relationship |
+|---|---|
+| §E3.9 (Quantitative Summary) | §E3.9 records the **parsed** results: 1,070 fresh executions across 46 suites. §13.1 is the **raw** input to that parse. |
+| §D12.5–§D12.6 (Test Suite Manifest) | §D12 provides the **per-suite commands**. §13 is what those commands produced. |
+| §D12.7 (Differential Corpus) | §D12.7 provides the differential commands. §13.2 is what the matrix command produced. |
+| Appendix F (Suite Manifest) | Appendix F §F.3 is the **canonical list** of 46 suites. §13.1 is the raw output in the same order. |
+
+The three views (parsed counts, commands, raw output) are **consistent** and are meant to be read together. Appendix C is the third view.
+
+---
+
+### C.5 How to Regenerate the Raw Logs
+
+A reader who wants to produce their own copy of the raw logs can do so by running the commands in §D12.5–§D12.7 in the order listed. The environment prerequisites are in §D12.2 and §F.4.
+
+**Note on regeneration.** The regenerated logs will reflect the reader's environment (toolchain versions, patch levels, log-level formatting). A regenerated log that differs in message text but matches the `TOTAL | PASS | FAIL` counts is a **successful reproduction**. The `TOTAL | PASS | FAIL` counts are the load-bearing part of the log, not the message text.
+
+**Note on ordering.** The 46 suites are independent. A reader may run them in any order. The order in §13.1 matches the author's execution order but is not required.
+
+---
+
+### C.6 What Appendix C Does Not Claim
+
+- Appendix C does not claim that the raw logs are in the source repository. They are in the evidence file (`vOmega-evidence-collection-v3-*.md`), which is a working artifact of the evidence-collection process.
+- Appendix C does not claim that the raw logs are the only evidence for the counts. The counts are also recorded in §E3.9 and §F.3.
+- Appendix C does not reproduce the raw logs. It is a pointer, not a copy.
+- Appendix C does not claim that the logs are canonical for anything other than the fresh rerun they record. The `1120` regression baseline (§D12.8.1) is a separate accounting and is not derived from §13.
+- Appendix C does not claim that the `TOTAL | PASS | FAIL` line is the only form in which test results may be expressed. It is the form used by the suites in this document.
+- Appendix C does not claim that the raw logs contain a complete per-test trace. They contain the **summary line per suite**; per-test detail is in the suite source files (see §F.3 and §D12.5–§D12.6).
+- Appendix C does not claim that §13 is stable across evidence-file versions. §13 is the current title in the current evidence file; a future evidence file version could restructure it.
+- Appendix C does not claim that the evidence file is preserved indefinitely. It is a working artifact; its preservation is outside the scope of this document.
+- Appendix C does not duplicate the reproduction commands. §D12.5–§D12.7 are the source; §C.5 provides only the reference.
+- Appendix C does not claim that the raw logs are the only form of test output produced. The suites may emit additional diagnostic output; §13 records only the summary line.
+
+---
+
+**End of Appendix C.**
 
 ## Appendix F — Environment Specification and Suite Manifest
 
