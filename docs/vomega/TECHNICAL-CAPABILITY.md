@@ -3,8 +3,8 @@
 **Status:** Recovered / Staged / Pending Commander Review
 **Recovered from:** conversation transcript (not from prior disk state)
 **Evidence-reference commit:** `7683adb` (branch `vOmega`)
-**Document scope (this recovery):** Part I (E1–E8) + Part II (D1–D7)
-**Not included in this recovery:** D8–D12, Part III (Appendices A–H)
+**Document scope (this recovery):** Part I (E1–E8) + Part II (D1–D8)
+**Not included in this recovery:** D9–D12, Part III (Appendices A–H)
 **Frozen upstream specifications:**
 - `spec/WIRE-FORMAT-0.2.md` — SHA-256 `b2fee085562dec275572d0ed64faa30bc0375ee9a74fe319b0af984895dcf07f`
 - `spec/WIRE-FORMAT-0.2-AMENDMENT-1.md` — SHA-256 `7cb607be51b7a5d1afbb78611d66b0db3ef3c8cdc30de15ee41b3a701e4762ab`
@@ -33,6 +33,7 @@
   - D5. Trust Status & Revocation (3C)
   - D6. End-to-End Assurance (3D / 3D-R1)
   - D7. Cryptographic Identity: Invariants Preserved
+  - D8. Security Analysis
 
 ---
 
@@ -3394,9 +3395,372 @@ PYTHONPATH=src .venv/bin/python tests/vomega/b-plus/test_bplus_e2e.py
 
 ---
 
-# End of Part II (D1–D7)
+## D8. Security Analysis
 
-**D8–D12 and Part III (Appendices A–H) are not part of this recovery.**
+**Part II, Section D8.**
+**Scope:** The threat model vOmega addresses, the threats it does not address, the library trust boundaries, the class of library-default defects, and bounded fuzz behavior.
+**Constraint:** D8 makes **no** claim of security proof, formal verification, or side-channel resistance. It documents what was tested, what was observed, and what remains out of scope.
+
+---
+
+### D8.1 Scope and Lineage
+
+D8 has a narrower purpose than a conventional security chapter. It documents the following, and only the following:
+
+1. **The threat model vOmega addresses** — a bounded list of threats that the architecture and its tests are intended to mitigate.
+2. **The threats vOmega does not address** — an equally explicit list of out-of-scope threats.
+3. **The library trust boundaries** — how the three CBOR codec libraries are treated (primitives, not oracles), and what that implies.
+4. **A recurring class of library-default defects** — patterns observed during development (DEFECT-021, 025, 026, 027, 028, 039).
+5. **Bounded fuzzing and classification behavior** — the scope and limits of the 10,000-mutation fuzz campaign (3A.6).
+6. **Explicit non-claims** — what the reader must not infer from this section.
+
+**What D8 is not.** D8 is not a security proof, not a penetration test report, not a cryptographic audit, and not a compliance statement. It is a bounded technical analysis with explicit limits.
+
+**Upstream references.**
+
+| Reference | Role |
+|---|---|
+| `docs/vomega/CONTINUITY.md` §55 | 3A.6 fuzzing narrative |
+| `docs/vomega/DEFECTS-LOG.md` | Library-default defects and their closures |
+| `spec/WIRE-FORMAT-0.2.md` §9 | The 14 `E_WIRE_*` rejection codes |
+| §E6 of this document | What vOmega does not yet prove |
+| §D7 of this document | Cryptographic identity invariants |
+
+**Evidence-reference commit.** `7683adb` — reproducibility baseline. `origin/vOmega` is checked separately (see §E7.2).
+
+**Verification:**
+
+```bash
+cd ~/Desktop/EnterpriseGuard && \
+git log --oneline -1 7683adb && \
+git show 7683adb:docs/vomega/DEFECTS-LOG.md | \
+grep -E "^## (DEFECT-021|DEFECT-025|DEFECT-026|DEFECT-027|DEFECT-028|DEFECT-039|DEFECT-040)"
+```
+
+---
+
+### D8.2 Threat Model — What vOmega Addresses
+
+This section lists the threats that the architecture and its tests are intended to **mitigate** (in the specific sense: reduce the probability that a specific class of failure occurs, given the specified inputs). It does not claim complete coverage.
+
+#### D8.2.1 T-01 — Malformed or non-canonical wire input
+
+**Threat.** A byte sequence that is syntactically valid CBOR but violates the DCP 2.1 profile — non-shortest integers, indefinite-length items, floats, tags, duplicate keys, trailing bytes, invalid UTF-8 — is processed as if it were canonical.
+
+**Consequence if unmitigated.** Two readers may disagree on the semantic content of the same wire bytes, or a signature computed over canonical bytes may be verified against non-canonical bytes with the same semantic content.
+
+**Mitigation.** The `rawcheck` gate rejects at the byte level before the semantic decoder runs. The 14 `E_WIRE_*` codes classify each rejection category. Rejection behavior is verified against the same corpus across Rust, Python, and JavaScript.
+
+**Evidence.** `test_rawcheck.py` (44 executions), `test_rawcheck.mjs` (60), Rust `cbor::rawcheck::tests::*`, and the negative differential vectors N01–N18 (see §D3.7).
+
+#### D8.2.2 T-02 — Cross-runtime semantic drift
+
+**Threat.** The same wire bytes decode to different semantic values across Rust, Python, and JavaScript, or the same semantic value encodes to different bytes.
+
+**Consequence if unmitigated.** A certificate signed by one runtime fails verification in another, or verifications succeed with divergent interpretations.
+
+**Mitigation.** Three differential test pairs use the **44-vector core corpus**; the JavaScript-involving pairs additionally exercise **A01**, producing **45 executions** per such pair. Byte-level encode parity and semantic decode parity are checked. Rejection-code parity is checked at the specific code level.
+
+**Evidence.** §D3.5, §D3.6, §D3.7 — 134 differential executions across three pairs (44 Python↔Rust + 45 Rust↔JS + 45 Python↔JS).
+
+#### D8.2.3 T-03 — Signature downgrade attacks
+
+**Threat.** An attacker presents a certificate with only one of the two required signatures (RS256 or ML-DSA-65) and expects the verifier to accept it.
+
+**Consequence if unmitigated.** Silent fallback from hybrid to single-signature verification.
+
+**Mitigation.** The hybrid policy requires both signatures by default. Missing signatures produce `E_SIGNATURE_HYBRID_MISSING`; a downgrade attempt produces `E_SIGNATURE_DOWNGRADE`. Silent fallback is forbidden.
+
+**Evidence.** `test_verify.py` V04, V07, V14, V15, V19; `test_rust_parity.py` R05, R06, R07; `test_e2e_crypto_verification.py` C03, C05.
+
+#### D8.2.4 T-04 — Wire-vs-identity confusion
+
+**Threat.** A signing or verification path accidentally computes the cryptographic input from the CBOR envelope rather than from the semantic certificate, coupling cryptographic identity to the wire format.
+
+**Consequence if unmitigated.** Signatures become dependent on envelope bytes; any transport change invalidates prior signatures; portability is lost.
+
+**Mitigation.** TBS is computed from the semantic certificate (via JCS), not from the envelope. See §D7.5. H09 confirms the TBS is byte-identical after a full envelope round-trip.
+
+**Evidence.** `test_bplus_e2e.py` H09; §D7.5.
+
+#### D8.2.5 T-05 — Governance bypass (evidence-as-authority)
+
+**Threat.** A code path treats an evidence object as if it were an authority, or infers authorization from the presence of evidence.
+
+**Consequence if unmitigated.** Any party who can produce evidence can authorize decisions.
+
+**Mitigation.** `DecisionEvidence` carries no `authority_id`, no `authorization_status`, and no `authorized` attribute. The legacy adapter does not fabricate an `Authority`. The canonical `DecisionContract` rejects `authorization_status=AUTHORIZED` when the lifecycle has not reached `AUTHORIZED`.
+
+**Evidence.** `test_governance_anti_bypass.py` X01–X19; `test_canonical_contract.py` D05–D08.
+
+#### D8.2.6 T-06 — Trust-status rewrite
+
+**Threat.** A later revocation silently changes the historical record of a decision, or a trust query returns the current status when a historical status was asked for.
+
+**Consequence if unmitigated.** The audit trail loses its integrity; past decisions appear to have been made under a status that never applied.
+
+**Mitigation.** The trust resolver exposes two interfaces — `resolve_at(T)` and `resolve_current()` — with distinct semantics. Historical queries are stable as new assertions are appended. A decision records `authority_status_at_authorization`, which is not overwritten.
+
+**Evidence.** `test_temporal_replay.py` (41 executions), `test_decision_trust_integration.py` (13), `test_governed_initial_state.py` (18).
+
+#### D8.2.7 T-07 — Crypto bypass in the end-to-end path
+
+**Threat.** The end-to-end path accepts a certificate without verifying its signatures.
+
+**Consequence if unmitigated.** A structurally valid certificate with garbage signatures reaches an accepted decision.
+
+**Mitigation.** Stage 1.5 of the end-to-end path performs cryptographic verification (added in 3D-R1, DEFECT-044). Failures produce `REJECTED_CRYPTO` with a specific reason code.
+
+**Evidence.** `test_e2e_crypto_verification.py` (12 executions, including C10 which confirms crypto and trust layers remain independent).
+
+#### D8.2.8 T-08 — Library-default permissiveness
+
+**Threat.** A CBOR codec library, by default, accepts inputs that the ADIE profile forbids — semantic tags, indefinite-length items, floats, non-shortest integers, duplicate keys. If the library's default behavior is taken as the protocol behavior, the profile degrades silently.
+
+**Consequence if unmitigated.** The wire profile's guarantees are weakened without any visible change in the code.
+
+**Mitigation.** All three codec paths apply explicit decoder/profile-facing controls appropriate to their runtime (for example: `allow_indefinite=False` in Python's `cbor2`; `allow_duplicate_keys=False` where applicable; `tag_hook=raise` in Python as defense-in-depth). `rawcheck` remains **authoritative for wire-level rules** and runs before semantic decoding. Library behavior is not treated as protocol behavior. The precise configuration for each runtime is enumerated in `CBOR-LIB-EVAL-001/002/003` and in the respective decoder modules.
+
+**Evidence.** `CBOR-LIB-EVAL-001/002/003`; §D8.4 below; the defect class in §D8.5.
+
+#### D8.2.9 What the threat model does not include
+
+This is not a complete threat model in the security-engineering sense. It lists **eight** threats that the architecture is designed to mitigate. It does not claim that any of them is fully mitigated, nor that the list is exhaustive. Additional threats are addressed in §D8.3 (out-of-scope threats) and §D8.7 (non-claims).
+
+---
+
+### D8.3 Threat Model — What vOmega Does Not Address
+
+The following threats are explicitly **out of scope** for the current vOmega implementation. Listing them here is part of the discipline: the document does not claim coverage it does not have.
+
+#### D8.3.1 Side-channel threats
+
+No constant-time analysis, timing analysis, cache analysis, or power analysis has been performed on any layer. The document makes no claim that the wire encoder, decoder, envelope builder, governance layer, trust resolver, or end-to-end path is safe against side-channel observation.
+
+#### D8.3.2 Formal-verification threats
+
+No machine-checked proof of correctness, determinism, or invariant preservation exists for any layer. The evidence base is empirical — test executions and differential comparisons — not deductive.
+
+#### D8.3.3 Runtime-compromise threats
+
+If the process executing the vOmega code is compromised (arbitrary code execution, memory corruption, hostile injection), vOmega's guarantees do not survive. No isolation mechanism, sandboxing, or hardening against a compromised runtime is claimed.
+
+#### D8.3.4 Authority-compromise threats
+
+If the private keys corresponding to an `Authority` are compromised, an attacker can authorize decisions. vOmega does not detect or mitigate this; it presumes the authority's keys are held by the legitimate party.
+
+#### D8.3.5 Trust-root-compromise threats
+
+The trust model operates on authorities provided as inputs. If those inputs are the result of a compromised trust-bootstrap step, the trust layer's determinations are based on forged inputs. vOmega does not define a trust root; it consumes the authorities it is given (see §E6.5, F-04/F-05).
+
+#### D8.3.6 Network-layer threats
+
+vOmega operates on byte sequences. Attacks at the network layer (interception, replay at the protocol level, TCP-level manipulation, TLS downgrade) are outside the scope of the wire profile.
+
+#### D8.3.7 Application-layer DoS threats
+
+The document does not claim bounded CPU or memory consumption under adversarial inputs at the application layer. The fuzz campaign (§D8.6) exercises 10,000 mutations but does not characterize worst-case resource consumption or DoS resistance.
+
+The trust store's integrity gate runs `verify_integrity()` on every resolution call and is O(N) in the size of the store. This is documented as a known scaling limitation (F-08, §D11). No mitigation is claimed.
+
+#### D8.3.8 Multi-tenant isolation
+
+No mechanism is defined for isolating authorities, trust stores, or decision artifacts across tenants. Multi-tenant deployment would require additional design (§E6.7).
+
+#### D8.3.9 Compromised or malicious library
+
+The three CBOR libraries (`ciborium`, `cbor2`, `cbor@9`) are treated as primitives. The document does not claim they are free of vulnerabilities, backdoors, or future-introduced defects. They are not audited by this project. If a library is compromised, the ADIE profile layer's guarantees may be weakened.
+
+#### D8.3.10 Hostile input outside the tested corpus
+
+Rejection behavior is validated for the enumerated negative vectors and the fuzz corpus. Inputs outside those corpora are not characterized. See §E6.8.
+
+#### D8.3.11 Compliance and certification
+
+No regulatory compliance (Common Criteria, ISO 27001, FIPS 140-3) is claimed. ACVP vector execution demonstrates conformance to published test vectors; it is not equivalent to a certification. See §E6.4.
+
+---
+
+### D8.4 Library Trust Boundaries
+
+vOmega uses three CBOR codec libraries. Their roles and trust boundaries are as follows.
+
+#### D8.4.1 The three libraries
+
+| Layer | Library | Version | License | Role |
+|---|---|---|---|---|
+| Rust | `ciborium` | `=0.2.2` | Apache-2.0 | Codec primitive for the Rust reference implementation. |
+| Python | `cbor2` | `==6.1.5` | MIT | Codec primitive for the Python adapter. |
+| JavaScript | `cbor` | `9.0.2` | MIT | Codec primitive for the JavaScript adapter. |
+
+Rationales for each selection are recorded in `CBOR-LIB-EVAL-001` (ciborium), `CBOR-LIB-EVAL-002` (cbor2), and `CBOR-LIB-EVAL-003` (cbor@9).
+
+#### D8.4.2 What "primitive" means here
+
+Each library is treated as a **codec primitive** — a source of `encode` and `decode` operations — not as an **oracle** for the ADIE profile. The profile is defined by the frozen specification and enforced by the ADIE-owned layers:
+
+- `rawcheck` (byte-level authority) — runs before the codec.
+- `profile` (semantic authority) — runs after the codec.
+- The encoder sorts map keys explicitly before calling the codec.
+
+A change to a library's default behavior does not change the profile. If a library's behavior is incompatible with the profile, the ADIE layer compensates.
+
+#### D8.4.3 Library defaults — the baseline
+
+All three libraries ship permissive defaults. Their defaults accept inputs that DCP 2.1 forbids. This is not a criticism of the libraries; it is a property of general-purpose CBOR codecs, which serve a broader community than ADIE.
+
+| Library | Non-shortest int | Indefinite items | Floats | Tags | Duplicate keys | Trailing bytes |
+|---|---|---|---|---|---|---|
+| `ciborium` 0.2.2 | Accepted | Accepted | Accepted | Accepted | Accepted | Accepted |
+| `cbor2` 6.1.5 | Accepted | Accepted | Accepted | **Interpreted** | Accepted | Accepted |
+| `cbor` 9.0.2 | Accepted | Accepted | Accepted | **Interpreted** | Accepted | **Rejected** |
+
+"Interpreted" for tags means the library converts a tagged value to a native type (e.g., a `datetime` in Python) rather than returning a `Tagged` wrapper. This is the DEFECT-021 pattern.
+
+#### D8.4.4 The compensating layers
+
+Every default listed above is overridden at the ADIE layer:
+
+| Default behavior | Compensated by |
+|---|---|
+| Non-shortest integers accepted | `rawcheck` rejects non-shortest encodings |
+| Indefinite items accepted | `rawcheck` rejects; codec configured with `allow_indefinite=False` |
+| Floats accepted | `rawcheck` rejects float major type |
+| Tags interpreted | `rawcheck` rejects major type 6; `tag_hook=raise` as defense-in-depth |
+| Duplicate keys accepted | `rawcheck` rejects; codec configured with `allow_duplicate_keys=False` |
+| Trailing bytes accepted (Rust, Python) | `rawcheck` verifies full-buffer consumption |
+
+#### D8.4.5 What is not claimed about the libraries
+
+- The libraries are **not** audited by this project.
+- The libraries are **not** claimed to be free of vulnerabilities.
+- The libraries are **not** claimed to be equivalent to one another; their behaviors are documented and compensated, not merged.
+- A library upgrade is a potential source of behavior change; the differential suites are intended to detect drift, not to prevent it.
+
+#### D8.4.6 Evidence
+
+| Evidence | Source |
+|---|---|
+| ciborium probe results | `CBOR-LIB-EVAL-001` in `DEFECTS-LOG.md` |
+| cbor2 probe results | `CBOR-LIB-EVAL-002` |
+| cbor@9 probe results | `CBOR-LIB-EVAL-003` |
+| Codec configuration | `protocol/wire/decoder.py`, `js/wire/decoder.mjs`, `rust/adie-primitives/src/cbor/decoder.rs` |
+
+---
+
+### D8.5 Library-Default Defects as a Class
+
+The following closed defects are included because they exposed differences between library behavior, runtime behavior, process behavior, and ADIE protocol assumptions.
+
+#### D8.5.1 The observed defects
+
+| ID | Library | Pattern | Closure |
+|---|---|---|---|
+| DEFECT-021 | `cbor2` | Silently interprets known semantic tags as native types | `rawcheck` rejects major type 6 at byte level; `tag_hook` defense-in-depth |
+| DEFECT-025 | `cbor` (npm) | CommonJS module — named exports not visible to ESM `import * as` | Use `import CBOR from 'cbor'` (default import) |
+| DEFECT-026 | `cbor` (npm) | Profile coerced non-integral `Number` values without rejection | Explicit type check; `1.5` now throws `Float_` |
+| DEFECT-027 | `rawcheck` | Duplicate keys not detected at wire level (relied on codec) | `rawcheck` now walks maps and rejects duplicates |
+| DEFECT-028 | `cbor` (npm) | Mixed output — CBOR maps decoded as JS `Map` in some cases, plain objects in others | Decoder normalizes; profile rejects non-`Map` inputs |
+| DEFECT-039 | `cbor` (npm) | `walkTag` skipped shortest-form check on tag number | Enforce shortest-form on tag number before `TagErr` |
+| DEFECT-040 | (process) | Commit message claimed 0/10k mismatch while 1/10k existed | Corrected in subsequent commit |
+
+#### D8.5.2 The common pattern
+
+Most entries above share a broader pattern:
+
+> A library default, interface behavior, or runtime type behavior differed from an ADIE protocol assumption, and the discrepancy became visible only when exercised by explicit tests.
+
+The instances fall into distinct sub-classes:
+
+- **Rejection-permissiveness** — the library accepts input that the ADIE profile forbids. Examples: DEFECT-021, DEFECT-026, DEFECT-027, DEFECT-039.
+- **Interface shape** — the library's module structure or API does not expose the operations the ADIE layer expects. Example: DEFECT-025 (CommonJS named-export visibility).
+- **Runtime type normalization** — the library returns a runtime-native type that the ADIE profile did not anticipate. Example: DEFECT-028 (mixed `Map` / plain object output).
+
+**DEFECT-040 is a process/evidence-recording defect** rather than a library-default defect. It is included only because it affected the accuracy of the recorded fuzzing result (see §D8.6). It is not an example of a library-vs-profile divergence.
+
+#### D8.5.3 The mitigation as a class
+
+The response is architectural, not case-by-case:
+
+1. **`rawcheck`** runs before the codec and enforces byte-level rules that do not depend on the codec's defaults.
+2. **The profile layer** runs after the codec and enforces semantic rules that do not depend on the codec's type model.
+3. **Cross-runtime differential tests** drive the same input through three implementations and compare outcomes. A library-default divergence that affects one runtime is detected as a parity failure.
+
+No single library's default is trusted as the protocol default.
+
+#### D8.5.4 Evidence
+
+| Evidence | Source |
+|---|---|
+| Per-defect records | `DEFECTS-LOG.md` — DEFECT-021, 025, 026, 027, 028, 039, 040 |
+| `rawcheck` implementation | `protocol/wire/rawcheck.py`, `js/wire/rawcheck.mjs`, `rust/adie-primitives/src/cbor/rawcheck.rs` |
+| Cross-runtime differential | §D3.4 (three pairs, 134 executions) |
+
+---
+
+### D8.6 Bounded Fuzzing and Classification Behavior
+
+#### D8.6.1 The 3A.6 fuzzing campaign
+
+Phase 3A.6 introduced a differential fuzzing campaign that mutated a base corpus and ran every mutant through all three implementations.
+
+| Property | Value |
+|---|---|
+| Number of mutations | **10,000** |
+| Base corpus | ADIE certificates + wire vectors |
+| Runtimes exercised | Rust, Python, JavaScript |
+| Comparison axes | acceptance decision; rejection code |
+| Run #1 result | 1/10k rejection-code mismatch (initially misreported as 0/10k) |
+| DEFECT-039 fix | Applied to JavaScript `walkTag` |
+| Run #2 result | **0/10k acceptance mismatches; 0/10k rejection-code mismatches** |
+| Recording defect | DEFECT-040 (the run-#1 misreport is documented) |
+
+#### D8.6.2 What this shows
+
+For the tested mutations, no cross-runtime divergence in acceptance or rejection-code classification was observed on run #2. The single divergence on run #1 was diagnosed and corrected.
+
+#### D8.6.3 What this does not show
+
+- It does not show that no divergence exists outside the tested mutation corpus.
+- It does not show bounded CPU or memory consumption — the campaign measured **classification**, not resource usage.
+- It does not show resistance to a targeted adversary who knows the profile and crafts inputs specifically.
+- It does not show DoS resistance.
+- It does not show that the libraries themselves are robust under all inputs; only that the profile layer's acceptance/rejection decisions are consistent across runtimes for the tested mutants.
+
+#### D8.6.4 Evidence
+
+| Evidence | Source |
+|---|---|
+| Run #2 result | `CONTINUITY.md` §55; commit `3fbc921` |
+| Run #1 correction | DEFECT-040 in `DEFECTS-LOG.md` |
+| The fix | DEFECT-039 in `DEFECTS-LOG.md` |
+
+**Reproduction.** The fuzzing campaign is not part of the routine test suite; its results are recorded in the continuity log and defect log. A re-run is outside the scope of this document.
+
+---
+
+### D8.7 What D8 Does Not Claim
+
+- D8 does not claim that vOmega is secure.
+- D8 does not claim that the eight threats in §D8.2 are fully mitigated. It lists the architecture's responses and the tests that exercise them.
+- D8 does not claim that the list in §D8.3 is complete. Additional threats may exist outside the enumerated set.
+- D8 does not claim that any library used is vulnerability-free or audited.
+- D8 does not claim that the 10,000-mutation fuzz campaign is representative of any real-world input distribution. Its mutations are structured, not sampled from a population.
+- D8 does not claim bounded resource behavior under adversarial input.
+- D8 does not claim constant-time or side-channel resistance in any layer.
+- D8 does not claim formal verification of any invariant.
+- D8 does not claim production hardening. The document treats production deployment as out of scope (§E6.1).
+- D8 does not claim that the DEFECT entries cited in §D8.5 constitute a complete list of library-default defects. They are the ones that were observed and closed during development.
+- D8 does not claim that the O(N) integrity gate is safe under adversarial store sizes. The scaling behavior is documented (F-08) and not mitigated.
+- D8 does not claim that the ADIE-owned compensating layers themselves are free of defects. They are subject to the same testing discipline as everything else in vOmega.
+
+---
+
+**End of D8.**
+
+# End of Part II (D1–D8)
+
+**D9–D12 and Part III (Appendices A–H) are not part of this recovery.**
 
 ---
 
