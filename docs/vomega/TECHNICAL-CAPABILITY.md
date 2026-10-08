@@ -39,6 +39,7 @@
   - D11. Open GAPs and Non-Blocking Findings
   - D12. Reproducibility: How to Verify Everything
 - Part III — Appendices
+  - Appendix A. Frozen Artifact Hashes
   - Appendix F. Environment Specification and Suite Manifest
 
 ---
@@ -5562,6 +5563,114 @@ A difference in an unfrozen or generated artifact that is not part of the claim 
 ---
 
 # Part III — Appendices
+
+
+## Appendix A — Frozen Artifact Hashes
+
+**Part III, Appendix A.**
+**Purpose:** the canonical list of the five frozen artifacts, their SHA-256 values, and the rule by which any change to any of them invalidates the affected claims in this document.
+**Reference base:** `Evidence Collection v3` §2.1; §D12.3; §E7.3.
+
+---
+
+### A.1 Purpose and Scope
+
+Appendix A serves one purpose: to record, in one place, the five artifacts that are **frozen** for this document, together with their SHA-256 values.
+
+A frozen artifact is an artifact whose **byte content is fixed** and whose recorded hash is the reference for verification. A change to any frozen artifact — even by a single byte — invalidates the reproduction of every claim in this document that cites that artifact.
+
+Appendix A does **not**:
+
+- duplicate the verification procedure. The full procedure is in §D12.3.2 and §E7.3.
+- list source artifacts (those are in Appendix B).
+- list test-suites or environment specifications (those are in Appendix F).
+- assert that the frozen set is exhaustive of every artifact in the repository.
+
+Appendix A is a **quick-reference index** of the five frozen artifacts. It is not a substitute for §D12.3.
+
+---
+
+### A.2 The Five Frozen Artifacts
+
+The following five artifacts are frozen. Their SHA-256 values are the canonical check for whether a reader is working against the same artifacts the evidence was produced against.
+
+| # | Artifact | Size (bytes) | SHA-256 |
+|---|---|---|---|
+| 1 | `spec/WIRE-FORMAT-0.2.md` | 20186 | `b2fee085562dec275572d0ed64faa30bc0375ee9a74fe319b0af984895dcf07f` |
+| 2 | `spec/WIRE-FORMAT-0.2-AMENDMENT-1.md` | 8337 | `7cb607be51b7a5d1afbb78611d66b0db3ef3c8cdc30de15ee41b3a701e4762ab` |
+| 3 | `spec/WIRE-FORMAT-0.2-AMENDMENT-2.md` | 9718 | `5e02bf89cfa347b7ff4b0b798ed0e7030866dc1f2989e060e8aca54768f844ac` |
+| 4 | `docs/vomega/decisions/DECISION-0.3-COSE-ARCH.md` | 2980 | `e9c0cd35637a21b5c5bc7268b084694805a79f4c55df06d9d65859f150a36412` |
+| 5 | `docs/vomega/decisions/DECISION-0.4-CBOR-ENVELOPE.md` | 2655 | `848a52d1e027637c308e092bf5b3cee29fcbecdf8c1a179c971c4efc3dfd8ba2` |
+
+**Note on terminology.** Three of the five artifacts are **specifications** (`WIRE-FORMAT-0.2.md`, its Amendments 1 and 2). Two are **decision artifacts** (`DECISION-0.3`, `DECISION-0.4`). The term "specification and decision artifacts" is used in §D12.3.1 to reflect this distinction. Appendix A preserves it.
+
+**Note on the number.** There are exactly **five** frozen artifacts. They are referenced across this document (see §A.5 for cross-references). No other file is frozen; all other files are either source artifacts (Appendix B), test suites (Appendix F), or narrative documentation.
+
+---
+
+### A.3 Verification Protocol
+
+The verification procedure for these five artifacts is documented in §D12.3.2. Two forms are available:
+
+- **Evidence-reference snapshot form:** `git show 7683adb:<path> | sha256sum`. Verifies the snapshot itself, regardless of the current working tree state. **Preferred when only hash verification is required.** No HEAD change is involved.
+- **Working-tree form:** `sha256sum <path>`. Verifies the current working tree. Use only after confirming that the working tree is clean and at commit `7683adb`.
+
+A concise verification command for the five artifacts is provided in §D12.3.2.
+
+---
+
+### A.4 What "Frozen" Means
+
+An artifact is **frozen** when:
+
+1. Its byte content is fixed.
+2. Its SHA-256 value is recorded (in this appendix).
+3. A change to it — even a single byte — invalidates the reproduction of any claim that cites it.
+
+**Consequence of change.** If any of the five artifacts changes, the following must be treated as invalidated until re-verified:
+
+- The reproduction of every claim in §D1 and §D2 (which cite the wire-format lineage).
+- The reproduction of the cross-runtime parity claim in §D3 (which cites the wire-format artifact by hash).
+- Any claim in Appendix B or Appendix F that references a frozen artifact.
+
+**Note on downstream artifacts.** Source artifacts (Appendix B) and test suites (Appendix F) are **not** frozen. They may be updated as part of normal development. Their integrity is checked by their recorded hashes (Appendix B) and by their execution counts (Appendix F); a change to any of them is an observation to be investigated, not a definitional invalidation of the frozen set.
+
+**Note on the "frozen" boundary.** The frozen set is limited to the five artifacts above. Amendment-1 §A6 reserves a future COSE-native profile with a distinct domain tag; that future profile is **not** frozen by this document and is **not** implemented by vOmega.
+
+---
+
+### A.5 Cross-References
+
+| Reference | Purpose |
+|---|---|
+| §D12.3.1 | Full table with sizes and hashes (canonical in the reproduction guide) |
+| §D12.3.2 | Verification procedure (both forms) |
+| §E7.3 | Executive-level hash check |
+| §D2.1 | Envelope lineage references to Amendment-1 and Amendment-2 |
+| §D3.1 | Parity lineage references to WIRE-FORMAT-0.2 and its Amendments |
+| §D7.1 | Phase 1 → Phase 2 → vOmega preservation argument |
+| §D10.3, §D10.5 | Position of COSE and plain CBOR relative to the frozen artifacts |
+| Appendix B | Source artifact hashes |
+| Appendix F | Environment specification and suite manifest |
+
+---
+
+### A.6 What Appendix A Does Not Claim
+
+- Appendix A does not claim that the five frozen artifacts are the only specifications or decisions relevant to vOmega. They are the five artifacts recorded as frozen in `Evidence Collection v3` §2.1.
+- Appendix A does not claim that the frozen set is a complete set of every referenced RFC or external standard. External standards (RFC 8949, RFC 8785, RFC 9052, etc.) are referenced in §E8.4 and are not frozen by this document.
+- Appendix A does not claim that the recorded hashes are the only hashes that matter. Source artifact hashes are in Appendix B.
+- Appendix A does not claim that a change to a frozen artifact is necessarily wrong. It claims that a change **invalidates the reproduction** of any claim that cites the artifact, until re-verification.
+- Appendix A does not duplicate the full verification procedure. §D12.3.2 is the source; §A.3 provides only a summary.
+- Appendix A does not claim that the size column is authoritative. Size is informative; the SHA-256 is the authoritative check.
+- Appendix A does not claim that no other frozen set exists in the repository. It records the frozen set as defined for this document's evidence.
+- Appendix A does not claim that the frozen set is stable across future versions of this document. A future version could freeze additional artifacts; that would be recorded in that version's appendix.
+
+---
+
+**End of Appendix A.**
+
+---
 
 ## Appendix F — Environment Specification and Suite Manifest
 
