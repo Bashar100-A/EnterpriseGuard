@@ -43,6 +43,7 @@
   - Appendix B. Source Artifact Hashes
   - Appendix C. Full Test Execution Logs
   - Appendix D. DEFECT Index
+  - Appendix E. CONTINUITY Index
   - Appendix F. Environment Specification and Suite Manifest
 
 ---
@@ -6181,6 +6182,224 @@ The three views are **consistent**. Appendix D does not add new content; it re-o
 ---
 
 **End of Appendix D.**
+
+## Appendix E — CONTINUITY Index
+
+**Part III, Appendix E.**
+**Purpose:** a consolidated **numerical index** of the 59 sections of `CONTINUITY.md`, with one-line summaries and a phase-grouped view for navigation.
+**Reference base:** `docs/vomega/CONTINUITY.md` §1–§59; §E1.7; §D9.
+
+---
+
+### E.1 Purpose and Scope
+
+Appendix E serves one purpose: to record, in one place, a **flat numerical index** of the 59 sections of `CONTINUITY.md`.
+
+`CONTINUITY.md` is the **narrative history** of every closed stage of the vOmega work, from the initial repository state through Phase 3D-R1. Each section records a stage, a decision, or a milestone. The document is the canonical reference for **narrative decisions** (see §E1.7).
+
+Appendix E does **not**:
+
+- reproduce the full text of any section. The full text is in `CONTINUITY.md`.
+- duplicate the analysis of §D9 (defect history) or §D11 (open findings).
+- list DEFECT entries (those are in Appendix D).
+- list test suites (those are in Appendix F).
+- assert that the 59 sections are exhaustive of every decision recorded in the repository.
+
+Appendix E is a **navigational index**. It does not add new content.
+
+---
+
+### E.2 `CONTINUITY.md` as Source
+
+`CONTINUITY.md` lives at `docs/vomega/CONTINUITY.md`. At the evidence-reference commit `7683adb`, it contains **59 sections**, numbered §1 through §59.
+
+The sections span the following phases:
+
+| Phase group | Sections | Nature |
+|---|---|---|
+| Foundation | §1–§9 | Initial repository state, architectural commitments, working rules |
+| Phase 1 | §10–§20 | Semantic layers: ACL, Authoring, Registry, Rust verifier |
+| Phase 2 | §21–§33 | Hybrid crypto: ML-DSA-65, RS256, ACVP KAT, hybrid signer |
+| Phase 3 / Gate 0 | §34–§38 | Full hybrid verifier (Rust), Gate 0 closure |
+| Phase 3 / Gate 1 | §39–§55 | Wire format: Rust ref, Python, JS, WASM, B+ envelope, fuzzing |
+| Phase 3 / Governance + Trust + E2E | §56–§59 | Governance control plane, trust status, E2E assurance |
+
+The phase boundaries are approximate; §34 is a procedural rule that spans phases, and some sections are re-classifications rather than new stages.
+
+---
+
+### E.3 The 59-Section Index
+
+The following is the numerical index of the 59 sections of `CONTINUITY.md`, in order. Each entry is the section title as it appears in the file. Detail is in `CONTINUITY.md`.
+
+| # | Section title |
+|---|---|
+| §1 | حالة المستودع الفعلية |
+| §2 | Phase 1 — ما بُني فعلاً |
+| §3 | الالتزامات المعمارية المُعتمَدة |
+| §4 | ترتيب التنفيذ المُعتمَد (32 خطوة) |
+| §5 | الخطوة التالية المحددة |
+| §6 | قواعد صارمة |
+| §7 | مقاييس مُعتمَدة (لا تُرفَع) |
+| §8 | روابط مهمة |
+| §9 | ما يجب فعله عند استئناف الجلسة |
+| §10 | تحديث — Phase 1.5 مكتمل |
+| §11 | تحديث — Phase 1.6 مكتمل |
+| §12 | Phase 1.7 مغلق (ACL-0.1) |
+| §13 | Phase 1.9 (spec) — REGISTRY-0.1 |
+| §14 | تصنيف وثيقة Physical Anchor |
+| §15 | Phase 1.9 مغلق + Physical Anchor مُثبَّت (NON-NORMATIVE) |
+| §16 | Phase 1.10 مغلق + Phase 1 كامل |
+| §17 | Phase 1.11 (fuzzing) مكتمل جزئياً |
+| §18 | Phase 1.11 مكتمل — Rust third-verifier |
+| §19 | قرار المرحلة |
+| §20 | Phase 1.12-lite مكتمل — Rust semantic verifier |
+| §21 | Phase 2 Block A — HYBRID-CRYPTO-0.1 spec |
+| §22 | Phase 2 Block B — مكتبات مختارة |
+| §23 | Phase 2 — بيئة Rust مُثبَّتة |
+| §24 | Phase 2 C.2.b — ml-dsa مُدمَج في adie-primitives |
+| §25 | Phase 2 C.3 — JavaScript ML-DSA مُثبَّت |
+| §26 | Phase 2 D.0 — أول تطابق ML-DSA bytes عبر اللغات |
+| §27 | Phase 2 D.1 — ML-DSA-65 مُثبَّت ثلاثياً |
+| §28 | Phase 2 D.2b — KAT: Python 55/55 + Rust 40/40 |
+| §29 | Phase 2 D.2c — JS KAT 55/55 (mldsa ثلاثي مُغطّى) |
+| §30 | Phase 2 D.3c — Hybrid signer (Python) 16/16 |
+| §31 | Phase 2 مُغلق رسمياً |
+| §32 | تصحيح عدّ الاختبارات (DEFECT-014) |
+| §33 | تصحيح العدّ + DEFECT-014 + DECISIONS-0.3 + Gate 0 spec |
+| §34 | قاعدة الفحص الإجرائية (Gate 0) |
+| §35 | Phase 3 Gate 0 — Rust Full Hybrid Verifier مكتمل |
+| §36 | Gate 0 مُغلق رسمياً — في انتظار قرار القائد |
+| §37 | قرار القائد — Gate 0 ACCEPTED / Gate 1 AUTHORIZED |
+| §38 | Gate 1 / 3A.1 — CLOSED |
+| §39 | Phase 3 / Gate 1 / 3A.2 — Rust Reference CBOR Implementation |
+| §40 | تصحيح tooling — DEFECT-020 (account.py summary) |
+| §41 | أمر القائد — 3A.3 Block C APPROVED WITH HARDENING |
+| §42 | Phase 3 / Gate 1 / 3A.3 — Python Interoperability Adapter |
+| §43 | أمر القائد — 3A.4_GO (JS + WASM) |
+| §44 | Phase 3 / Gate 1 / 3A.4A — JavaScript Adapter (D.1-D.3) |
+| §45 | Phase 3 / Gate 1 / 3A.4A — D.4 rawcheck.mjs |
+| §46 | Phase 3 / Gate 1 / 3A.4A — Stage Core (D.5 + D.6 + D.7) |
+| §47 | Phase 3 / Gate 1 / 3A.4A-DIFF — Interoperability Proof |
+| §48 | Stage 3A.4B-WASM — Plan (APPROVED by Commander) |
+| §49 | Stage 3A.4B-WASM — Browser Target Decision (APPROVED) |
+| §50 | Stage 3A.4B-WASM — CLOSED |
+| §51 | Stage 3A.4B-WASM — CLOSED (post DEFECT-033) |
+| §52 | Stage 3A.5-SR — WIRE-FORMAT RECONCILIATION |
+| §53 | Stage 3A.5-B+SR2 — SPECIFICATION RECONCILIATION (R2+) |
+| §54 | Stage 3A.5-B+ — IMPLEMENTATION CLOSED |
+| §55 | Stage 3A.6 — B+ SECURITY HARDENING & DIFFERENTIAL FUZZING |
+| §56 | Stage 3B — GOVERNANCE CONTROL PLANE — CLOSED |
+| §57 | Stage 3C — TRUST STATUS & REVOCATION — CLOSED |
+| §58 | Stage 3D — END-TO-END TRUST DECISION ASSURANCE — CLOSED |
+| §59 | Stage 3D-R1 — END-TO-END TRUST DECISION ASSURANCE REMEDIATION — CLOSED |
+
+**Note on language.** Sections §1–§41 are predominantly in Arabic; some sections (§14 onward) mix Arabic and English. Sections §42–§59 are predominantly in English. The bilingual pattern reflects the project's working language; Appendix E preserves the titles as they appear in the source.
+
+**Note on terminal status.** Sections with the marker `CLOSED` in the title are formal stage closures. Sections without it are milestones, updates, or decisions that were recorded between closures.
+
+---
+
+### E.4 Phase-Grouped View
+
+An alternative view of the same 59 sections, grouped by phase and stage for navigation.
+
+#### E.4.1 Foundation (§1–§9)
+
+| # | Title |
+|---|---|
+| §1–§3 | Repository state, Phase 1 accomplishments, architectural commitments |
+| §4–§7 | Execution order, next step, working rules, stable metrics |
+| §8–§9 | Important links, session-resumption procedure |
+
+#### E.4.2 Phase 1 — Semantic layers (§10–§20)
+
+| # | Title |
+|---|---|
+| §10–§11 | Phase 1.5, Phase 1.6 completions |
+| §12 | Phase 1.7 closed (ACL-0.1) |
+| §13 | Phase 1.9 — REGISTRY-0.1 spec |
+| §14–§16 | Physical Anchor classification; Phase 1.9, 1.10 closures |
+| §17–§18 | Phase 1.11 — fuzzing; Rust third-verifier |
+| §19–§20 | Stage decision; Phase 1.12-lite — Rust semantic verifier |
+
+#### E.4.3 Phase 2 — Hybrid crypto (§21–§33)
+
+| # | Title |
+|---|---|
+| §21–§23 | HYBRID-CRYPTO-0.1 spec; library selection; Rust environment |
+| §24–§26 | ml-dsa integration; JS ML-DSA; cross-language byte parity (first) |
+| §27–§29 | ML-DSA-65 three-language parity; ACVP KAT coverage |
+| §30 | Hybrid signer (Python) |
+| §31 | Phase 2 formally closed |
+| §32–§33 | Test-count corrections (DEFECT-014); DECISIONS-0.3; Gate 0 spec |
+
+#### E.4.4 Phase 3 / Gate 0 (§34–§38)
+
+| # | Title |
+|---|---|
+| §34 | Procedural verification rule (Gate 0) |
+| §35–§36 | Rust full hybrid verifier; Gate 0 closure pending Commander |
+| §37 | Commander decision — Gate 0 ACCEPTED / Gate 1 AUTHORIZED |
+| §38 | Gate 1 / 3A.1 — CLOSED |
+
+#### E.4.5 Phase 3 / Gate 1 — Wire format (§39–§55)
+
+| # | Title |
+|---|---|
+| §39 | 3A.2 — Rust reference CBOR |
+| §40 | Tooling fix — DEFECT-020 |
+| §41–§42 | 3A.3 — Python interoperability adapter |
+| §43 | Commander order — 3A.4_GO (JS + WASM) |
+| §44–§47 | 3A.4A — JavaScript adapter; 3A.4A-DIFF |
+| §48–§51 | 3A.4B-WASM — plan, browser decision, closure |
+| §52–§54 | 3A.5-SR; 3A.5-B+SR2; 3A.5-B+ implementation |
+| §55 | 3A.6 — B+ security hardening & differential fuzzing |
+
+#### E.4.6 Phase 3 / Governance + Trust + E2E (§56–§59)
+
+| # | Title |
+|---|---|
+| §56 | 3B — Governance control plane |
+| §57 | 3C — Trust status & revocation |
+| §58 | 3D — End-to-end trust decision assurance |
+| §59 | 3D-R1 — Remediation |
+
+---
+
+### E.5 Relationship to §D9 and Other Appendices
+
+`CONTINUITY.md` records narrative decisions. Its sections are cross-referenced by several sections of this document and by other appendices.
+
+| Reference | Relationship to `CONTINUITY.md` |
+|---|---|
+| §E1.7 | Establishes `CONTINUITY.md` as a canonical source |
+| §D4.1, §D5.1, §D6.1 | Cite the §56, §57, §58, §59 close commits |
+| §D9.10 | Refers to `CONTINUITY.md` for narrative decisions |
+| §D11 | Cites §59 for finding dispositions |
+| Appendix D | Indexes DEFECTS-LOG.md; DEFECT entries often cite `CONTINUITY.md` sections |
+| Appendix F | Records the 46-suite manifest; some suites correspond to `CONTINUITY.md` stages |
+
+**Cross-document consistency.** The 59 sections of `CONTINUITY.md` correspond to the stages recorded in §D1–§D12. Where a claim in Part II cites a specific stage, the corresponding `CONTINUITY.md` section provides the narrative context.
+
+---
+
+### E.6 What Appendix E Does Not Claim
+
+- Appendix E does not reproduce the full text of any `CONTINUITY.md` section. The full text is in `CONTINUITY.md`.
+- Appendix E does not claim that the 59 sections are exhaustive of every decision recorded in the repository. They are the sections present at the evidence-reference commit.
+- Appendix E does not claim that the phase-grouped view in §E.4 is the only valid grouping. It is a navigational aid; the sections are ordered §1–§59 in the source.
+- Appendix E does not translate the Arabic section titles. It preserves them as they appear in the source.
+- Appendix E does not claim that the "CLOSED" marker in a section title is the only indicator of closure. Some milestones recorded in non-CLOSED sections are themselves closures of a sub-stage.
+- Appendix E does not claim that the phase boundaries in §E.4 are precise. Some sections (§34, §40, §41) are procedural or corrective and do not fall into a single phase.
+- Appendix E does not claim that `CONTINUITY.md` is stable across future versions of this document. It records the file's state at the evidence-reference commit `7683adb`.
+- Appendix E does not duplicate the DEFECT index. That is Appendix D.
+- Appendix E does not duplicate the suite manifest. That is Appendix F.
+- Appendix E does not claim that a section number is a stable identifier. Section numbers are tied to `CONTINUITY.md`'s current ordering; a future revision could renumber.
+
+---
+
+**End of Appendix E.**
 
 ## Appendix F — Environment Specification and Suite Manifest
 
