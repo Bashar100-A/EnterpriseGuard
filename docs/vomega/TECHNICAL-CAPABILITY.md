@@ -40,6 +40,7 @@
   - D12. Reproducibility: How to Verify Everything
 - Part III — Appendices
   - Appendix A. Frozen Artifact Hashes
+  - Appendix B. Source Artifact Hashes
   - Appendix F. Environment Specification and Suite Manifest
 
 ---
@@ -5671,6 +5672,184 @@ An artifact is **frozen** when:
 **End of Appendix A.**
 
 ---
+
+## Appendix B — Source Artifact Hashes
+
+**Part III, Appendix B.**
+**Purpose:** the canonical index of the 15 **source artifacts** whose SHA-256 values are cited by this document, with their layer classification and the claims each artifact protects.
+**Reference base:** `Evidence Collection v3` §9 ("Critical File Hashes"); §D12.4; §E3.3.
+
+---
+
+### B.1 Purpose and Scope
+
+Appendix B serves one purpose: to record, in one place, the 15 **source artifacts** whose SHA-256 values are cited across this document.
+
+A **source artifact** is a file in the repository whose byte content is cited as evidence for a specific claim. Unlike a **frozen artifact** (Appendix A), a source artifact is **not** frozen: it may evolve as part of normal development. Its hash is a reference to the state at the evidence-reference commit, not a permanent invariant.
+
+Appendix B does **not**:
+
+- duplicate the verification procedure. The full procedure is in §D12.4.2.
+- list frozen artifacts (those are in Appendix A).
+- list test-suites or environment specifications (those are in Appendix F).
+- assert that the 15 source artifacts are exhaustive of every source file in the repository. They are the artifacts cited by name across D1–D12 and E1–E8.
+- freeze the source artifacts. A change to any of them is an observation, not an invalidation of the frozen set.
+
+Appendix B is a **quick-reference index** of the 15 source artifacts. It is not a substitute for §D12.4.
+
+---
+
+### B.2 The Fifteen Source Artifacts — by Layer
+
+The following 15 source artifacts are cited across this document. Their SHA-256 values are the evidence-reference for the state at commit `7683adb`.
+
+#### B.2.1 Cryptographic identity layer (2 files)
+
+| # | Artifact | SHA-256 | Cited in |
+|---|---|---|---|
+| 1 | `protocol/hybrid/tbs.py` | `fe6e14d503c3f2e8d224ec058eb5744603778d5b7803fd8d6d6d612296c836e3` | §D2.8.2, §D7.6.3 |
+| 2 | `protocol/hybrid/verify.py` | `2d285fc50c43ae1c08bc7dd577657925cc08faf6deb9bbd1e3e8d5c6b48a7df5` | §D2.8.2, §D6.10.2, §D7.6.3 |
+
+#### B.2.2 Wire layer — Rust reference (3 files)
+
+| # | Artifact | SHA-256 | Cited in |
+|---|---|---|---|
+| 3 | `rust/adie-primitives/src/cbor/rawcheck.rs` | `bbc9c65917ba8f4aa1758b1e8e5286e1bfc250da4d2b69dd9c0fa6659365d6f0` | §E3.3, §D3.10.2 |
+| 4 | `rust/adie-primitives/src/cbor/envelope.rs` | `c2cb978dee16f6c0ae53b70dc81cf8710c9f1bb7f9392f38f9ff5aed9f93d049` | §D2.8.2 |
+| 5 | `rust/adie-primitives/src/bin/adie-cbor-envelope.rs` | `50919d5b77e100e1c7afa07041d5c3d30e52582ad81244f410fa9b848da65697` | §D2.8.2 |
+
+#### B.2.3 Wire layer — JavaScript adapter (2 files)
+
+| # | Artifact | SHA-256 | Cited in |
+|---|---|---|---|
+| 6 | `js/wire/rawcheck.mjs` | `c46d22bed334a53ce66d5652e300c6c93fe2a5e44f8e5c0461ae671036c35e52` | §D3.10.2 |
+| 7 | `js/wire/bin/adie-cbor-envelope.mjs` | `5b4ba51fe790bda14a8057f0210370b0645f1aab5bb15fc464ba0126a3c907a2` | §D2.8.2 |
+
+#### B.2.4 Governance layer (4 files)
+
+| # | Artifact | SHA-256 | Cited in |
+|---|---|---|---|
+| 8 | `src/enterpriseguard/adie/canonical/lifecycle.py` | `cf8e1a2ba7b5c7797543859006ad0c75023758c2957ea812ad08689c70aa39b3` | §D4.10.2 |
+| 9 | `src/enterpriseguard/adie/canonical/lifecycle_sm.py` | `cecfad8df33b1a354437975f21648823e2dfbb686e1c526016d47c75676438a6` | §D4.10.2 |
+| 10 | `src/enterpriseguard/adie/canonical/authority.py` | `01e60e37b6bc582ce1c41ab65ad994ba858e984ea02e623cd1bd25b74600c52a` | §D4.10.2 |
+| 11 | `src/enterpriseguard/adie/decision.py` | `532fef99c023a6275bdec0ee4cf2a174df7b724dc499fe23f5ae63c5834fcfee` | §D4.10.2 |
+
+#### B.2.5 Trust layer (3 files)
+
+| # | Artifact | SHA-256 | Cited in |
+|---|---|---|---|
+| 12 | `src/enterpriseguard/adie/canonical/trust/status.py` | `a3975f7f7365dbe9029e8ec46eaa0eca9890c5a3d185c1a73ec2808eb55ceeb4` | §D5.10.2 |
+| 13 | `src/enterpriseguard/adie/canonical/trust/resolver.py` | `4a3263dbf11c8b4dcc76a74c9ebd3d7ae9e93e918907cd75d4632b403979f6f9` | §D5.10.2, §E3.6 |
+| 14 | `src/enterpriseguard/adie/canonical/trust/history.py` | `99b14a828543acb199ebb31fb6c1411ad1ee4b3c72d59c6491856897603d78a5` | §D5.10.2, §E3.6 |
+
+#### B.2.6 End-to-end integration (1 file)
+
+| # | Artifact | SHA-256 | Cited in |
+|---|---|---|---|
+| 15 | `src/enterpriseguard/adie/canonical/integration/e2e.py` | `0f16bc2ecb04a9481f9d1950cf0c0c1d0d6aebe37ec170b0e758719e08097894` | §D6.10.2, §E3.7 |
+
+#### B.2.7 Aggregate
+
+| Layer | Files | Location prefix |
+|---|---|---|
+| Cryptographic identity | 2 | `protocol/hybrid/` |
+| Wire — Rust | 3 | `rust/adie-primitives/` |
+| Wire — JavaScript | 2 | `js/wire/` |
+| Governance | 4 | `src/enterpriseguard/adie/canonical/` |
+| Trust | 3 | `src/enterpriseguard/adie/canonical/trust/` |
+| End-to-end integration | 1 | `src/enterpriseguard/adie/canonical/integration/` |
+| **Total** | **15** | |
+
+**Verification:** 2 + 3 + 2 + 4 + 3 + 1 = **15**.
+
+---
+
+### B.3 Verification Protocol
+
+The verification procedure for these 15 source artifacts is documented in §D12.4.2. Two forms are available:
+
+- **Evidence-reference snapshot form:** `git show 7683adb:<path> | sha256sum`. Verifies the snapshot itself, regardless of the current working tree state. **Preferred when only hash verification is required.** No HEAD change is involved.
+- **Working-tree form:** `sha256sum <path>`. Verifies the current working tree. Use only after confirming that the working tree is clean and at commit `7683adb`.
+
+A concise verification command for the 15 artifacts is provided in §D12.4.2.
+
+---
+
+### B.4 Sources of the Source Artifacts
+
+The 15 source artifacts are declared in two places in this document set:
+
+| Source | What it provides |
+|---|---|
+| `Evidence Collection v3` §9 ("Critical File Hashes (SHA-256)") | The 15 hashes as recorded during evidence collection |
+| §D12.4.1 | The 15 hashes with cross-references to the sections that cite each artifact |
+
+The two lists are **identical in content** — the same 15 artifacts, the same 15 SHA-256 values. Appendix B adds:
+
+- **Layer classification** (§B.2.1–§B.2.6).
+- **Cross-reference pointers** to the sections that cite each artifact.
+- **The distinction** from frozen artifacts (§A.4).
+
+Appendix B does **not** re-derive the hashes. It records them as declared in the two sources above.
+
+---
+
+### B.5 What "Source Artifact" Means Here
+
+A **source artifact** in this document is a file whose SHA-256 value is cited as evidence for a specific claim. Three properties distinguish it from a **frozen artifact** (Appendix A):
+
+| Aspect | Frozen artifact | Source artifact |
+|---|---|---|
+| Byte content | Fixed by definition | May evolve |
+| Hash stability | Expected to remain constant across this document's lifetime | Reference to the state at `7683adb` only |
+| Consequence of change | Invalidates reproduction of any claim citing it, until re-verified | Observation to be investigated; the affected claim may need re-verification |
+| Cited in | Appendix A (5 artifacts) | Appendix B (15 artifacts) |
+
+**Consequence of change for source artifacts.** If any of the 15 source artifacts changes:
+
+- The claims that cite the artifact must be re-verified against the new source.
+- The frozen artifacts (Appendix A) are unaffected, since they are independent of source changes.
+- The test suites (Appendix F) may still execute; their results should be compared against the recorded counts.
+
+**Boundary.** A source artifact is not a frozen artifact and does not become one by being listed in Appendix B. The frozen set is exactly the five artifacts of Appendix A.
+
+---
+
+### B.6 Cross-References
+
+| Reference | Purpose |
+|---|---|
+| §D12.4.1 | Full table with cross-references (canonical in the reproduction guide) |
+| §D12.4.2 | Verification procedure (both forms) |
+| §E3.3, §E3.6, §E3.7 | Wire, trust, and E2E capability statements citing source artifacts |
+| §D2.8.2 | Envelope hashes |
+| §D3.10.2 | Wire parity hashes |
+| §D4.10.2 | Governance hashes |
+| §D5.10.2 | Trust hashes |
+| §D6.10.2 | E2E hash |
+| §D7.6.3 | TBS and verify hashes |
+| `Evidence Collection v3` §9 | Original source of the 15 hashes |
+| Appendix A | Frozen artifact hashes |
+| Appendix F | Environment specification and suite manifest |
+
+---
+
+### B.7 What Appendix B Does Not Claim
+
+- Appendix B does not claim that the 15 source artifacts are exhaustive of every source file in the repository. They are the artifacts cited by name across D1–D12 and E1–E8.
+- Appendix B does not claim that the source artifacts are frozen. They may evolve; their hashes reference the state at `7683adb` only.
+- Appendix B does not claim that the recorded hashes are the only hashes that matter for the source. Test suite files, WASM artifacts, and other source files not cited by name in this document may have hashes recorded elsewhere (e.g., in build outputs).
+- Appendix B does not claim that a change to a source artifact is necessarily wrong. It claims that a change is an **observation to be investigated** against the affected claims.
+- Appendix B does not duplicate the full verification procedure. §D12.4.2 is the source; §B.3 provides only a summary.
+- Appendix B does not claim that the two source lists (Evidence v3 §9 and §D12.4.1) are independent. They record the same 15 artifacts; Appendix B is the third presentation of the same list, with layer classification added.
+- Appendix B does not claim that no other source-artifact set exists in the repository. It records the source-artifact list as defined for this document's evidence.
+- Appendix B does not claim that the size of any source artifact is authoritative. Size is not part of Appendix B's manifest; the SHA-256 is the authoritative check.
+- Appendix B does not claim that the layer classification in §B.2 is the only valid one. It reflects the primary architectural role of each artifact as used in this document.
+- Appendix B does not claim that the source artifacts are stable across future versions of this document. A future version could cite additional artifacts; that would be recorded in that version's appendix.
+
+---
+
+**End of Appendix B.**
 
 ## Appendix F — Environment Specification and Suite Manifest
 
