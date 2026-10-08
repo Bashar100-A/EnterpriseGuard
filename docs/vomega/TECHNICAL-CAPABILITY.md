@@ -38,6 +38,8 @@
   - D10. Positioning Against Adjacent Technologies
   - D11. Open GAPs and Non-Blocking Findings
   - D12. Reproducibility: How to Verify Everything
+- Part III — Appendices
+  - Appendix F. Environment Specification and Suite Manifest
 
 ---
 
@@ -5558,6 +5560,352 @@ A difference in an unfrozen or generated artifact that is not part of the claim 
 **Part III (Appendices A–H) is not part of this recovery.**
 
 ---
+
+# Part III — Appendices
+
+## Appendix F — Environment Specification and Suite Manifest
+
+**Part III, Appendix F.**
+**Status:** Draft 01 — reconciliation of the 46-suite count included as §F.2.
+**Scope:** defines (a) the canonical 46-suite manifest referenced by §E1.6, §E3.9, §E7.7, §D12.5–§D12.6; (b) the environment specification under which the evidence was generated; (c) the evidence-reference commit.
+**Reference base:** `vOmega-evidence-collection-v3-20261008-113035.md` §5.2; §D12; §E7.
+
+---
+
+### F.1 Purpose and Scope
+
+Appendix F serves two related purposes:
+
+1. **Canonical suite manifest** — the 46 suites whose aggregate is 1,070 fresh executions, as recorded in `Evidence Collection v3` §5.2.
+2. **Environment specification** — the toolchain versions, dependency versions, and disk state under which the evidence was produced.
+
+Appendix F is the reference for:
+
+- §E1.6 (Verification Method) — "46 test suites referenced in Evidence Collection v3 §5.2"
+- §E3.9 (Quantitative Summary) — "Fresh test executions: 1,070"
+- §E7.7 (Step 6 — Run the 46-Suite Evidence Set)
+- §D12.5–§D12.6 (Test Suite Manifest — per-suite commands)
+
+**Relationship to other appendices.** Appendix A records frozen artifact hashes; Appendix B records source artifact hashes. Appendix F is the **manifest and environment** reference, not a hash manifest.
+
+---
+
+### F.2 Suite-Count Reconciliation
+
+The figure **"46 suites"** is used across this document. This section reconciles it against `Evidence Collection v3` §5.2 — the source of the manifest.
+
+#### F.2.1 What Evidence v3 §5.2 contains
+
+`Evidence Collection v3` §5.2 is a table with **46 rows**, each naming one test suite and giving its fresh-execution count and Phase classification. The sum of the 46 counts is **1,070**.
+
+The row count was verified directly:
+
+```bash
+V3=$(ls -t "$HOME/Desktop"/vOmega-evidence-collection-v3-*.md | head -1)
+sed -n '/### 5.2 /,/### 5.3/p' "$V3" | grep -cE "^\| \`"
+```
+
+**Result:** `46`
+
+#### F.2.2 What the 46-suite manifest does NOT contain
+
+`Evidence Collection v3` §5.2 **does not include**:
+
+- The **Python wire suites** as separate rows.
+- The **Rust CBOR library tests** as a separate row.
+
+These two evidence sets are documented separately:
+
+| Evidence set | Executions | Documented in |
+|---|---|---|
+| Python wire suites (6 files) | 194 | §E3.3, §D12.5.1 |
+| Rust CBOR library tests | 111 | §E3.3, §D12.5.3 |
+
+Neither is part of the 1,070-execution figure. The reason is historical: the §5.2 table was generated during Phase 1.6 of the evidence-collection process and enumerated the suites as they appeared in that run.
+
+#### F.2.3 The labeling of the "3A.3 Python wire" rows
+
+Six rows in §5.2 carry the Phase value `3A.3 Python wire`. Their execution counts are:
+
+| Suite row in §5.2 | Count | Python actual | JavaScript actual |
+|---|---|---|---|
+| `test_error` | 20 | 20 | 20 |
+| `test_value` | 28 | 28 | 28 |
+| `test_profile` | 32 | **31** | **32** |
+| `test_rawcheck` | 60 | **44** | **60** |
+| `test_encoder` | 43 | **32** | **43** |
+| `test_decoder` | 40 | **39** | **40** |
+
+For the rows where Python and JavaScript counts differ (`test_profile`, `test_rawcheck`, `test_encoder`, `test_decoder`), the §5.2 values match the **JavaScript** counts, not the Python counts.
+
+**Interpretation.** The six rows labeled `3A.3 Python wire` in §5.2 actually reflect the **JavaScript wire adapter's** execution counts. The JavaScript wire adapter was developed during Phase 3A.4A; the `3A.3` label reflects the phase during which the wire format itself was defined, not the implementation under test.
+
+This labeling pattern is the same issue addressed by the E3.3 correction in Part I, where the Python wire suite executions were corrected from 223 to **194** (20+28+31+44+32+39), and the JavaScript wire suite executions were confirmed as **253** (20+28+32+60+43+40+30). §E3.9 records the Python wire suites and the Rust CBOR tests under "Additional Reproducibility Executions — not included in the 46-suite historical total."
+
+**The 46-suite manifest is not affected by this labeling.** The 46 rows exist, the 1,070 sum is confirmed, and the rows in question are the JavaScript wire rows under a legacy phase label. Appendix F preserves the labeling as it appears in the source, and notes the interpretation above so that a reader is not misled.
+
+#### F.2.4 Composition of the 46-suite manifest
+
+| Category | Suites | Phase label in §5.2 |
+|---|---|---|
+| JavaScript wire | 7 | 3A.3 Python wire / 3A.4A Adapter |
+| Differential | 2 | 3A.4A-DIFF |
+| WASM delivery path | 2 | 3A.4B WASM |
+| B+ envelope | 2 | 3A.5 B+ |
+| Governance (3B) | 7 | 3B Governance |
+| Trust (3C + governed-init) | 9 | 3C Trust + 3D-R1 |
+| End-to-end (3D + 3D-R1) | 12 | 3D / 3D-R1 |
+| Legacy hybrid | 5 | Legacy hybrid (3A-era) |
+| **Total** | **46** | |
+
+**Verification of composition:** 7 + 2 + 2 + 2 + 7 + 9 + 12 + 5 = 46.
+
+**Note on `test_governed_initial_state`.** This suite appears in §5.2 with the Phase label `3D-R1`. Its source file lives at `tests/vomega/trust/test_governed_initial_state.py` and it exercises the trust layer's governed-initial-state rule (documented in §D5). In §D12.6.2 it is counted under the trust subtotal (9 suites, 193 executions). The two groupings (`3D-R1` phase label; `trust` file location) are both correct; they describe different aspects of the same suite. Appendix F preserves the §5.2 phase label.
+
+#### F.2.5 Conclusion
+
+The number **46** refers to the **46 suites enumerated in `Evidence Collection v3` §5.2**, whose fresh-execution sum is **1,070**. The Python wire suites (194 executions) and the Rust CBOR library tests (111 executions) are **additional reproduction evidence**, recorded separately, and are not part of the 46-suite count.
+
+**Two figures must not be conflated:**
+
+| Figure | Meaning | Not to be confused with |
+|---|---|---|
+| **46** | Suites in the historical evidence run | A count of all tests in the repository |
+| **1,070** | Fresh executions in that run | A count of all executions in the repository |
+
+---
+
+### F.3 The Canonical 46-Suite Manifest
+
+The following is the exact list of 46 suites as recorded in `Evidence Collection v3` §5.2, with their fresh-execution counts and phase labels preserved.
+
+#### F.3.1 Wire layer (JavaScript adapter + supporting suites)
+
+| # | Suite | Executions | Phase label |
+|---|---|---|---|
+| 1 | `test_error` | 20 | 3A.3 Python wire |
+| 2 | `test_value` | 28 | 3A.3 Python wire |
+| 3 | `test_profile` | 32 | 3A.3 Python wire |
+| 4 | `test_rawcheck` | 60 | 3A.3 Python wire |
+| 5 | `test_encoder` | 43 | 3A.3 Python wire |
+| 6 | `test_decoder` | 40 | 3A.3 Python wire |
+| 7 | `test_index` | 30 | 3A.4A Adapter |
+
+**Subtotal:** 253 executions (JavaScript wire, per §F.2.3).
+
+#### F.3.2 Differential (3A.4A-DIFF)
+
+| # | Suite | Executions | Phase label |
+|---|---|---|---|
+| 8 | `test_differential_rust` | 45 | 3A.4A-DIFF |
+| 9 | `test_differential_python` | 45 | 3A.4A-DIFF |
+
+**Subtotal:** 90 executions.
+
+#### F.3.3 WASM delivery path (3A.4B)
+
+| # | Suite | Executions | Phase label |
+|---|---|---|---|
+| 10 | `test_wasm_node` | 45 | 3A.4B WASM |
+| 11 | `test_wasm_precision` | 31 | 3A.4B WASM |
+
+**Subtotal:** 76 executions.
+
+#### F.3.4 B+ envelope (3A.5)
+
+| # | Suite | Executions | Phase label |
+|---|---|---|---|
+| 12 | `test_bplus_negative` | 15 | 3A.5 B+ |
+| 13 | `test_bplus_e2e` | 10 | 3A.5 B+ |
+
+**Subtotal:** 25 executions.
+
+#### F.3.5 Governance (3B)
+
+| # | Suite | Executions | Phase label |
+|---|---|---|---|
+| 14 | `test_canonical_lifecycle` | 24 | 3B Governance |
+| 15 | `test_lifecycle_sm` | 31 | 3B Governance |
+| 16 | `test_canonical_authority` | 20 | 3B Governance |
+| 17 | `test_compat_b_adapter` | 16 | 3B Governance |
+| 18 | `test_canonical_contract` | 19 | 3B Governance |
+| 19 | `test_governance_anti_bypass` | 19 | 3B Governance |
+| 20 | `test_wire_bridge` | 7 | 3B Governance |
+
+**Subtotal:** 136 executions.
+
+#### F.3.6 Trust (3C + governed-init)
+
+| # | Suite | Executions | Phase label |
+|---|---|---|---|
+| 21 | `test_status_semantics` | 23 | 3C Trust |
+| 22 | `test_revocation_authority` | 21 | 3C Trust |
+| 23 | `test_assertion` | 19 | 3C Trust |
+| 24 | `test_resolver` | 27 | 3C Trust |
+| 25 | `test_history` | 18 | 3C Trust |
+| 26 | `test_temporal_replay` | 41 | 3C Trust |
+| 27 | `test_anti_bypass_3c` | 13 | 3C Trust |
+| 28 | `test_decision_trust_integration` | 13 | 3C Trust |
+| 29 | `test_governed_initial_state` | 18 | 3D-R1 |
+
+**Subtotal:** 193 executions.
+
+#### F.3.7 End-to-end (3D + 3D-R1)
+
+| # | Suite | Executions | Phase label |
+|---|---|---|---|
+| 30 | `test_e2e_happy_path` | 14 | 3D / 3D-R1 |
+| 31 | `test_e2e_trust_matrix` | 18 | 3D |
+| 32 | `test_e2e_lifecycle_sm` | 28 | 3D |
+| 33 | `test_e2e_crypto_gov_mismatch` | 9 | 3D |
+| 34 | `test_e2e_provenance` | 11 | 3D |
+| 35 | `test_e2e_legacy_bypass` | 11 | 3D |
+| 36 | `test_e2e_replay_deterministic` | 72 | 3D |
+| 37 | `test_e2e_failure_injection` | 11 | 3D |
+| 38 | `test_e2e_no_mutation` | 8 | 3D |
+| 39 | `test_e2e_manifest_boundary` | 19 | 3D / 3D-R1 |
+| 40 | `test_e2e_crypto_verification` | 12 | 3D-R1 |
+| 41 | `test_e2e_trust_store_real` | 12 | 3D-R1 |
+
+**Subtotal:** 225 executions.
+
+#### F.3.8 Legacy hybrid (3A-era)
+
+| # | Suite | Executions | Phase label |
+|---|---|---|---|
+| 42 | `test_e2e` | 11 | Legacy hybrid (3A-era) |
+| 43 | `test_sign` | 16 | Legacy hybrid |
+| 44 | `test_verify` | 20 | Legacy hybrid |
+| 45 | `test_tbs` | 12 | Legacy hybrid |
+| 46 | `test_rust_parity` | 13 | Legacy hybrid |
+
+**Subtotal:** 72 executions.
+
+#### F.3.9 Manifest aggregate
+
+| Category | Suites | Executions |
+|---|---|---|
+| Wire layer (JS adapter + index) | 7 | 253 |
+| Differential | 2 | 90 |
+| WASM | 2 | 76 |
+| B+ envelope | 2 | 25 |
+| Governance (3B) | 7 | 136 |
+| Trust + governed-init | 9 | 193 |
+| End-to-end (3D + 3D-R1) | 12 | 225 |
+| Legacy hybrid | 5 | 72 |
+| **Total** | **46** | **1,070** |
+
+**Verification:** 46 suites; 253+90+76+25+136+193+225+72 = 1,070.
+
+**This aggregate is a historical figure.** It is the sum of the 46 suite rows as recorded in Evidence v3 §5.2. It **must not** be used to reconstruct the `1120` regression baseline (which has its own accounting rule; see §D12.8.1) nor to infer any other total.
+
+---
+
+### F.4 Environment Specification
+
+#### F.4.1 Toolchain versions
+
+| Component | Version | Source |
+|---|---|---|
+| Linux kernel | 7.0.0-31-generic | `uname -r` |
+| Python | 3.12.3 | `python3 --version` |
+| Rust | 1.99.0 | `rustc --version` |
+| Cargo | 1.99.0 | `cargo --version` |
+| Node.js | 20.20.2 | `node --version` |
+| npm | 10.9.9 | `npm --version` |
+| Firefox (browser path) | 155.0.1 | `firefox --version` |
+
+The specific Linux **distribution** is not asserted. A compatible environment provides the same kernel version and toolchain versions.
+
+#### F.4.2 Dependency versions
+
+| Layer | Library | Version | License | Manifest |
+|---|---|---|---|---|
+| Rust | `ciborium` | `=0.2.2` | Apache-2.0 | `rust/adie-primitives/Cargo.lock` |
+| Rust | `ml-dsa` | `=0.1.1` | (see Cargo.lock) | `rust/adie-primitives/Cargo.lock` |
+| Rust | `rsa` | `=0.9.6` with `sha2` feature | (see Cargo.lock) | `rust/adie-primitives/Cargo.lock` |
+| Python | `cbor2` | `==6.1.5` | MIT | `requirements.txt` |
+| Python | `cryptography` | `==50.0.1` | (see requirements.txt) | `requirements.txt` |
+| Python | `dilithium-py` | `==1.4.0` | (see requirements.txt) | `requirements.txt` |
+| Python | `pqcrypto` | `==1.0.0` | (see requirements.txt) | `requirements.txt` |
+| JavaScript | `cbor` | `9.0.2` | MIT | `js/package.json` |
+| JavaScript | `@noble/post-quantum` | `^0.7.1` | (see package.json) | `js/package.json` |
+
+**Note on pinning.** Where a dependency is pinned by a manifest, that manifest is the source. Where a dependency is not pinned by a manifest, the recorded version is the explicitly documented value. This note is consistent with §D12.10.1.
+
+**Note on library selection.** Rationales for the three CBOR library selections are recorded in `CBOR-LIB-EVAL-001/002/003`; see §D8.4 and §D9.5.
+
+#### F.4.3 Disk state
+
+At the **last recorded environment reading** associated with the evidence set, the home partition was at 86% usage. This figure is the state of the development environment, not a Git-state fact. It is recorded under `RISK-3.3` (see §D11.14).
+
+**Historical peak:** during Phase 3A.2, `cargo build --release` failed with `OS error 28` (No space left on device). The mitigation and monitoring rule are recorded in `RISK-3.3`.
+
+#### F.4.4 Environment capture command
+
+A reader capturing their own environment should run the command in §D12.2.2. The output should be compared against §F.4.1; any divergence is analyzed under §D12.2.3.
+
+---
+
+### F.5 Evidence-Reference Commit
+
+All reproduction in Appendix F targets commit **`7683adb`** (branch `vOmega`), the reproducibility baseline.
+
+`origin/vOmega` may have advanced beyond this commit; the current tip of `origin/vOmega` is **not** the evidence reference and should not be used for reproduction. See §D12.1.3.
+
+**Verification:**
+
+```bash
+set -euo pipefail && \
+cd ~/Desktop/EnterpriseGuard && \
+git log --oneline -1 7683adb && \
+git branch -vv | grep '^\*'
+```
+
+---
+
+### F.6 Reproduction Prerequisites
+
+Appendix F does not duplicate the reproduction commands. The reader should follow:
+
+| Step | Where |
+|---|---|
+| Environment capture | §D12.2 |
+| Frozen artifact verification | §D12.3 |
+| Source artifact verification | §D12.4 |
+| Per-suite execution | §D12.5, §D12.6 |
+| Differential corpus | §D12.7 |
+| Regression baseline | §D12.8 |
+| Worked examples | §D12.9 |
+| Failure interpretation | §D12.10 |
+
+**Prerequisites for the reproduction:**
+
+1. A machine meeting the environment in §F.4.1 (or a compatible environment).
+2. The repository cloned at commit `7683adb` (or the ability to run `git show 7683adb:<path>` for the snapshot form).
+3. Python 3.12.3 with `requirements.txt` installed in a virtual environment.
+4. Rust 1.99.0 with `rust/adie-primitives/Cargo.lock` dependencies available.
+5. Node.js 20.20.2 with `js/package.json` dependencies installed.
+6. No network access required for test execution once the environment and dependencies are installed (§E7.1).
+
+---
+
+### F.7 What Appendix F Does Not Claim
+
+- Appendix F does not claim that the 46-suite manifest is the total set of tests in the repository. It is the manifest of the historical evidence run recorded in `Evidence Collection v3` §5.2.
+- Appendix F does not claim that the 1,070-execution figure is the total execution count across all phases. It is the sum of the 46 suite rows in §5.2.
+- Appendix F does not claim that the labeling of the "3A.3 Python wire" rows in §5.2 is correct. It records the labeling as it appears in the source and documents the interpretation (see §F.2.3).
+- Appendix F does not claim that the 1,070 figure is comparable with the `1120` regression baseline. The two are defined by different accounting rules; see §D12.8.1.
+- Appendix F does not claim that the environment specification is the only environment in which the evidence reproduces. It documents the environment under which the evidence was generated; a compatible environment may reproduce the evidence, and divergences are analyzed per §D12.2.3.
+- Appendix F does not claim that the dependency versions listed in §F.4.2 are exhaustive of every dependency in every layer. They are the dependencies cited by name in D1–D12 and E1–E8.
+- Appendix F does not duplicate the per-artifact hashes. Those are in Appendix A (frozen artifacts) and Appendix B (source artifacts).
+- Appendix F does not claim that the disk-state figure (86%) is a Git-state fact. It is a recorded environment reading associated with the evidence set, as documented in §D11.14.
+- Appendix F does not claim that the Python wire suites or the Rust CBOR library tests are excluded from the document. They are documented in §E3.9 and §D12.5.1 / §D12.5.3, and they are **additional** evidence, not part of the 46-suite manifest.
+- Appendix F does not claim that the phase labels in §F.3 are current architectural labels. They are the labels as recorded in Evidence v3 §5.2.
+
+---
+
+**End of Appendix F.**
 
 # End of Recovered Document
 
