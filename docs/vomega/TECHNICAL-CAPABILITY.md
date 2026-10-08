@@ -1,10 +1,9 @@
 # vOmega — Technical Capability Document
 
-**Status:** Recovered / Staged / Pending Commander Review
-**Recovered from:** conversation transcript (not from prior disk state)
+**Status:** Issued — with D1 as an intentional final placeholder
+**Source:** Recovered from conversation transcript (initial) and updated through the vOmega evidence-reference commit.
 **Evidence-reference commit:** `7683adb` (branch `vOmega`)
-**Document scope (this recovery):** Part I (E1–E8) + Part II (D1–D12)
-**Not included in this recovery:** Part III (Appendices A–H)
+**Document scope:** Part I (E1–E8) + Part II (D1–D12) + Part III (Appendices A–H)
 **Frozen upstream specifications:**
 - `spec/WIRE-FORMAT-0.2.md` — SHA-256 `b2fee085562dec275572d0ed64faa30bc0375ee9a74fe319b0af984895dcf07f`
 - `spec/WIRE-FORMAT-0.2-AMENDMENT-1.md` — SHA-256 `7cb607be51b7a5d1afbb78611d66b0db3ef3c8cdc30de15ee41b3a701e4762ab`
@@ -894,9 +893,17 @@ TrustStatus  (5 values)
 
 ## D1. Wire Format: Deterministic CBOR (DCP 2.1)
 
-**[PLACEHOLDER — awaiting Commander text]**
+**[PLACEHOLDER — final, intentional documentation gap]**
 
-The full D1 Draft 01 text is not available in the current recovery context. The section will be inserted here once the text is provided by the Commander or explicitly authorized for reconstruction.
+The full D1 Draft 01 text is not available in this document. After review with the Commander, this placeholder was retained as a **documentation gap** rather than reconstructed. The document does not attempt to reconstruct D1 from cross-references, because reconstruction would violate the "extraction, not reinterpretation" rule stated in §E1.5.
+
+The wire-format claims of this document are supported by:
+- The frozen `WIRE-FORMAT-0.2` artifacts (see Appendix A).
+- §D2 (B+ Envelope) and §D3 (Cross-Runtime Parity).
+- §D7 (Cryptographic Identity: Invariants Preserved).
+- §D8.5 (Library-Default Defects as a Class).
+
+This placeholder is intentional. It is not "pending" text; it is the final state of D1 in this document.
 
 For the reader's orientation, the following cross-referenced facts about D1 are available elsewhere in this document:
 
@@ -7202,9 +7209,8 @@ This partitioning reflects §E1.2's design: the document serves multiple reader 
 
 **End of Appendix H.**
 
-# End of Recovered Document
+# End of Document
 
-**Status:** Recovered / Staged / Pending Commander Review
-**Recovery source:** conversation transcript
+**Status:** Issued — with D1 as an intentional final placeholder
 **Evidence-reference commit:** `7683adb` (branch `vOmega`)
-**Not yet performed:** Commander file review; single clean commit
+**Document:** Complete (Parts I, II, and III); D1 is the sole intentional placeholder.
