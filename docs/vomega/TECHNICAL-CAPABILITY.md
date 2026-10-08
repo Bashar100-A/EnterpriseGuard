@@ -3,8 +3,8 @@
 **Status:** Recovered / Staged / Pending Commander Review
 **Recovered from:** conversation transcript (not from prior disk state)
 **Evidence-reference commit:** `7683adb` (branch `vOmega`)
-**Document scope (this recovery):** Part I (E1–E8) + Part II (D1–D9)
-**Not included in this recovery:** D10–D12, Part III (Appendices A–H)
+**Document scope (this recovery):** Part I (E1–E8) + Part II (D1–D10)
+**Not included in this recovery:** D11–D12, Part III (Appendices A–H)
 **Frozen upstream specifications:**
 - `spec/WIRE-FORMAT-0.2.md` — SHA-256 `b2fee085562dec275572d0ed64faa30bc0375ee9a74fe319b0af984895dcf07f`
 - `spec/WIRE-FORMAT-0.2-AMENDMENT-1.md` — SHA-256 `7cb607be51b7a5d1afbb78611d66b0db3ef3c8cdc30de15ee41b3a701e4762ab`
@@ -35,6 +35,7 @@
   - D7. Cryptographic Identity: Invariants Preserved
   - D8. Security Analysis
   - D9. Defect History — All 44 DEFECTs
+  - D10. Positioning Against Adjacent Technologies
 
 ---
 
@@ -4182,9 +4183,330 @@ The full defect record as of the evidence-reference commit `7683adb` is what D9 
 
 **End of D9.**
 
-# End of Part II (D1–D9)
+## D10. Positioning Against Adjacent Technologies
 
-**D10–D12 and Part III (Appendices A–H) are not part of this recovery.**
+**Part II, Section D10.**
+**Scope:** a positioning analysis of vOmega relative to six adjacent technologies — JWT/JWS, COSE, CMS, plain CBOR, SCITT, Sigstore — based on **documented architectural properties**, not on quality or security claims.
+**Constraint:** D10 does not claim that vOmega is "better than," "more secure than," or "a replacement for" any of the technologies discussed. It documents where vOmega's composition overlaps with each, and where it differs. Comparison is on architecture and scope, not on absolute merit.
+
+---
+
+### D10.1 Scope and Method
+
+#### D10.1.1 What "positioning" means here
+
+D10 uses the word *positioning* in a narrow, technical sense. It does not mean:
+
+- vOmega is superior to any other technology.
+- vOmega replaces any other technology.
+- Any other technology is inadequate for its purpose.
+
+It means:
+
+- For each of six adjacent technologies, D10 records **what that technology provides** (a documented capability, not an opinion).
+- It records **where vOmega overlaps** with that technology (if at all).
+- It records **where vOmega differs** (the specific architectural property that distinguishes the two).
+- It records **what vOmega borrows** from that technology (if any).
+
+The comparison criterion is **architectural scope**, not security, performance, or quality.
+
+#### D10.1.2 Why architectural scope is the criterion
+
+vOmega is a composition of existing primitives (deterministic CBOR, JCS, cryptographic signatures, structured authority models) under stricter invariants. Many of the adjacent technologies also compose primitives under constraints. Comparing them on "security" would require a threat model that is specific to each technology's deployment context — a comparison that D10 cannot make without claiming to be a security audit of those technologies, which it is not.
+
+Comparing them on **architectural scope** — what each defines, what each does not define, and where the two definitions overlap — is a factual exercise. That is what D10 does.
+
+#### D10.1.3 The six adjacent technologies
+
+| Technology | Category |
+|---|---|
+| **JWT / JWS** (RFC 7515, RFC 7519) | JSON-based signed tokens |
+| **COSE** (RFC 9052, RFC 9964) | CBOR-based signing and encryption structures |
+| **CMS / PKCS#7** (RFC 5652) | ASN.1-based cryptographic messaging |
+| **Plain CBOR** (RFC 8949) | Binary data encoding |
+| **SCITT** (Supply Chain Integrity, Transparency, and Trust) | IETF standards defining Signed Statements, Transparency Services, Verifiable Data Structures, and Receipts for trustworthy and transparent digital supply chains (RFC 9943, RFC 9942). |
+| **Sigstore** | Signing infrastructure combining OIDC-bound short-lived certificates, a transparency/auditability service, and a signing client, for software artifacts. |
+
+Each is documented here as it is defined by its own specification or, in the case of Sigstore, by its own project documentation. D10 does not attempt to characterize any of these technologies beyond what their own definitions state.
+
+#### D10.1.4 Evidence base
+
+D10 is primarily an architectural analysis. Where a specific vOmega property is cited, it points to a section of this document or to `docs/vomega/CONTINUITY.md` or `docs/vomega/DEFECTS-LOG.md`. Where a specific property of an adjacent technology is cited, it points to the corresponding RFC or project documentation by identifier.
+
+**Evidence-reference commit.** `7683adb` (reproducibility baseline).
+
+---
+
+### D10.2 JWT / JWS
+
+#### D10.2.1 What JWT / JWS provides
+
+JWS (RFC 7515) defines a JSON-based structure for signing arbitrary byte payloads. In the JWS Compact Serialization, the signing input is computed from the base64url-encoded **protected header** and the base64url-encoded payload. In the JWS JSON Serialization, multiple signatures may be present, and unprotected headers do not participate in the signing input. JWT (RFC 7519) defines a set of registered claims (`iss`, `sub`, `exp`, `nbf`, `aud`, `iat`, `jti`) that can be carried in a JWS payload for token use cases.
+
+#### D10.2.2 Where vOmega overlaps
+
+- **Signing a semantic artifact.** Both vOmega and JWS bind a signature to a payload that is delivered alongside the signature. In both cases, the signature is computed over a byte sequence derived from the payload and its metadata.
+- **Claim-based identity.** Both carry a set of named fields that constitute the artifact's semantic content.
+
+#### D10.2.3 Where vOmega differs
+
+| Property | JWS | vOmega (DCP 2.1 / B+) |
+|---|---|---|
+| Signing input framework | JOSE signing input (`BASE64URL(protected_header) ‖ "." ‖ BASE64URL(payload)`) in the Compact Serialization | `ADIE-SIG-V2\0` ‖ JCS(certificate_without_signatures) |
+| Payload serialization | JSON, with base64url encoding for transport | Semantic certificate canonicalized by JCS (RFC 8785) |
+| Deterministic encoding requirement | Not specified for JSON payloads | Required (JCS) |
+| Signing-input dependence | The **protected header** participates in the signing input; the full serialized container is not, by itself, a single signed byte sequence. | The signing input does not include any wire container bytes; the CBOR envelope does not participate. |
+
+The relevant difference is that in JWS, the **protected header** contributes to the signing input, whereas in vOmega the envelope (the wire container) contributes no bytes to the signing input. The JWS signing input is not "the container"; it is the concatenation of a specific subset (protected header and payload), by the rules of the serialization. vOmega's signing input is a similarly specific subset — the semantic certificate — with the envelope excluded by design. This is the Model B+ decision documented in §D2.2 and §D7.5.
+
+#### D10.2.4 What vOmega borrows
+
+No structural element. The vOmega certificate is not a JWS object, and the vOmega hybrid signature scheme is not a JOSE algorithm. The two are parallel designs addressing overlapping problems.
+
+#### D10.2.5 What D10 does not claim
+
+D10 does not claim that vOmega is "more secure" than JWS. JWS is a widely deployed, thoroughly reviewed standard. The two designs occupy different architectural points: JWS is a general-purpose signed-token format; vOmega is a decision-artifact format with explicit governance and trust layers. A deployment could use JWS for token delivery while using vOmega for the semantic decision artifact; the two are not in direct competition.
+
+---
+
+### D10.3 COSE
+
+#### D10.3.1 What COSE provides
+
+COSE (RFC 9052) defines CBOR-based structures for signing, encryption, and key representation. `COSE_Sign` and `COSE_Sign1` define signing structures in which the bytes to be signed are computed by the framework according to a defined `Sig_structure`; that structure incorporates context strings, protected attributes, and the payload. RFC 9964 (published May 2026) registers ML-DSA algorithm identifiers for COSE, including ML-DSA-65 (identifier `-49`), and defines the AKP key type for COSE.
+
+#### D10.3.2 Where vOmega overlaps
+
+- **CBOR as the transport encoding.** Both use CBOR as the binary representation.
+- **ML-DSA-65 as a signature algorithm.** vOmega's hybrid profile includes ML-DSA-65 as one of the two required algorithms; COSE has a registered identifier for ML-DSA-65 (RFC 9964).
+- **Algorithm identifier reuse.** vOmega uses the IANA COSE algorithm identifiers `-257` (RS256) and `-49` (ML-DSA-65). This reuse is documented in Amendment-1 §A2.4.
+
+#### D10.3.3 Where vOmega differs
+
+| Property | COSE | vOmega (Model B+) |
+|---|---|---|
+| Signing input | `Sig_structure` defined by the framework, incorporating context, protected attributes, and payload | `ADIE-SIG-V2\0` ‖ JCS(certificate_without_signatures) |
+| Wire container participation | The signature covers the COSE `Sig_structure`, which references signing metadata and the payload | The signature covers only the semantic certificate; no envelope bytes participate |
+| Signing object | `COSE_Sign` / `COSE_Sign1` | ADIE-native hybrid certificate (not a COSE object) |
+
+This is the Model B+ architectural decision (Amendment-1 §A2, DECISION-0.3). The decision is documented in §D2.2 and the preservation argument is documented in §D7.5.
+
+#### D10.3.4 What vOmega borrows
+
+- **`COSE_Key` for ML-DSA-65 key representation.** The ML-DSA-65 public key is represented using the `COSE_Key` structure per RFC 9964 (AKP key type). This is a **key representation**, not a signing structure.
+- **Algorithm identifiers.** `-257` (RS256) and `-49` (ML-DSA-65) are reused as IANA-registered values.
+
+Both borrowings are documented in Amendment-1 §A2.4.
+
+#### D10.3.5 What D10 does not claim
+
+D10 does not claim that vOmega is "more COSE-compliant" than a COSE implementation, or that COSE is "inadequate." Amendment-1 §A2.3 explicitly states that vOmega does not claim compliance with any COSE signing profile or any composite-signature standard. The two designs address different problems: COSE is a general-purpose CBOR signing framework; vOmega is an application-level decision artifact with a stable cryptographic identity independent of transport.
+
+A future COSE-native profile is reserved (Amendment-1 §A6) with a distinct domain tag; vOmega does not implement it.
+
+---
+
+### D10.4 CMS / PKCS#7
+
+#### D10.4.1 What CMS provides
+
+CMS (RFC 5652, superseding PKCS#7) defines ASN.1-based structures for signing, encryption, and enveloping data. `SignedData` and its variants are widely used in email (S/MIME), code signing, and document signing contexts. CMS permits the use of BER as a base encoding; when signed attributes are present, RFC 5652 requires those attributes to be DER-encoded.
+
+#### D10.4.2 Where vOmega overlaps
+
+- **Signing a semantic artifact.** Both bind a signature to a payload delivered alongside the signature.
+- **Multi-signature support.** Both CMS `SignedData` and vOmega's `signatures[]` array can carry multiple signatures over the same payload.
+
+#### D10.4.3 Where vOmega differs
+
+| Property | CMS | vOmega |
+|---|---|---|
+| Wire encoding | ASN.1-based encoding; CMS permits BER encoding, while signed attributes are required to be DER-encoded when present. | Deterministic CBOR (DCP 2.1) |
+| Canonicalization for signing | Defined per signed-attribute rules (RFC 5652 §5.4) | JCS (RFC 8785) |
+| Deterministic encoding | Context-dependent; DER is required for signed attributes, while CMS as a whole is not equivalent to a universally DER-only container. | Deterministic by construction (DCP 2.1 + JCS) |
+| Semantic model | Generic signed attributes | ADIE-specific decision certificate with 13 named fields |
+| Governance layer | Not defined | Dual-axis decision model (§D4) |
+| Trust model | Signer/key identification with optional certificate carriage; trust establishment is deployment-dependent | Authority-based assertion model (§D5) |
+
+#### D10.4.4 What vOmega borrows
+
+No structural element. vOmega does not use ASN.1, does not carry X.509 certificates, and does not reuse CMS signed-attribute rules. The two are parallel designs in different encoding families.
+
+#### D10.4.5 What D10 does not claim
+
+D10 does not claim that vOmega is "lighter" or "better" than CMS. CMS is a mature, standard-integrated system widely deployed in email and document-signing contexts. vOmega is not a CMS replacement; it addresses a decision-artifact use case where a JSON-based canonicalization (JCS) and a governance model are the primary requirements.
+
+---
+
+### D10.5 Plain CBOR (RFC 8949)
+
+#### D10.5.1 What plain CBOR provides
+
+RFC 8949 defines a binary data encoding with a defined set of major types and additional information fields. It permits multiple encodings for the same semantic value (shortest vs overlong integers, definite vs indefinite-length items, optional tag use). RFC 8949 §4.2 defines deterministic encoding requirements that protocols may adopt or further restrict.
+
+#### D10.5.2 Where vOmega overlaps
+
+- **CBOR as the transport family.** The B+ envelope is a CBOR map.
+- **Rejection categories.** Most of the 14 `E_WIRE_*` codes classify violations of either RFC 8949 rules or DCP 2.1's stricter restrictions on top of them.
+
+#### D10.5.3 Where vOmega differs
+
+| Property | Plain CBOR (RFC 8949) | vOmega (DCP 2.1) |
+|---|---|---|
+| Encoding latitude | Permits overlong integers, indefinite items, floats, tags | Excludes all of these |
+| Map key discipline | Any major type as key | Unsigned integer keys only |
+| Map key ordering | Not required | Numeric ascending |
+| Tag use | Permitted | Rejected (major type 6) |
+| Depth limit | Not specified | 32 (bounded) |
+| Rejection codes | Not applicable (no rejection model) | 14 typed `E_WIRE_*` codes |
+| Authority for wire rules | Not defined | `rawcheck` (byte-level authority) |
+
+DCP 2.1 is a **stricter profile** on top of RFC 8949, not a replacement. The relationship is documented in §D1 and §E2.2.1.
+
+#### D10.5.4 What vOmega borrows
+
+The entire byte-level syntax. DCP 2.1 uses the CBOR major-type/additional-information structure as defined by RFC 8949 and adds a stricter profile above it. RFC 8949 §4.2 (deterministic encoding) is the specific clause that DCP 2.1 restricts further.
+
+#### D10.5.5 What D10 does not claim
+
+D10 does not claim that RFC 8949 is "insufficient." The RFC explicitly permits protocols to define their own deterministic profiles. DCP 2.1 is one such profile.
+
+---
+
+### D10.6 SCITT
+
+#### D10.6.1 What SCITT provides
+
+SCITT (Supply Chain Integrity, Transparency, and Trust) is defined by IETF standards (RFC 9943 and RFC 9942) as a set of architectural elements for **trustworthy and transparent digital supply chains**. The architecture includes:
+
+- **Signed Statements** — signed claims about supply-chain artifacts, carried as enveloped COSE structures (`COSE_Sign1`-based).
+- **Transparency Services** — services that append statements to an **append-only log** and issue receipts.
+- **Verifiable Data Structures (VDS)** — the data structures underlying a Transparency Service. SCITT supports multiple VDS constructions; specific implementations may use Merkle-style proofs, but SCITT does not require a single VDS construction.
+- **Receipts** — proofs that a statement has been included in a Transparency Service's log.
+
+RFC 9942 provides COSE receipt encodings, including Merkle-style proof encodings.
+
+#### D10.6.2 Where vOmega overlaps
+
+- **Signed claims.** Both define a signed artifact (a Signed Statement in SCITT; a certificate in vOmega).
+- **Structured signing input.** Both define a specified signing structure that cryptographically binds the signed artifact to its metadata and payload. vOmega additionally fixes its own JCS/DCP 2.1 canonicalization rules; SCITT's Signed Statement is carried as an enveloped COSE structure whose signing input is defined by COSE.
+- **Cryptographic binding.** Both bind a signature to a payload via a defined signing input.
+
+#### D10.6.3 Where vOmega differs
+
+| Property | SCITT | vOmega |
+|---|---|---|
+| Transparency Service | **Defined** (Append-only log / VDS; multiple VDS constructions supported) | **Not defined** |
+| Receipt structure | **Defined** (proof of inclusion) | **Not defined** |
+| Governance model | Not the primary focus | Dual-axis decision model (§D4) |
+| Trust model | Issuer/signature + Transparency Service / Receipt model | Authority-based assertion model (§D5) |
+| End-to-end path | Not the primary focus | Defined (§D6) |
+
+The most consequential difference is that **SCITT defines a Transparency Service and receipts; vOmega does not.** vOmega's trust model is authority-based: a decision records the trust status of the authority that authorized it, and later changes to that authority do not overwrite the record. This is a different design point from a Transparency Service, which records statements in an append-only log/VDS and issues proofs of inclusion.
+
+The two are not mutually exclusive. A deployment could sign its certificates under vOmega and publish their hashes to a SCITT Transparency Service for transparency; SCITT provides the transparency layer, vOmega provides the semantic artifact and its governance. This composition is **not implemented by vOmega** and is mentioned only as a design observation.
+
+#### D10.6.4 What vOmega borrows
+
+No structural element. vOmega does not implement a Transparency Service, does not produce inclusion receipts, and does not use SCITT's Signed Statement format.
+
+#### D10.6.5 What D10 does not claim
+
+D10 does not claim that SCITT is "redundant" or that vOmega "makes it unnecessary." SCITT addresses a distinct transparency requirement. vOmega addresses a decision-artifact and governance requirement. A deployment requiring both properties would use both. The composition is outside the current vOmega scope.
+
+---
+
+### D10.7 Sigstore
+
+#### D10.7.1 What Sigstore provides
+
+Sigstore is an open-source project providing signing infrastructure for software artifacts. Its components include:
+
+- **Fulcio** — a certificate authority that issues short-lived certificates binding an ephemeral signing key to an OIDC identity.
+- **Rekor** — a transparency/auditability service in which signing events are recorded.
+- **Cosign** — a signing and verification client.
+- **Timestamping authority** — a trusted timestamp service.
+
+Sigstore's design point is keyless signing: an OIDC identity provider authenticates the signer, Fulcio issues a short-lived certificate, and the signing event is recorded in Rekor.
+
+**Sigstore's Trust Root.** Sigstore's Trust Root distributes the trusted verification material for Sigstore services, including Fulcio and Rekor, through **TUF** (The Update Framework). OIDC providers supply the identity assertions consumed by Fulcio; they are not described here as components of the Sigstore Trust Root itself.
+
+#### D10.7.2 Where vOmega overlaps
+
+- **Signed artifacts.** Both produce signed artifacts.
+- **Cryptographic binding.** Both bind a signature to an artifact.
+- **Hash-based identification.** Both produce content hashes that can be used for identity purposes.
+
+#### D10.7.3 Where vOmega differs
+
+The comparison is on **two specific architectural properties**, not on overall system quality:
+
+| Property | Sigstore | vOmega |
+|---|---|---|
+| Signing-key model | Short-lived certificate binding an ephemeral signing key to an OIDC identity; signing events are recorded in Rekor. | Authority-associated signing key material; key lifetime and rotation are not defined by the current vOmega scope. |
+| Transparency / auditability service | **Defined** (Rekor) | **Not defined by vOmega** |
+| Sigstore trust root | Fulcio/Rekor verification material distributed through TUF | Not defined (authorities provided as inputs; §E6.5, F-04/F-05) |
+| Identity binding | OIDC identity | Authority identity (§D4.6) |
+| Governance layer | Not the focus | Dual-axis decision model (§D4) |
+| Trust-status history | Recorded in the transparency service | Explicit append-only assertion store (§D5) |
+
+The distinguishing architectural property is that **Sigstore combines OIDC-bound short-lived signing certificates with a transparency/auditability service**, whereas vOmega does not define either a Fulcio-style CA or a Rekor-style transparency service.
+
+#### D10.7.4 What vOmega borrows
+
+No structural element. vOmega does not implement a Fulcio-style CA, does not implement a Rekor-style transparency service, does not use OIDC identity, and does not implement keyless signing.
+
+#### D10.7.5 What D10 does not claim
+
+D10 does not claim that vOmega is "more secure" or "simpler" than Sigstore. Sigstore is a widely adopted project with a distinct trust model suited to software supply chains. vOmega addresses a decision-artifact use case; Sigstore addresses software-artifact signing at scale. The two occupy different architectural points.
+
+The specific comparison in §D10.7.3 is on **transparency / auditability service anchoring** and **signing-key model**, not on overall system merit.
+
+---
+
+### D10.8 Summary Table
+
+The following table summarizes the architectural scope of each technology against vOmega's stated scope. It is a scope table, not a feature-quality table. Cells answer the question: *does this technology define this architectural property?*
+
+| Property | JWT/JWS | COSE | CMS | Plain CBOR | SCITT | Sigstore | **vOmega** |
+|---|---|---|---|---|---|---|---|
+| Signed artifact | Yes | Yes | Yes | No (encoding only) | Yes | Yes | **Yes** |
+| Deterministic byte encoding | No (JSON + base64url) | Yes (CBOR + Sig_structure) | Context-dependent (DER for signed attributes when present; BER permitted as base) | Optional (RFC 8949 §4.2) | Underlying payload may be structured; deterministic encoding is not SCITT's own construction | Not the focus | **Yes (DCP 2.1 + JCS)** |
+| Signing input excludes the complete transport envelope | Depends on serialization; protected header participates in the signing input | No; `Sig_structure` incorporates signing metadata and payload | Depends on `SignedData` / `SignedAttributes` structure | N/A | Depends on the enveloping COSE structure | Depends on the signing format | **Yes** |
+| Multi-signature over same payload | Yes (JWS JSON serialization) | Yes (`COSE_Sign`) | Yes (`SignedData`) | N/A | Not the focus | Not the focus | **Yes (`signatures[]`)** |
+| Transparency / auditability service | No | No | No | No | **Yes (Transparency Service + VDS + Receipts)** | **Yes (Rekor)** | **No** |
+| Governance model (lifecycle / authorization separation) | No | No | No | No | No | No | **Yes (§D4)** |
+| Authority-based trust-status history | No | No | No | No | No (log-based) | No (log-based) | **Yes (§D5)** |
+| End-to-end decision path | No | No | No | No | No | No | **Yes (§D6)** |
+| External-execution boundary | Not defined | Not defined | Not defined | N/A | Not defined | Not defined | **Defined (§D6.2.9)** |
+
+The following two scope boundaries are worth stating explicitly:
+
+- vOmega does not define a transparency / auditability service. This is a scope choice; a deployment could compose vOmega with SCITT or Sigstore for that function.
+- vOmega does not define a certificate authority or trust-bootstrap mechanism. Authorities are provided as inputs; their establishment is an external step (§E6.5, F-04/F-05).
+
+---
+
+### D10.9 What D10 Does Not Claim
+
+- D10 does not claim that vOmega is more secure than any adjacent technology.
+- D10 does not claim that vOmega replaces any adjacent technology.
+- D10 does not claim that any adjacent technology is inadequate for its purpose.
+- D10 does not claim that the summary table in §D10.8 is exhaustive of the architectural properties of the adjacent technologies. It lists the properties relevant to the vOmega scope.
+- D10 does not claim that the scope rows in §D10.8 establish quality differences. A "Yes" in a cell means "this technology defines this property," not "this technology is better because of it."
+- D10 does not claim that any composition between vOmega and an adjacent technology is implemented. Compositions such as vOmega + SCITT or vOmega + Sigstore are mentioned only as design observations, not as implemented features.
+- D10 does not claim that the "No" entries in the vOmega column are deficiencies. They are scope boundaries; a deployment with the corresponding requirement would need to compose vOmega with a technology that provides it.
+- D10 does not claim that adjacent technologies lack properties not listed in the table. Only the properties relevant to vOmega's scope are listed.
+- D10 does not claim that the RFC identifiers used in this section represent the only relevant specifications of the technologies named. They are the specification references used by this document.
+- D10 does not claim that vOmega defines key lifetime or rotation. Authority-associated signing key material is used, but the current vOmega scope does not define key lifetime, rotation, or revocation policy at the signing-key layer.
+
+---
+
+**End of D10.**
+
+# End of Part II (D1–D10)
+
+**D11–D12 and Part III (Appendices A–H) are not part of this recovery.**
 
 ---
 
