@@ -3,8 +3,8 @@
 **Status:** Recovered / Staged / Pending Commander Review
 **Recovered from:** conversation transcript (not from prior disk state)
 **Evidence-reference commit:** `7683adb` (branch `vOmega`)
-**Document scope (this recovery):** Part I (E1–E8) + Part II (D1–D8)
-**Not included in this recovery:** D9–D12, Part III (Appendices A–H)
+**Document scope (this recovery):** Part I (E1–E8) + Part II (D1–D9)
+**Not included in this recovery:** D10–D12, Part III (Appendices A–H)
 **Frozen upstream specifications:**
 - `spec/WIRE-FORMAT-0.2.md` — SHA-256 `b2fee085562dec275572d0ed64faa30bc0375ee9a74fe319b0af984895dcf07f`
 - `spec/WIRE-FORMAT-0.2-AMENDMENT-1.md` — SHA-256 `7cb607be51b7a5d1afbb78611d66b0db3ef3c8cdc30de15ee41b3a701e4762ab`
@@ -34,6 +34,7 @@
   - D6. End-to-End Assurance (3D / 3D-R1)
   - D7. Cryptographic Identity: Invariants Preserved
   - D8. Security Analysis
+  - D9. Defect History — All 44 DEFECTs
 
 ---
 
@@ -3758,9 +3759,432 @@ For the tested mutations, no cross-runtime divergence in acceptance or rejection
 
 **End of D8.**
 
-# End of Part II (D1–D8)
+## D9. Defect History — All 44 DEFECTs
 
-**D9–D12 and Part III (Appendices A–H) are not part of this recovery.**
+**Part II, Section D9.**
+**Status:** Draft 03 — applying Commander's three precision corrections to Draft 01, plus the RISK-count correction identified during evidence verification.
+**Scope:** the complete defect record from Phases 1 through 3D-R1: 46 top-level DEFECT headers (44 unique numbers), 3 library-evaluation entries, 3 GAP entries, and 4 RISK headers (3 unique numbers).
+**Constraint:** D9 records defect history. It does not claim that the record is exhaustive of all defects that occurred during development; it records the defects that were logged.
+
+---
+
+### D9.1 Scope and Lineage
+
+D9 documents the defect record that has accumulated across the vOmega work. It has a narrower purpose than a conventional "lessons learned" section. It documents:
+
+1. **The numbering irregularities** — so a reader can reconcile the 46 DEFECT headers with the 44 unique DEFECT numbers, and the 4 RISK headers with the 3 unique RISK numbers.
+2. **A categorical classification** — code, architecture, dependency, test, process, spec.
+3. **The five architecture-critical defects** — the ones that changed the design, not just the code.
+4. **The three library-evaluation entries** — CBOR-LIB-EVAL-001/002/003.
+5. **The open GAPs and RISK entries** — separated from DEFECTs to avoid conflation.
+6. **The full header index** — as an index, with pointers to `DEFECTS-LOG.md` for detail.
+
+**What D9 is not.** D9 is not a complete reproduction of `DEFECTS-LOG.md`. It is an index and a classification. The full text of each defect — root cause, fix, lesson, commit references — is in `docs/vomega/DEFECTS-LOG.md` and is not duplicated here.
+
+**Record inventory.** D9 references the following records in `DEFECTS-LOG.md`:
+
+- **46** top-level `## DEFECT-` headers, corresponding to **44 unique DEFECT numbers**.
+- **3** `CBOR-LIB-EVAL-` entries.
+- **3** `GAP-` entries.
+- **4** `RISK-` headers, corresponding to **3 unique RISK numbers** (2 archived, 1 active; RISK-3.1 appears twice — original + reclassification).
+
+**Source of truth.** `docs/vomega/DEFECTS-LOG.md`.
+
+**Evidence-reference commit.** `7683adb` (reproducibility baseline).
+
+**Verification:**
+
+```bash
+cd ~/Desktop/EnterpriseGuard && \
+git show 7683adb:docs/vomega/DEFECTS-LOG.md | grep -cE "^## DEFECT-" && \
+git show 7683adb:docs/vomega/DEFECTS-LOG.md | grep -E "^## (DEFECT|CBOR-LIB|GAP|RISK)" | head -60
+```
+
+---
+
+### D9.2 The Defect Record — Numbering Irregularities
+
+The defect record in `DEFECTS-LOG.md` contains **46 top-level headers** matching `^## DEFECT-`. These correspond to **44 unique DEFECT numbers**. The difference is explained by three irregularities.
+
+#### D9.2.1 Unassigned numbers
+
+Two numbers in the sequence were never assigned:
+
+| Number | Status |
+|---|---|
+| `DEFECT-005` | Never assigned. No header, no reference. |
+| `DEFECT-030` | Never assigned. No header, no reference. |
+
+This is not a defect; it is a documented gap in the numbering sequence. The numbers were reserved and then not used.
+
+#### D9.2.2 A duplicated header
+
+`DEFECT-017` appears **twice** in the log:
+
+- The first entry (line 494) is the original defect: *"Rust adie-hybrid-verify did not check key_id before signature."*
+- The second entry (line 554) is an **architectural classification** entry, recorded per Commander order on 2026-10-07. It re-examines the original defect in light of the RISK-3.1 reclassification.
+
+The two entries share a number but serve different documentary purposes. Neither is a duplicate defect; the number is reused because the second entry is explicitly a re-classification of the first, not a new defect.
+
+#### D9.2.3 A suffix variant
+
+`DEFECT-029-WASM` is a **suffix variant** of `DEFECT-029`. It is not a separate number. It records a WASM-specific manifestation of the same underlying invariant (lossless integer boundary) that DEFECT-029 addressed for the JSON boundary.
+
+#### D9.2.4 The counts, stated precisely
+
+**DEFECT counts:**
+
+| Metric | Value |
+|---|---|
+| Top-level `## DEFECT-` headers | 46 |
+| Unique DEFECT numbers (base `NNN`) | 44 |
+| Suffix variants (`NNN-XXX`) | 1 (`DEFECT-029-WASM`) |
+| Duplicate headers | 1 (`DEFECT-017` architectural classification) |
+| Unassigned numbers | 2 (`DEFECT-005`, `DEFECT-030`) |
+
+**Formula:** 44 base numbers + 1 duplicate + 1 suffix = **46 headers**.
+
+There are **44 unique base DEFECT numbers** and **45 unique DEFECT identifiers** when the `DEFECT-029-WASM` suffix variant is counted as a distinct identifier.
+
+**RISK counts:**
+
+| Metric | Value |
+|---|---|
+| Top-level `## RISK-` headers | 4 |
+| Unique RISK numbers | 3 (`RISK-3.1`, `RISK-3.2`, `RISK-3.3`) |
+| Duplicate headers | 1 (`RISK-3.1 RECLASSIFICATION`, Commander order 2026-10-07) |
+| Active | 1 (`RISK-3.3`) |
+| Archived | 2 (`RISK-3.1`, `RISK-3.2`) |
+
+**Formula:** 3 unique RISK numbers + 1 duplicate header = **4 headers**.
+
+---
+
+### D9.3 Classification of Defects
+
+Every logged DEFECT is classified under **one or more** of six categories, based on its dominant nature and recorded facets. The classification is preserved as recorded.
+
+#### D9.3.1 The six categories
+
+| Category | Meaning |
+|---|---|
+| **code** | A behavior bug in a specific code path. |
+| **architecture** | A design correction that changes structural assumptions, not just code. |
+| **dependency** | A library, tool, or external dependency behaves differently than assumed. |
+| **test** | Test infrastructure, harness, or fixture defect. |
+| **process** | Documentation, tooling, or workflow defect. |
+| **spec** | Specification text is inaccurate or incomplete. |
+
+A defect may carry more than one category label. For example, DEFECT-021 is classified as both *dependency* (the library's behavior differed from the assumption) and *architecture* (the correction introduced a new gate). The multi-label facet is intentional: it reflects the fact that a defect can occupy more than one plane of the system.
+
+#### D9.3.2 Distribution (approximate)
+
+| Category | Approximate count | Examples |
+|---|---|---|
+| code | ~15 | DEFECT-002, 004, 006, 011, 012, 018, 023, 026, 027, 028, 034, 035, 038, 039 |
+| architecture | ~5 | DEFECT-021, 026, 027, 028, 036 |
+| dependency | ~7 | DEFECT-010, 015, 016, 021, 025, 031, 032 |
+| test | ~8 | DEFECT-001, 003, 014, 019, 022, 037, 041, 042 |
+| process | ~6 | DEFECT-007, 008, 020, 024, 033, 040 |
+| spec | ~2 | DEFECT-009, 013 |
+
+The approximate counts in this table are **not disjoint**: a defect with two facets appears in two rows. The sum of the counts is greater than 44. The table is provided for orientation only; it is not an accounting total.
+
+#### D9.3.3 The classification is not the log's schema
+
+`DEFECTS-LOG.md` uses a **richer schema** for each entry, with fields including:
+
+- `date`
+- `commit_found`
+- `commit_fixed`
+- `suite`
+- `test_id`
+- `test_name`
+- `category/classification facets` (the six categories above)
+- `root_cause`
+- `fix`
+- `lesson`
+
+D9.3's classification is a summarization of the `category/classification facets` field; it is not a substitute for the full record.
+
+---
+
+### D9.4 Architecture-Critical Defects
+
+Five defects are marked as **architecture-critical**: they changed structural assumptions in the design, not just behavior in a specific code path. They are listed here with the change they triggered.
+
+#### D9.4.1 DEFECT-021 — cbor2 silently interprets known semantic tags
+
+**Category:** dependency, architecture.
+**Discovery.** During the 3A.3 Python adapter work, a probe revealed that `cbor2` 6.1.5 by default interprets well-known CBOR tags (e.g., tag 0 → `datetime`, tag 1 → `datetime`) as native Python types. This means the codec conceals tag information rather than surfacing it.
+
+**Architectural change.** The `rawcheck` gate was introduced as a **byte-level authority** that runs *before* the codec. `rawcheck` inspects the raw bytes and rejects major type 6 (tags) regardless of the codec's behavior. The codec's `tag_hook=raise` is retained only as defense-in-depth.
+
+**Why architecture, not code.** The correction is not "patch the decoder." It is "introduce a byte-level gate that is authoritative for wire rules, and stop relying on the codec for those rules." The same gate protects all three implementations.
+
+**Cross-reference.** §D1.6, §D8.5.
+
+#### D9.4.2 DEFECT-026 — JS profile coercion of non-integral Number values
+
+**Category:** dependency, architecture.
+**Discovery.** During the 3A.4A JavaScript adapter work, a probe revealed that `cbor@9` accepted non-integral `Number` values (`1.5`) and passed them to the profile layer, where the initial profile did not reject them.
+
+**Architectural change.** The JavaScript `profile.mjs` layer was extended to explicitly reject non-integral `Number` values before type classification. The check is at the profile layer, not the decoder, because the decoder's type model is not authoritative.
+
+**Why architecture, not code.** The correction establishes that the profile layer — not the codec — is responsible for enforcing the DCP 2.1 type discipline. The codec is treated as a transport, not as a validator.
+
+**Cross-reference.** §D8.5.2 (rejection-permissiveness sub-class).
+
+#### D9.4.3 DEFECT-027 — rawcheck must reject duplicate keys at wire level
+
+**Category:** architecture.
+**Discovery.** Duplicate keys were being detected by the codec (when the codec was configured to reject them) rather than by the wire-level gate. This made the rejection behavior dependent on the codec's configuration and version.
+
+**Architectural change.** `rawcheck` was extended to walk map structures at the byte level and reject duplicates before decoding. The codec's duplicate-rejection mode is retained as defense-in-depth, but the wire gate is now authoritative.
+
+**Why architecture, not code.** It relocates the authority for a wire rule from a library configuration to the ADIE-owned gate. Library upgrades no longer silently change this behavior.
+
+**Cross-reference.** §D8.4.4.
+
+#### D9.4.4 DEFECT-028 — cbor@9 mixed Map/object output
+
+**Category:** dependency, architecture.
+**Discovery.** During the JavaScript work, the `cbor@9` decoder was found to return CBOR maps as JavaScript `Map` objects in some cases and as plain objects in others, depending on options and input shape.
+
+**Architectural change.** The JavaScript decoder normalizes map output to a single representation. The profile layer accepts only that representation; any other map-like shape is rejected.
+
+**Why architecture, not code.** The correction establishes a **canonical in-memory representation** for CBOR maps on the JavaScript side — parallel to the Python `AdieValue` class hierarchy and the Rust `AdieValue` enum. Without this, semantic decode parity across runtimes is not well-defined.
+
+**Cross-reference.** §D3.6, §D8.5.2 (runtime type normalization sub-class).
+
+#### D9.4.5 DEFECT-036 — Cross-runtime rejection-code divergence on nested duplicate keys
+
+**Category:** architecture.
+**Discovery.** During the 3A.6 fuzz campaign, a mutant containing a nested duplicate-key structure produced different rejection codes across Rust, Python, and JavaScript. The divergence was at the **classification priority** level: which of two applicable rejection codes should be returned.
+
+**Architectural change.** A **classification priority** was defined for rejection codes and enforced consistently across all three implementations. The priority is documented in `WIRE-FORMAT-0.2.md` §9 and is exercised by the differential suites.
+
+**Why architecture, not code.** The correction establishes a *priority order* where none existed. Without it, the three implementations could each choose "reasonable" but different codes for the same malformed input, breaking rejection-code parity.
+
+**Cross-reference.** §D3.7.4 (classification priority).
+
+---
+
+### D9.5 Library-Evaluation Entries
+
+Three entries in `DEFECTS-LOG.md` are **not DEFECTs** in the strict sense. They are **library-evaluation records** — documented comparisons of CBOR libraries with a recorded selection rationale.
+
+#### D9.5.1 CBOR-LIB-EVAL-001 — ciborium 0.2.2 (Rust)
+
+Selected for the Rust reference implementation. Rationale: mature codec, `Value` model available, Apache-2.0 license, MSRV 1.58. The log records the probe results on the library's default behavior (see §D8.4.3).
+
+#### D9.5.2 CBOR-LIB-EVAL-002 — cbor2 6.1.5 (Python)
+
+Selected for the Python adapter. Rationale: pinned version, provides both encode and decode, exposes strict-mode flags (`allow_indefinite`, `allow_duplicate_keys`, `max_depth`, `tag_hook`). The log records the same probe pattern.
+
+#### D9.5.3 CBOR-LIB-EVAL-003 — cbor 9.0.2 (JavaScript)
+
+Selected for the JavaScript adapter. Rationale: last major line with the classic helper API (`encode`, `encodeCanonical`, `decodeFirstSync`). The 10.x line rewrote the API to low-level push/pull primitives. The CommonJS-vs-ESM interop issue is recorded as DEFECT-025.
+
+**Note on the number of entries.** There are exactly **three** CBOR-LIB-EVAL entries. They are separate from DEFECT numbering and are not counted in the 44/46 figures.
+
+---
+
+### D9.6 Open GAPs
+
+Three GAP entries are recorded. GAPs are documented limitations that are **not** defects — the behavior is understood and accepted, or the gap is reserved for future work.
+
+#### D9.6.1 GAP-8 — Rust ML-DSA sigGen not covered by ACVP KAT
+
+**Status:** Open.
+**Nature.** The ACVP KAT vectors used by the project cover ML-DSA-65 key generation and verification, but not the deterministic signature-generation path in Rust. The Rust signing path is exercised by project tests, but not against external NIST vectors.
+
+**Documented as:** GAP, not a defect. The signing path works; its coverage by external vectors is incomplete.
+
+#### D9.6.2 GAP-9 — ML-DSA-65 key_id uses raw pk bytes, not SPKI DER
+
+**Status:** Open.
+**Nature.** The ML-DSA-65 `key_id` in a hybrid certificate is derived from the raw public-key bytes, not from an SPKI-DER encoding. This is a documented design choice, not a defect.
+
+**Documented as:** GAP, not a defect. The choice is consistent across phases; it is recorded so that a future profile decision (e.g., a switch to SPKI-DER) is visible as a decision rather than as a silent change.
+
+#### D9.6.3 GAP-3.4B-01 — wasm-bindgen nodejs CWD-relative wasm path
+
+**Status:** Documented by design.
+**Nature.** The `wasm-bindgen`-generated Node.js bindings load the `.wasm` file relative to the current working directory. This is the default behavior of `wasm-bindgen` for the `nodejs` target and is not modified.
+
+**Documented as:** GAP by design. Callers must invoke the WASM module from a working directory where the `.wasm` file is reachable.
+
+---
+
+### D9.7 RISK Entries
+
+RISK entries record tracked risks. There are **4 RISK headers** in `DEFECTS-LOG.md`, corresponding to **3 unique RISK numbers**. One header is a reclassification entry (RISK-3.1).
+
+#### D9.7.1 RISK-3.1 — sad-rsa fork tracks unstable rsa 0.10.x API line
+
+**Status:** Archived.
+**History.** RISK-3.1 was originally logged at line 363 with the status *"not applicable"*. On 2026-10-07, per Commander order, a **reclassification entry** was added at line 527 with the new status:
+
+> BOUNDED EXPOSURE / NOT USED FOR PRIVATE-KEY OPERATIONS IN CURRENT VERIFIER PATH.
+
+The reclassification was triggered by DEFECT-015 (`sad-rsa` 0.10.2 build failure) which caused the project to fall back to `rsa` 0.9.6. The two headers (original + reclassification) share the RISK-3.1 number. This is the same documentary pattern as DEFECT-017 (§D9.2.2).
+
+#### D9.7.2 RISK-3.2 — sad-rsa dependency surface (~46 crates)
+
+**Status:** Archived.
+**History.** RISK-3.2 was logged at line 386. It was resolved together with RISK-3.1 when the `rsa` 0.9.6 fallback became permanent.
+
+#### D9.7.3 RISK-3.3 — Build environment is space-constrained
+
+**Status:** **ACTIVE.**
+**History.** RISK-3.3 was logged at line 699 in Phase 3A.2. The observation: development disk is 38 GB with 36 GB used at peak, leaving ~450 MB free; one `cargo build --release` required ~240 MB.
+
+The risk is monitored by recording disk state before and after each material block of work. As of the evidence-reference commit, disk usage is at 86% of the home partition.
+
+**Cross-reference.** §E7.1, and any section that reports disk state.
+
+---
+
+### D9.8 The Full Header Index
+
+The following is the complete index of the `## DEFECT-`, `## CBOR-LIB-EVAL-`, and `## GAP-` headers in `DEFECTS-LOG.md`. RISK entries are indexed separately in §D9.7. Each entry is a one-line summary taken from the header itself. Detail (root cause, fix, lesson, commits) is in `DEFECTS-LOG.md`.
+
+#### D9.8.1 DEFECT headers (46 total, including 017 duplicate and 029-WASM suffix)
+
+| Header | Summary |
+|---|---|
+| DEFECT-001 | M19 was a duplicate of M06 |
+| DEFECT-002 | A25: EQ did not enforce type check |
+| DEFECT-003 | Block B test 4 over-specified code |
+| DEFECT-004 | JS verify.mjs: ClaimRoot field mismatch + message format |
+| DEFECT-006 | Rust verifier binding error codes use hyphens |
+| DEFECT-007 | Premature GAP-5 commitment based on partial information |
+| DEFECT-008 | Repeated GAP-N before exhausting paths |
+| DEFECT-009 | Placeholder contamination in spec §12.3 |
+| DEFECT-010 | pqcrypto cannot participate in deterministic ML-DSA testing |
+| DEFECT-011 | mldsa wrapper assumed ctx=b"" |
+| DEFECT-012 | RustCrypto decode was stricter than FIPS 204.Verify semantics |
+| DEFECT-013 | Spec claimed 13-byte domain tag; actual is 11 chars + NUL = 12 bytes |
+| DEFECT-014 | Test count conflation across phases |
+| DEFECT-015 | sad-rsa 0.10.2 fails to build; rsa 0.9.6 selected as fallback |
+| DEFECT-016 | rsa 0.9.6 requires explicit sha2 feature |
+| DEFECT-017 | Rust adie-hybrid-verify did not check key_id before signature |
+| DEFECT-017 | ARCHITECTURAL CLASSIFICATION (Commander order, 2026-10-07) |
+| DEFECT-018 | ciborium::Value is `#[non_exhaustive]` |
+| DEFECT-019 | Test byte count error in rawcheck::valid_nested |
+| DEFECT-020 | account.py summary anchor mismatch |
+| DEFECT-021 | cbor2 silently interprets known semantic tags |
+| DEFECT-022 | Test harness ROOT path off by one |
+| DEFECT-023 | cbor2 raises CBORDecodeError for duplicate keys |
+| DEFECT-024 | Hand-written JSON vector file had invalid syntax |
+| DEFECT-025 | CommonJS interop: named exports not visible in ESM |
+| DEFECT-026 | JS profile coercion of non-integral Number values |
+| DEFECT-027 | rawcheck must reject duplicate keys at wire level |
+| DEFECT-028 | cbor@9 mixed Map/object output for maps |
+| DEFECT-029 | JSON Number precision boundary at u64 range |
+| DEFECT-029-WASM | Lossless Integer Boundary Invariant (WASM ABI) |
+| DEFECT-031 | getrandom wasm32 backend requires explicit opt-in |
+| DEFECT-032 | wasm-bindgen nodejs output under ESM parent |
+| DEFECT-033 | Build artifacts and toolchain binaries tracked |
+| DEFECT-034 | jcs::canonical_bytes returns Result, not Vec |
+| DEFECT-035 | CborError::Malformed is a struct variant, not tuple |
+| DEFECT-036 | Cross-runtime rejection-code divergence on nested duplicate keys |
+| DEFECT-037 | Patch application silently failed to insert helper |
+| DEFECT-038 | Python rawcheck missing inner duplicate-key detection |
+| DEFECT-039 | JS walkTag skipped shortest-form check on tag number |
+| DEFECT-040 | Commit message claimed 0/10k mismatch while 1/10k existed |
+| DEFECT-041 | pytest --collect-only breaks on test_bplus_e2e.py |
+| DEFECT-042 | Test harness time-semantics error in H13 |
+| DEFECT-043 | Missing governed initial ACTIVE state for trust resolver |
+| DEFECT-044 | E2E did not perform cryptographic verification (FINDING-3D-01) |
+| DEFECT-045 | E2E emitted a plain dict instead of real ExecutionManifest (FINDING-3D-02) |
+| DEFECT-046 | E2E bypassed TrustStatusStore (FINDING-3D-03) |
+
+#### D9.8.2 CBOR-LIB-EVAL headers (3 total)
+
+| Header | Summary |
+|---|---|
+| CBOR-LIB-EVAL-001 | ciborium 0.2.2 selected for 3A.2 |
+| CBOR-LIB-EVAL-002 | cbor2 6.1.5 selected for Python adapter (3A.3) |
+| CBOR-LIB-EVAL-003 | cbor 9.0.2 selected for JavaScript adapter (3A.4A) |
+
+#### D9.8.3 GAP headers (3 total)
+
+| Header | Summary |
+|---|---|
+| GAP-8 | Rust ML-DSA sigGen not covered by ACVP KAT |
+| GAP-9 | ML-DSA-65 key_id uses raw pk bytes, not SPKI DER |
+| GAP-3.4B-01 | wasm-bindgen nodejs CWD-relative wasm path |
+
+---
+
+### D9.9 Evidence Summary
+
+#### D9.9.1 Source
+
+The single source for defect detail is `docs/vomega/DEFECTS-LOG.md`. D9 does not reproduce that file; it indexes and classifies.
+
+#### D9.9.2 Reproduction
+
+```bash
+cd ~/Desktop/EnterpriseGuard && \
+echo "═══ Total DEFECT headers ═══" && \
+git show 7683adb:docs/vomega/DEFECTS-LOG.md | grep -cE "^## DEFECT-" && \
+echo "═══ Unique DEFECT numbers (base) ═══" && \
+git show 7683adb:docs/vomega/DEFECTS-LOG.md | grep -oE "^## DEFECT-[0-9]{3}" | sort -u | wc -l && \
+echo "═══ Suffix variants ═══" && \
+git show 7683adb:docs/vomega/DEFECTS-LOG.md | grep -cE "^## DEFECT-[0-9]{3}-[A-Z]" && \
+echo "═══ CBOR-LIB-EVAL headers ═══" && \
+git show 7683adb:docs/vomega/DEFECTS-LOG.md | grep -cE "^## CBOR-LIB-EVAL-" && \
+echo "═══ GAP headers ═══" && \
+git show 7683adb:docs/vomega/DEFECTS-LOG.md | grep -cE "^## GAP-" && \
+echo "═══ RISK headers ═══" && \
+git show 7683adb:docs/vomega/DEFECTS-LOG.md | grep -cE "^## RISK-"
+```
+
+**Expected:**
+
+```
+═══ Total DEFECT headers ═══
+46
+═══ Unique DEFECT numbers (base) ═══
+44
+═══ Suffix variants ═══
+1
+═══ CBOR-LIB-EVAL headers ═══
+3
+═══ GAP headers ═══
+3
+═══ RISK headers ═══
+4
+```
+
+#### D9.9.3 Commit reference
+
+The full defect record as of the evidence-reference commit `7683adb` is what D9 indexes. Later commits may add defect entries; D9 reflects the state at that commit.
+
+---
+
+### D9.10 What D9 Does Not Claim
+
+- D9 does not claim that the defect record is exhaustive of every defect that occurred during development. It records the defects that were logged.
+- D9 does not claim that all defects were caught by tests. Some were caught by code review, by probing, or by adversarial review.
+- D9 does not claim that the classification in §D9.3 is unique. A defect may fit multiple categories; the classification reflects the dominant nature and recorded facets.
+- D9 does not claim that all open GAPs will be closed. GAP-8, GAP-9, and GAP-3.4B-01 are documented as understood limitations.
+- D9 does not reproduce the full text of any defect. The full record is in `DEFECTS-LOG.md`; D9 is an index.
+- D9 does not claim that the five architecture-critical defects in §D9.4 are the only defects with architectural consequences. They are the five explicitly classified as architecture-critical in the log.
+- D9 does not claim that the RISK-3.3 status will not change. It is ACTIVE at the evidence-reference commit.
+- D9 does not claim that RISK entries and DEFECT entries are interchangeable. They record different classes of observation: a DEFECT is a defect that was found and fixed; a RISK is a tracked concern that may or may not materialize.
+- D9 does not claim that RISK-3.1 is a single header. It appears twice (original + reclassification), following the same documentary pattern as DEFECT-017. The duplication is documented in §D9.7.1.
+
+---
+
+**End of D9.**
+
+# End of Part II (D1–D9)
+
+**D10–D12 and Part III (Appendices A–H) are not part of this recovery.**
 
 ---
 
