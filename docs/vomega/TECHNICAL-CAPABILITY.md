@@ -3,8 +3,8 @@
 **Status:** Recovered / Staged / Pending Commander Review
 **Recovered from:** conversation transcript (not from prior disk state)
 **Evidence-reference commit:** `7683adb` (branch `vOmega`)
-**Document scope (this recovery):** Part I (E1–E8) + Part II (D1–D6)
-**Not included in this recovery:** D7–D12, Part III (Appendices A–H)
+**Document scope (this recovery):** Part I (E1–E8) + Part II (D1–D7)
+**Not included in this recovery:** D8–D12, Part III (Appendices A–H)
 **Frozen upstream specifications:**
 - `spec/WIRE-FORMAT-0.2.md` — SHA-256 `b2fee085562dec275572d0ed64faa30bc0375ee9a74fe319b0af984895dcf07f`
 - `spec/WIRE-FORMAT-0.2-AMENDMENT-1.md` — SHA-256 `7cb607be51b7a5d1afbb78611d66b0db3ef3c8cdc30de15ee41b3a701e4762ab`
@@ -32,6 +32,7 @@
   - D4. Governance Control Plane (3B)
   - D5. Trust Status & Revocation (3C)
   - D6. End-to-End Assurance (3D / 3D-R1)
+  - D7. Cryptographic Identity: Invariants Preserved
 
 ---
 
@@ -3000,9 +3001,402 @@ Both figures are historically accurate. The 3D close figure (196) is not retroac
 
 ---
 
-# End of Part II (D1–D6)
 
-**D7–D12 and Part III (Appendices A–H) are not part of this recovery.**
+## D7. Cryptographic Identity — Invariants Preserved
+
+**Part II, Section D7.**
+**Scope:** The cryptographic-identity invariants preserved unchanged across Phase 1, Phase 2, and vOmega.
+**Frozen upstream:** `spec/HYBRID-CRYPTO-0.1.md` §5 (TBS definition, unchanged by vOmega); §D2.5 of this document; §E2.2.3.
+
+---
+
+### D7.1 Scope and Lineage
+
+Phase 1 defined the ADIE certificate and the ClaimRoot identity. Phase 2 introduced the hybrid signature scheme (RS256 + ML-DSA-65) and the TBS construction. Phase 3 (vOmega) added a deterministic wire layer and a CBOR envelope above the certificate, without changing the bytes over which signatures are computed.
+
+This section documents the **invariants preserved unchanged** across all three phases. It is a section about **what did not change**.
+
+**What D7 does not do.**
+
+- D7 does not introduce a new cryptographic primitive.
+- D7 does not claim that the B+ envelope redesigned the signature scheme.
+- D7 does not claim that the TBS construction is novel.
+- D7 records the preservation of the existing cryptographic identity model across Phase 1 → Phase 2 → B+ integration.
+
+**Phase-close references.**
+
+| Phase | Reference | Status |
+|---|---|---|
+| Phase 1 | `PHASE-1-CLOSURE.md` | Closed |
+| Phase 2 | `PHASE-2-CLOSURE.md` | Closed |
+| vOmega (3A–3D-R1) | `7683adb` (branch `vOmega`) | Current evidence state |
+
+**Verification:**
+
+```bash
+cd ~/Desktop/EnterpriseGuard && \
+git log --oneline -1 7683adb && \
+head -30 docs/vomega/PHASE-1-CLOSURE.md && \
+head -30 docs/vomega/PHASE-2-CLOSURE.md
+```
+
+---
+
+### D7.2 TBS Invariants
+
+The To-Be-Signed bytes are defined by `spec/HYBRID-CRYPTO-0.1.md` §5:
+
+```
+TBS = "ADIE-SIG-V2\0" ‖ JCS(certificate_without_signatures)
+```
+
+The definition did not change across phases. The invariants are:
+
+#### D7.2.1 Invariant 1 — Domain tag prefix
+
+The TBS begins with the 12-byte domain tag. It is not nulled, not replaced, not reordered. It is a strict prefix of the TBS byte sequence.
+
+#### D7.2.2 Invariant 2 — JCS canonicalization of the certificate body
+
+The certificate body that follows the tag is canonicalized per RFC 8785 (JSON Canonicalization Scheme). The canonicalization is:
+
+- **Deterministic** — the same certificate body yields the same JCS bytes.
+- **Sorted-key** — object keys are sorted by UTF-16 code unit as specified in RFC 8785.
+- **Minimal-escape** — escaping is minimal, as specified in RFC 8785.
+- **No trailing whitespace** — there is no BOM, no leading or trailing whitespace.
+
+#### D7.2.3 Invariant 3 — The `signatures` field is removed, not nulled
+
+The certificate used to compute the TBS has its `signatures` field **removed** — not set to `null`, not set to `[]`, not set to `{}`. This distinction is material: a certificate with `"signatures": []` produces a different TBS than the same certificate with the field absent.
+
+This is tested by `tests/vomega/hybrid/test_tbs.py` (T05, T06).
+
+#### D7.2.4 Invariant 4 — No CBOR envelope participation
+
+The TBS is computed from the semantic certificate. It does not include the CBOR envelope. The envelope carries the semantic certificate but does not define its cryptographic identity.
+
+See §D2.5 and §D7.5.
+
+#### D7.2.5 Evidence
+
+| Language | Suite | Executions | Role |
+|---|---|---|---|
+| Python | `tests/vomega/hybrid/test_tbs.py` | 12 | TBS construction: tag, JCS, field removal |
+| Python | `tests/vomega/hybrid/test_e2e.py` | 11 | Full issue/sign/verify cycle |
+| Python | `tests/vomega/b-plus/test_bplus_e2e.py` | 10 | **H09 — TBS byte-identity after envelope round-trip** |
+
+**Reproduction — TBS invariants:**
+
+```bash
+cd ~/Desktop/EnterpriseGuard && \
+echo "═══ TBS construction (12) ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/hybrid/test_tbs.py && \
+echo "═══ E2E hybrid (11) ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/hybrid/test_e2e.py && \
+echo "═══ H09 — TBS byte-identity after envelope round-trip ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/b-plus/test_bplus_e2e.py | grep "H09"
+```
+
+**Expected:**
+
+- TBS construction: `TOTAL: 12 | PASS: 12 | FAIL: 0`
+- E2E hybrid: `TOTAL: 11 | PASS: 11 | FAIL: 0`
+- H09: `[PASS] H09 TBS byte-identical after envelope round-trip`
+
+**Commit.** `7683adb` (branch `vOmega`).
+
+**Reproducible Artifact / Hash.** `protocol/hybrid/tbs.py` — SHA-256 `fe6e14d503c3f2e8d224ec058eb5744603778d5b7803fd8d6d6d612296c836e3`.
+
+---
+
+### D7.3 Domain Tag Invariants
+
+| Property | Value |
+|---|---|
+| String form | `"ADIE-SIG-V2\0"` (11 visible characters + NUL) |
+| Byte length | **12 bytes** |
+| Hex form | `414449452d5349472d563200` |
+| Position in TBS | Prefix (bytes 0..11) |
+| Definition source | `spec/HYBRID-CRYPTO-0.1.md` §5 |
+
+#### D7.3.1 Why the tag exists
+
+The tag is a **domain-separation marker**. Its purpose is to ensure that a signature produced over an ADIE certificate cannot be valid for any other protocol whose TBS construction happens to coincide with a JCS-canonicalized JSON document. The tag declares the protocol version and isolates the signing domain.
+
+`V2` in the tag indicates the second-generation TBS construction.
+
+#### D7.3.2 Why it is 12 bytes
+
+The string `"ADIE-SIG-V2\0"` is 11 visible ASCII characters plus one NUL terminator = **12 bytes**. The NUL terminator is intentional: it provides an unambiguous boundary between the tag and the JCS bytes that follow, so that a tag like `"ADIE-SIG-V2"` (no NUL, 11 bytes) cannot be confused with a certificate that starts with the byte `\x00`.
+
+This was the subject of **DEFECT-013**, whose closure is recorded in `DEFECTS-LOG.md`. DEFECT-013 is a **historical defect closure**; it is not an independent cryptographic evidence source.
+
+#### D7.3.3 Cross-phase stability
+
+The tag has been the same byte sequence in:
+
+- Phase 1 — as the identity marker for the certificate format.
+- Phase 2 — as the TBS prefix for the hybrid signature scheme.
+- vOmega — unchanged; the wire layer does not touch it.
+
+A future COSE-native profile (Amendment-1 §A6) would use a **different** tag. The current tag is not repurposed. vOmega does not implement that future profile.
+
+#### D7.3.4 Evidence
+
+| Suite | Test IDs | What the test demonstrates |
+|---|---|---|
+| `test_tbs.py` | T01, T02 | Tag length = 12; exact byte sequence |
+| `test_tbs.py` | T03, T04 | TBS starts with tag; body is JCS |
+| `test_bplus_e2e.py` | **H10** | Domain tag **preserved** through B+ round-trip (12 bytes) |
+
+**On the interpretation of H10.** H10 does not demonstrate signature validity. It demonstrates **preservation of the domain tag** through a full envelope round-trip. Signature validity is a separate claim, evidenced by H03 and the verification suites (§D7.4).
+
+**Reproduction:**
+
+```bash
+cd ~/Desktop/EnterpriseGuard && \
+python3 -c "
+import sys
+sys.path.insert(0, '.')
+from protocol.hybrid.tbs import DOMAIN_TAG
+print('len:', len(DOMAIN_TAG))
+print('hex:', DOMAIN_TAG.hex())
+assert len(DOMAIN_TAG) == 12
+assert DOMAIN_TAG.hex() == '414449452d5349472d563200'
+print('OK — domain tag invariant holds')
+"
+```
+
+**Expected:**
+
+```
+len: 12
+hex: 414449452d5349472d563200
+OK — domain tag invariant holds
+```
+
+---
+
+### D7.4 Phase 1 and Phase 2 Signatures Remain Valid
+
+A central claim of this document is that **signatures produced under Phase 1 and Phase 2 remain valid under vOmega**, without re-issuance, without modification, and without a version bump on the certificate.
+
+#### D7.4.1 What would invalidate a signature
+
+A signature becomes invalid if the bytes over which it was computed change. The bytes are the TBS. The TBS is a function of:
+
+- The domain tag (unchanged — §D7.3).
+- The certificate body (canonicalized by JCS — §D7.2).
+
+The certificate body is what the issuer signed. vOmega does not modify it when the certificate is carried over the wire. The CBOR envelope is a transport representation; it carries the same semantic certificate (§D2.3.2).
+
+#### D7.4.2 What would not invalidate a signature
+
+- Adding a CBOR envelope around the certificate.
+- Changing the CBOR library that produces the envelope.
+- Changing the wire profile version — provided the certificate body remains canonically recoverable.
+- Storing the certificate in a different container format (e.g., a file), as long as the semantic content is preserved.
+
+None of these operations alter the TBS.
+
+#### D7.4.3 The compatibility claim, stated precisely
+
+The claim is not "a Phase 1 signature verifies under a Phase 3 verifier" in an unconditional sense. The claim is:
+
+> Given a Phase 1 or Phase 2 certificate, its original signatures, and the corresponding public keys, a vOmega verifier computes the same TBS as the Phase 1 or Phase 2 signer computed, and verifies the signatures against it.
+
+The "same TBS" phrase is the load-bearing part. It is what **H09** tests: after a full envelope round-trip (certificate → envelope → certificate), the recovered certificate's TBS is byte-identical to the original.
+
+#### D7.4.4 The determinism claim, stated precisely
+
+The signing path is **not** claimed to produce deterministic signatures in a general FIPS 204 sense. The claim is limited to the tested implementation:
+
+> **S11** (in `tests/vomega/hybrid/test_sign.py`) confirms that the **vOmega ML-DSA-65 signing path** used in this implementation operates deterministically for the tested inputs. Deterministic ML-DSA signing is a **permitted mode** under FIPS 204; the test does not imply that all FIPS 204 ML-DSA signatures are deterministic, nor that all implementations of ML-DSA-65 produce identical signatures for identical inputs.
+
+The test bounds the observation to: **this implementation, these inputs**. Extrapolation to other implementations, other inputs, or the standard itself is not made.
+
+#### D7.4.5 Evidence
+
+| Suite | Test ID | What is demonstrated |
+|---|---|---|
+| `test_bplus_e2e.py` | **H09** | TBS byte-identity after envelope round-trip |
+| `test_bplus_e2e.py` | H03 | Hybrid verification VALID (both signatures) |
+| `test_rust_parity.py` | R01 | Rust and Python verifiers both return VALID |
+| `test_verify.py` | V01 | Both signatures valid |
+| `test_sign.py` | **S11** | The vOmega signing path is deterministic for tested inputs |
+| `test_e2e.py` | E01–E11 | End-to-end issue/sign/verify cycle |
+
+**Reproduction:**
+
+```bash
+cd ~/Desktop/EnterpriseGuard && \
+echo "═══ H09 + H03 — B+ round-trip and hybrid verification ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/b-plus/test_bplus_e2e.py | grep "H03\|H09" && \
+echo "═══ S11 — determinism (scoped) ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/hybrid/test_sign.py | grep "S11" && \
+echo "═══ Rust ↔ Python verifier parity (13) ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/hybrid/test_rust_parity.py
+```
+
+**Expected:**
+
+```
+[PASS] H03 hybrid verify VALID (both sigs)
+[PASS] H09 TBS byte-identical after envelope round-trip
+[PASS] S11 ML-DSA-65 deterministic
+...
+TOTAL: 13 | PASS: 13 | FAIL: 0
+```
+
+---
+
+### D7.5 Wire Encoding Does Not Redefine Cryptographic Identity
+
+This is the negative statement of §D7.4. It is the central architectural commitment of Model B+.
+
+#### D7.5.1 The commitment
+
+> **TBS = `ADIE-SIG-V2\0` ‖ JCS(certificate_without_signatures)`.** The CBOR envelope does not participate in signature computation. The cryptographic identity of a certificate is defined by its TBS. B+ / DCP 2.1 are transport representations above that identity.
+
+#### D7.5.2 What this rules out
+
+- The envelope is **not** used as the signing input.
+- The envelope's CBOR encoding is **not** part of the TBS.
+- The envelope's label order, label values, or JCS byte strings do **not** affect the TBS.
+- Changing the envelope's encoding (e.g., a future wire-format version) does **not** invalidate signatures computed over the certificate body.
+
+#### D7.5.3 Why this matters — briefly
+
+If the envelope were part of the signing input, every transport-layer decision (CBOR library, wire version, envelope label registry) would become a cryptographic decision, invalidating prior signatures whenever the transport changed. Model B+ avoids this by pinning cryptographic identity to the semantic certificate, not to the envelope that carries it.
+
+The full architectural argument, including why Model A (COSE-native) was not selected, is in §D2.2.
+
+#### D7.5.4 Cross-runtime TBS parity — bounded claim
+
+The verification suites establish **parity of verification outcomes** across Rust and Python: for the same input, both verifiers return the same result (VALID or a specific rejection code). This is what `test_rust_parity.py` (13 executions) tests.
+
+The verification suites **do not** establish direct byte-for-byte parity of the TBS corpus across implementations, because `test_rust_parity.py` compares **verification outcomes** (VALID/INVALID + code), not the TBS bytes themselves.
+
+**What can be claimed with the current evidence:**
+
+| Claim | Evidence |
+|---|---|
+| Rust and Python verifiers return the same outcome (VALID or specific code) for the same input | `test_rust_parity.py` — 13 executions |
+| TBS bytes are byte-identical after a B+ round-trip (within one implementation) | `test_bplus_e2e.py` — H09 |
+| Direct byte-for-byte parity of TBS across Rust and Python | **Not established by current tests** |
+
+The last row is stated as a limit. A direct cross-runtime TBS-byte corpus would be needed to lift it; the current suite does not include one.
+
+#### D7.5.5 The specific comparison
+
+| Aspect | Model A (not selected) | Model B+ (selected) |
+|---|---|---|
+| Signing input | COSE `Sig_structure` | `ADIE-SIG-V2\0 ‖ JCS(cert)` |
+| Envelope participates in signature? | Yes | No |
+| Changing the transport invalidates signatures? | Yes | No |
+| Phase 1 / Phase 2 signatures remain valid? | No (would require re-issuance) | Yes |
+
+The right-hand column is what vOmega implements. The left-hand column is preserved as a possible future profile (Amendment-1 §A6), with a distinct domain tag.
+
+#### D7.5.6 Evidence
+
+| Evidence type | Source |
+|---|---|
+| Amendment-1 records the Model B+ decision | `spec/WIRE-FORMAT-0.2-AMENDMENT-1.md` — SHA-256 `7cb607be...` |
+| DECISION-0.3 records the Commander decision | `docs/vomega/decisions/DECISION-0.3-COSE-ARCH.md` — SHA-256 `e9c0cd35...` |
+| H09 confirms wire round-trip does not change the TBS bytes | `tests/vomega/b-plus/test_bplus_e2e.py` |
+| H03 confirms hybrid verification is VALID | `tests/vomega/b-plus/test_bplus_e2e.py` |
+| R01–R13 confirm Rust ↔ Python verifier outcome parity | `tests/vomega/hybrid/test_rust_parity.py` |
+
+---
+
+### D7.6 Evidence Summary
+
+#### D7.6.1 Hybrid legacy suites — accounting
+
+The **hybrid legacy suites** are five Python test modules. Their executions are:
+
+| Suite | Executions |
+|---|---|
+| `tests/vomega/hybrid/test_tbs.py` | 12 |
+| `tests/vomega/hybrid/test_sign.py` | 16 |
+| `tests/vomega/hybrid/test_verify.py` | 20 |
+| `tests/vomega/hybrid/test_e2e.py` | 11 |
+| `tests/vomega/hybrid/test_rust_parity.py` | 13 |
+| **Hybrid legacy subtotal** | **72** |
+
+The subtotal **72** covers these five suites only. It does not include the B+ E2E suite.
+
+#### D7.6.2 B+ E2E suite — separate, additional evidence
+
+| Suite | Executions | Role |
+|---|---|---|
+| `tests/vomega/b-plus/test_bplus_e2e.py` | 10 | H09 (TBS byte-identity after envelope round-trip) and H10 (domain tag preserved through B+ round-trip) |
+
+The B+ E2E suite is **not** added to the 72-execution subtotal. Its purpose is narrow: to provide H09 and H10 as direct evidence for §D7.2 and §D7.3. It is not part of the hybrid legacy count.
+
+**Why the separation matters.** The 72-execution subtotal is the hybrid legacy count as defined by the five suites that were part of the Phase 2 hybrid work. Adding the B+ suite would conflate two distinct accounting categories and would risk double-counting if a later section (e.g., §D2) also cites the B+ suite.
+
+#### D7.6.3 Artifact hashes
+
+| Artifact | SHA-256 |
+|---|---|
+| `protocol/hybrid/tbs.py` | `fe6e14d503c3f2e8d224ec058eb5744603778d5b7803fd8d6d6d612296c836e3` |
+| `protocol/hybrid/verify.py` | `2d285fc50c43ae1c08bc7dd577657925cc08faf6deb9bbd1e3e8d5c6b48a7df5` |
+| `protocol/hybrid/sign.py` | (see Appendix B) |
+| `spec/HYBRID-CRYPTO-0.1.md` | (referenced; not modified by vOmega) |
+| `spec/WIRE-FORMAT-0.2-AMENDMENT-1.md` | `7cb607be51b7a5d1afbb78611d66b0db3ef3c8cdc30de15ee41b3a701e4762ab` |
+| `docs/vomega/decisions/DECISION-0.3-COSE-ARCH.md` | `e9c0cd35637a21b5c5bc7268b084694805a79f4c55df06d9d65859f150a36412` |
+
+#### D7.6.4 Reproduction — full D7 set
+
+```bash
+cd ~/Desktop/EnterpriseGuard && \
+echo "═══ Hybrid legacy: tbs (12) ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/hybrid/test_tbs.py && \
+echo "═══ Hybrid legacy: sign (16) ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/hybrid/test_sign.py && \
+echo "═══ Hybrid legacy: verify (20) ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/hybrid/test_verify.py && \
+echo "═══ Hybrid legacy: e2e (11) ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/hybrid/test_e2e.py && \
+echo "═══ Hybrid legacy: rust parity (13) ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/hybrid/test_rust_parity.py && \
+echo "═══ B+ E2E (10) — separate evidence ═══" && \
+PYTHONPATH=src .venv/bin/python tests/vomega/b-plus/test_bplus_e2e.py
+```
+
+**Expected:** 12 + 16 + 20 + 11 + 13 = **72 hybrid legacy executions**, then B+ E2E **10 executions** (separate). All 0 failures.
+
+**Commit.** `7683adb` (branch `vOmega`).
+
+---
+
+### D7.7 What D7 Does Not Claim
+
+- D7 does not claim **formal verification**. No machine-checked proof of the TBS construction, the domain tag, or the phase-compatibility property exists.
+- D7 does not claim **side-channel resistance or constant-time behavior**. No timing or cache analysis was performed on the signing or verification path.
+- D7 does not claim **parity outside the tested corpus**. Cross-runtime verification-outcome parity is established only for the inputs in the test suites. Inputs outside those suites are not characterized.
+- D7 does not claim that **all ML-DSA usage is deterministic**. S11's determinism observation is bounded to the vOmega signing path on the tested inputs (see §D7.4.4).
+- D7 does not claim that the **envelope bytes** are the basis of cryptographic identity in vOmega. They are not. The basis is the TBS (§D7.5).
+- D7 does not claim that the **72 hybrid legacy executions** (or the additional 10 B+ E2E executions) constitute a proof of security. They are evidence that specific properties hold for specific inputs.
+- D7 does not claim that a future wire format cannot change the TBS. Amendment-1 §A6 reserves the COSE-native option; that option would use a **different** domain tag and would require re-issuance of all prior signatures. D7 documents the invariants of the **current** profile.
+- D7 does not claim that preserving the TBS is sufficient for signature validity. Validity also requires the correct public key, the correct signature bytes, and a verifier that computes the same TBS. D7 addresses only the TBS side.
+- D7 does not claim that `spec/HYBRID-CRYPTO-0.1.md` is unmodifiable. It is referenced, not frozen by vOmega. A future revision of that spec could change the TBS, in which case the domain tag would also change.
+- D7 does not claim that the absence-of-envelope-participation is enforced by a cryptographic mechanism. It is enforced by construction: the envelope is produced **after** signing, from the certificate; the verifier recomputes the TBS from the certificate body, not from the envelope.
+- D7 does not claim that the phase-compatibility claim was tested against certificates issued in Phase 1 or Phase 2 in a real deployment. It is tested against certificates constructed under the same TBS definition; the definition itself is what carries the compatibility claim.
+- D7 does not claim that the **12-byte domain tag length** is optimal. It is the length of `"ADIE-SIG-V2\0"`. A future tag could be a different length. The 12-byte value is fixed for the current profile.
+
+---
+
+**End of D7.**
+
+
+---
+
+# End of Part II (D1–D7)
+
+**D8–D12 and Part III (Appendices A–H) are not part of this recovery.**
 
 ---
 
