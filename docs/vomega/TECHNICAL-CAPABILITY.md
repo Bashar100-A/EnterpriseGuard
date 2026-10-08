@@ -42,6 +42,7 @@
   - Appendix A. Frozen Artifact Hashes
   - Appendix B. Source Artifact Hashes
   - Appendix C. Full Test Execution Logs
+  - Appendix D. DEFECT Index
   - Appendix F. Environment Specification and Suite Manifest
 
 ---
@@ -5973,6 +5974,213 @@ A reader who wants to produce their own copy of the raw logs can do so by runnin
 ---
 
 **End of Appendix C.**
+
+## Appendix D — DEFECT Index
+
+**Part III, Appendix D.**
+**Purpose:** a consolidated **numerical index** of all tracked records in `DEFECTS-LOG.md` — DEFECT entries, library-evaluation entries, GAP entries, and RISK entries — with one-line summaries and cross-references to §D9 for detail.
+**Reference base:** `docs/vomega/DEFECTS-LOG.md`; §D9; §D11.
+
+---
+
+### D.1 Purpose and Scope
+
+Appendix D serves one purpose: to record, in one place, a **flat numerical index** of every tracked record in `DEFECTS-LOG.md`.
+
+The records fall into four categories:
+
+| Category | What it records | Count |
+|---|---|---|
+| **DEFECT** | A defect found and fixed during development | 46 headers / 44 unique numbers |
+| **CBOR-LIB-EVAL** | A library evaluation and selection rationale | 3 entries |
+| **GAP** | A documented limitation that is not a defect | 3 entries |
+| **RISK** | A tracked operational or architectural concern | 4 headers / 3 unique numbers |
+
+The four categories are **not interchangeable**:
+- A DEFECT is a defect; it was found and fixed.
+- A CBOR-LIB-EVAL is a selection decision; it documents why a library was chosen.
+- A GAP is a known limitation; it is understood and accepted, or reserved for future work.
+- A RISK is a tracked concern; it may or may not materialize.
+
+Appendix D does **not**:
+
+- reproduce the full text of any record. The full text is in `DEFECTS-LOG.md`.
+- duplicate the classification, architecture-critical analysis, or finding dispositions of §D9.
+- list non-blocking findings (F-04 through F-11); those are in §D11.
+- assert that the four categories are exhaustive of every tracking mechanism in the repository.
+
+Appendix D is a **flat index** for navigation. §D9 is the analysis.
+
+---
+
+### D.2 Record Inventory and Reconciliation
+
+#### D.2.1 DEFECT counts
+
+| Metric | Value |
+|---|---|
+| Top-level `## DEFECT-` headers | 46 |
+| Unique DEFECT numbers (base) | 44 |
+| Unique DEFECT identifiers (base + suffix) | 45 |
+| Suffix variants | 1 (`DEFECT-029-WASM`) |
+| Duplicate headers | 1 (`DEFECT-017` architectural classification) |
+| Unassigned numbers | 2 (`DEFECT-005`, `DEFECT-030`) |
+
+**Formula:** 44 base + 1 duplicate + 1 suffix = 46 headers.
+
+#### D.2.2 CBOR-LIB-EVAL, GAP, RISK counts
+
+| Category | Headers | Unique numbers |
+|---|---|---|
+| CBOR-LIB-EVAL | 3 | 3 |
+| GAP | 3 | 3 |
+| RISK | 4 | 3 |
+
+**Note on RISK:** The 4 RISK headers correspond to 3 unique RISK numbers. `RISK-3.1` appears twice: once as the original entry, once as a reclassification entry.
+
+#### D.2.3 Cross-reference to §D9
+
+The reconciliation presented here matches §D9.2.4. §D9 is the canonical analysis; Appendix D re-states the counts for navigation.
+
+---
+
+### D.3 DEFECT Index
+
+The following is the numerical index of the 46 `## DEFECT-` headers as they appear in `DEFECTS-LOG.md`. Each entry is a one-line summary taken from the header itself. Detail (root cause, fix, lesson, commits) is in `DEFECTS-LOG.md`; architectural analysis is in §D9.
+
+| Header | One-line summary |
+|---|---|
+| DEFECT-001 | M19 was a duplicate of M06 |
+| DEFECT-002 | A25: EQ did not enforce type check |
+| DEFECT-003 | Block B test 4 over-specified code |
+| DEFECT-004 | JS verify.mjs: ClaimRoot field mismatch + message format |
+| DEFECT-006 | Rust verifier binding error codes use hyphens |
+| DEFECT-007 | Premature GAP-5 commitment based on partial information |
+| DEFECT-008 | Repeated GAP-N before exhausting paths |
+| DEFECT-009 | Placeholder contamination in spec §12.3 |
+| DEFECT-010 | pqcrypto cannot participate in deterministic ML-DSA testing |
+| DEFECT-011 | mldsa wrapper assumed ctx=b"" |
+| DEFECT-012 | RustCrypto decode was stricter than FIPS 204.Verify semantics |
+| DEFECT-013 | Spec claimed 13-byte domain tag; actual is 11 chars + NUL = 12 bytes |
+| DEFECT-014 | Test count conflation across phases |
+| DEFECT-015 | sad-rsa 0.10.2 fails to build; rsa 0.9.6 selected as fallback |
+| DEFECT-016 | rsa 0.9.6 requires explicit sha2 feature |
+| DEFECT-017 | Rust adie-hybrid-verify did not check key_id before signature |
+| DEFECT-017 | ARCHITECTURAL CLASSIFICATION (Commander order, 2026-10-07) |
+| DEFECT-018 | ciborium::Value is `#[non_exhaustive]` |
+| DEFECT-019 | Test byte count error in rawcheck::valid_nested |
+| DEFECT-020 | account.py summary anchor mismatch |
+| DEFECT-021 | cbor2 silently interprets known semantic tags |
+| DEFECT-022 | Test harness ROOT path off by one |
+| DEFECT-023 | cbor2 raises CBORDecodeError for duplicate keys |
+| DEFECT-024 | Hand-written JSON vector file had invalid syntax |
+| DEFECT-025 | CommonJS interop: named exports not visible in ESM |
+| DEFECT-026 | JS profile coercion of non-integral Number values |
+| DEFECT-027 | rawcheck must reject duplicate keys at wire level |
+| DEFECT-028 | cbor@9 mixed Map/object output for maps |
+| DEFECT-029 | JSON Number precision boundary at u64 range |
+| DEFECT-029-WASM | Lossless Integer Boundary Invariant (WASM ABI) |
+| DEFECT-031 | getrandom wasm32 backend requires explicit opt-in |
+| DEFECT-032 | wasm-bindgen nodejs output under ESM parent |
+| DEFECT-033 | Build artifacts and toolchain binaries tracked |
+| DEFECT-034 | jcs::canonical_bytes returns Result, not Vec |
+| DEFECT-035 | CborError::Malformed is a struct variant, not tuple |
+| DEFECT-036 | Cross-runtime rejection-code divergence on nested duplicate keys |
+| DEFECT-037 | Patch application silently failed to insert helper |
+| DEFECT-038 | Python rawcheck missing inner duplicate-key detection |
+| DEFECT-039 | JS walkTag skipped shortest-form check on tag number |
+| DEFECT-040 | Commit message claimed 0/10k mismatch while 1/10k existed |
+| DEFECT-041 | pytest --collect-only breaks on test_bplus_e2e.py |
+| DEFECT-042 | Test harness time-semantics error in H13 |
+| DEFECT-043 | Missing governed initial ACTIVE state for trust resolver |
+| DEFECT-044 | E2E did not perform cryptographic verification (FINDING-3D-01) |
+| DEFECT-045 | E2E emitted a plain dict instead of real ExecutionManifest (FINDING-3D-02) |
+| DEFECT-046 | E2E bypassed TrustStatusStore (FINDING-3D-03) |
+
+**Note on duplicates and suffix variants.** The header `DEFECT-017` appears twice; the header `DEFECT-029-WASM` is a suffix variant of `DEFECT-029`. Both are documented in §D9.2.
+
+**Architecture-critical subset.** §D9.4 identifies 5 defects as architecture-critical: DEFECT-021, DEFECT-026, DEFECT-027, DEFECT-028, DEFECT-036.
+
+---
+
+### D.4 CBOR-LIB-EVAL Index
+
+The following is the index of the 3 CBOR-LIB-EVAL entries. Detail (candidate comparison, probe findings, trust boundary) is in `DEFECTS-LOG.md`; the D8 library-trust-boundary analysis is in §D8.4.
+
+| Header | Selection |
+|---|---|
+| CBOR-LIB-EVAL-001 | ciborium 0.2.2 selected for Rust reference implementation (3A.2) |
+| CBOR-LIB-EVAL-002 | cbor2 6.1.5 selected for Python adapter (3A.3) |
+| CBOR-LIB-EVAL-003 | cbor 9.0.2 selected for JavaScript adapter (3A.4A) |
+
+**Note on numbering.** CBOR-LIB-EVAL entries use their own numbering (`-001`, `-002`, `-003`) and are not counted in the 46 DEFECT headers.
+
+---
+
+### D.5 GAP Index
+
+The following is the index of the 3 GAP entries. Detail is in `DEFECTS-LOG.md`; the analysis and closure conditions are in §D11.11–§D11.13.
+
+| Header | Status | Summary |
+|---|---|---|
+| GAP-8 | Open | Rust ML-DSA sigGen not covered by ACVP KAT |
+| GAP-9 | Open | ML-DSA-65 `key_id` uses raw pk bytes, not SPKI DER |
+| GAP-3.4B-01 | Documented by design | wasm-bindgen nodejs CWD-relative wasm path |
+
+**Note on numbering.** GAP entries use their own numbering (`GAP-8`, `GAP-9`, `GAP-3.4B-01`) and are not counted in the 46 DEFECT headers.
+
+---
+
+### D.6 RISK Index
+
+The following is the index of the 4 `## RISK-` headers, corresponding to 3 unique RISK numbers. Detail is in `DEFECTS-LOG.md`; the analysis is in §D11.14 (RISK-3.3) and §D9.7 (all RISKs).
+
+| Header | Status | Summary |
+|---|---|---|
+| RISK-3.1 | Archived | sad-rsa fork tracks unstable rsa 0.10.x API line |
+| RISK-3.2 | Archived | sad-rsa dependency surface (~46 crates) |
+| RISK-3.1 RECLASSIFICATION | Archived (reclassification) | Commander order, 2026-10-07: status changed to BOUNDED EXPOSURE |
+| RISK-3.3 | **ACTIVE** | Build environment is space-constrained |
+
+**Note on the duplicate RISK header.** `RISK-3.1` appears twice: the original entry and the reclassification entry. This is the same documentary pattern as the duplicated `DEFECT-017` header (§D9.2.2).
+
+**Note on the active risk.** `RISK-3.3` is the only RISK still marked ACTIVE at the evidence-reference commit. Its analysis is in §D11.14.
+
+---
+
+### D.7 Relationship to §D9 and `DEFECTS-LOG.md`
+
+Three views of the same record set:
+
+| Reference | Role |
+|---|---|
+| `docs/vomega/DEFECTS-LOG.md` | **Full text** of each record: root cause, fix, lesson, commit references |
+| §D9 (Part II) | **Analysis**: numbering irregularities, classification, architecture-critical set, library evaluations, GAP/RISK dispositions |
+| Appendix D | **Flat numerical index**: one-line summary per header, organized by category |
+
+The three views are **consistent**. Appendix D does not add new content; it re-organizes the same records into a flat index for navigation.
+
+**Verification of the DEFECT index.** The 46 DEFECT headers in §D.3 match the 46 headers enumerated in §D9.8.1. The 3 CBOR-LIB-EVAL entries in §D.4 match §D9.8.2. The 3 GAP entries in §D.5 match §D9.8.3. The 4 RISK headers in §D.6 match §D9.7.
+
+---
+
+### D.8 What Appendix D Does Not Claim
+
+- Appendix D does not claim that the four categories (DEFECT, CBOR-LIB-EVAL, GAP, RISK) are exhaustive of every tracking mechanism in the repository.
+- Appendix D does not claim that the 46 DEFECT headers represent 46 distinct defects. They represent 44 unique DEFECT numbers plus one duplicate header and one suffix variant; see §D9.2.
+- Appendix D does not reproduce the full text of any record. The full text is in `DEFECTS-LOG.md`.
+- Appendix D does not duplicate the classification or the architecture-critical analysis of §D9. Those are the source; Appendix D is a navigational view.
+- Appendix D does not convert GAPs into DEFECTs, or RISKs into security claims. The distinction between the four categories is preserved throughout.
+- Appendix D does not list non-blocking findings (F-04 through F-11). Those are in §D11 and are not part of the DEFECTS-LOG's four-category structure.
+- Appendix D does not claim that the record is exhaustive of every defect, library evaluation, gap, or risk that occurred during development. It records what was logged.
+- Appendix D does not claim that the RISK-3.1 reclassification entry is a separate RISK. It is a reclassification of the original entry, following the same documentary pattern as the duplicated DEFECT-017 header.
+- Appendix D does not claim that the CBOR-LIB-EVAL, GAP, or RISK numbering shares the DEFECT numbering sequence. Each category uses its own numbering.
+- Appendix D does not duplicate the closure conditions for GAPs. Those are in §D11.11–§D11.13.
+- Appendix D does not claim that the `DEFECTS-LOG.md` file is stable across future versions of this document. It records the file's state as of the evidence-reference commit `7683adb`.
+
+---
+
+**End of Appendix D.**
 
 ## Appendix F — Environment Specification and Suite Manifest
 
