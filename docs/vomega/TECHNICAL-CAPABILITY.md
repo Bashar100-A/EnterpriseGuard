@@ -3,8 +3,8 @@
 **Status:** Recovered / Staged / Pending Commander Review
 **Recovered from:** conversation transcript (not from prior disk state)
 **Evidence-reference commit:** `7683adb` (branch `vOmega`)
-**Document scope (this recovery):** Part I (E1–E8) + Part II (D1–D10)
-**Not included in this recovery:** D11–D12, Part III (Appendices A–H)
+**Document scope (this recovery):** Part I (E1–E8) + Part II (D1–D11)
+**Not included in this recovery:** D12, Part III (Appendices A–H)
 **Frozen upstream specifications:**
 - `spec/WIRE-FORMAT-0.2.md` — SHA-256 `b2fee085562dec275572d0ed64faa30bc0375ee9a74fe319b0af984895dcf07f`
 - `spec/WIRE-FORMAT-0.2-AMENDMENT-1.md` — SHA-256 `7cb607be51b7a5d1afbb78611d66b0db3ef3c8cdc30de15ee41b3a701e4762ab`
@@ -36,6 +36,7 @@
   - D8. Security Analysis
   - D9. Defect History — All 44 DEFECTs
   - D10. Positioning Against Adjacent Technologies
+  - D11. Open GAPs and Non-Blocking Findings
 
 ---
 
@@ -4504,9 +4505,523 @@ The following two scope boundaries are worth stating explicitly:
 
 **End of D10.**
 
-# End of Part II (D1–D10)
+## D11. Open GAPs and Non-Blocking Findings
 
-**D11–D12 and Part III (Appendices A–H) are not part of this recovery.**
+**Part II, Section D11.**
+**Scope:** the open GAPs, the non-blocking findings recorded by the adversarial review, and the active RISK entry that remains under monitoring.
+**Constraint:** D11 is a **boundary section**. It records what is open, accepted, or documented. It does not convert GAPs into DEFECTs, RISKs into security claims, or future work into closed defects.
+
+---
+
+### D11.1 Scope and Structure
+
+D11 documents three categories of open items:
+
+1. **Non-blocking findings (F-04 through F-11)** — recorded by the DeepSeek adversarial review of Phase 3D, dispositioned in Phase 3D-R1.
+2. **Open GAPs** — `GAP-8`, `GAP-9`, `GAP-3.4B-01`.
+3. **Active RISK** — `RISK-3.3` (build environment space constraint).
+
+Each item is documented under a **six-part structure**:
+
+```
+Finding / GAP / RISK
+    ├── What is actually observed
+    ├── Evidence / source
+    ├── Current status
+    ├── Why it is non-blocking
+    ├── What it does not imply
+    └── What would be required to close it (if applicable)
+```
+
+This structure is applied consistently across D11 so that a reader can compare items and identify which ones are actual open work, which are accepted design choices, and which are operational constraints.
+
+**Distinction preserved throughout:**
+- A **finding** is a recorded observation from an adversarial review. It may be a defect, a design assumption, or a documented limitation.
+- A **GAP** is a documented limitation that is not a defect.
+- A **RISK** is a tracked operational or architectural concern.
+
+**Evidence-reference commit.** `7683adb` (reproducibility baseline).
+
+**Verification:**
+
+```bash
+cd ~/Desktop/EnterpriseGuard && \
+git show 7683adb:docs/vomega/DEFECTS-LOG.md | sed -n '/## Non-blocking review findings/,/^## /p' && \
+git show 7683adb:docs/vomega/DEFECTS-LOG.md | grep -A2 "^## GAP-8\|^## GAP-9\|^## GAP-3.4B-01" && \
+git show 7683adb:docs/vomega/DEFECTS-LOG.md | grep -A10 "^## RISK-3.3"
+```
+
+---
+
+### D11.2 Finding Inventory
+
+The adversarial review of Phase 3D recorded **eleven** findings, numbered F-01 through F-11. Their dispositions:
+
+| Finding | Severity | Disposition | Reference |
+|---|---|---|---|
+| **F-01** | CRITICAL | **CLOSED** (DEFECT-044) — crypto verification added to E2E path | §D6.5.1 |
+| **F-02** | HIGH | **CLOSED** (DEFECT-045) — real `ExecutionManifest` | §D6.5.3 |
+| **F-03** | HIGH | **CLOSED** (DEFECT-046) — real `TrustStatusStore` in E2E path | §D6.5.2 |
+| **F-04** | HIGH | Documented assumption (not a defect) | §D11.3 |
+| **F-05** | MEDIUM | Documented (chain-of-trust assumption) | §D11.4 |
+| **F-06** | MEDIUM | Documented (EXPIRED dual-use terminology) | §D11.5 |
+| **F-07** | MEDIUM | Documented (EXECUTED_EXTERNAL unowned) | §D11.6 |
+| **F-08** | MEDIUM | Documented (O(N) integrity — scaling note) | §D11.7 |
+| **F-09** | LOW | Accepted (test volume) | §D11.8 |
+| **F-10** | LOW | Documented (JS/Rust governance future) | §D11.9 |
+| **F-11** | LOW | Documented (subprocess bridge) | §D11.10 |
+
+**F-01, F-02, F-03** were addressed in Phase 3D-R1 as DEFECT-044/045/046 respectively; their detail is in §D6.5 and in `DEFECTS-LOG.md`. They are **not** repeated in D11 — D11 covers the items that remain open or documented.
+
+**F-04 through F-11** are the scope of D11.3–D11.10. Each has a distinct character; the six-part structure is applied to each.
+
+---
+
+### D11.3 F-04 — Authority establishment is external
+
+#### Observed
+
+There is no global `Authority` registry in vOmega. The `Authority` objects consumed by the governance and trust layers are provided as inputs by the caller. There is no subsystem that creates, discovers, or distributes authorities from a root of trust.
+
+#### Evidence
+
+`DEFECTS-LOG.md` — "Non-blocking review findings (DeepSeek 3D review)", FINDING-3D-04:
+
+> Authority establishment is external / bootstrap trust root. No global Authority registry exists. Documented as an explicit assumption, not implemented as a new subsystem.
+
+Cross-references in this document: §E5.6, §E6.5, §D5.11.
+
+#### Current status
+
+**Documented assumption.** The finding is preserved as an explicit architectural assumption. It is not classified as a defect; no fix is planned for it in the current vOmega scope.
+
+#### Why it is non-blocking
+
+The governance and trust layers are defined to consume authorities, not to create them. A reader can evaluate the layers' correctness given any authority input; the layers' behavior does not depend on how that authority was established. The end-to-end assurance path terminates at the manifest emission boundary; it does not need a registry of authorities to be present in order to be internally consistent.
+
+#### What it does not imply
+
+- It does not imply that an **unauthenticated** `Authority` object should be trusted. It means that authority establishment is **outside the current vOmega scope**. A deployment that accepts authority inputs from an untrusted source would require external provisioning and/or anchoring controls.
+- It does not imply that a deployment cannot provide authorities through an external mechanism (a config file, a database, a separate service). The assumption is silent on the provisioning mechanism.
+
+#### What would be required to close it
+
+A defined provisioning mechanism — for example, a signed authority manifest distributed from a designated root, or a federation protocol between authority issuers. This is **out of scope** for the current vOmega work and would represent a new subsystem, not a fix.
+
+---
+
+### D11.4 F-05 — Chain-of-trust is not cryptographically anchored
+
+#### Observed
+
+An `Authority` object is not cryptographically signed by any root. The governance layer accepts an authority if it is present and active; it does not verify a signature chain back to a designated anchor.
+
+#### Evidence
+
+`DEFECTS-LOG.md` — FINDING-3D-05:
+
+> Chain-of-trust is not cryptographically anchored (Authority is not signed by a root). Architectural assumption.
+
+Cross-references: §D4.11, §D5.11, §D10.7.3.
+
+#### Current status
+
+**Documented architectural assumption.** The finding is preserved. No cryptographic anchoring mechanism is defined or planned in the current scope.
+
+#### Why it is non-blocking
+
+The trust model's core question is: *given an authority, what is its status at time T?* That question is answered by the trust resolver (§D5.6) independently of how the authority was established. Cryptographic anchoring of the authority itself is a separate concern that would be addressed by F-04's closure, not by the trust resolver.
+
+#### What it does not imply
+
+- It does not imply that an attacker can forge an authority by possessing an unsigned object. The trust layer's input is provided by the caller; the question of where that input comes from is F-04's, not F-05's.
+- It does not imply that signing authorities is unnecessary. It implies that the current vOmega scope does not include it.
+
+#### What would be required to close it
+
+A cryptographic anchoring scheme — for example, each `Authority` carrying a signature from a designated root, and the governance layer verifying that signature before accepting the authority. This is **out of scope** for the current vOmega work. It is closely related to F-04; a solution to F-04 would likely include an anchoring mechanism for F-05.
+
+---
+
+### D11.5 F-06 — EXPIRED and SUPERSEDED appear in two axes
+
+#### Observed
+
+The strings `"expired"` and `"superseded"` appear as enum values in **both** `AuthorizationStatus` and `TrustStatus`. The two enums are distinct Python classes; the semantic meaning of the string differs by axis.
+
+#### Evidence
+
+- `DEFECTS-LOG.md` — FINDING-3D-06:
+
+  > "EXPIRED" and "SUPERSEDED" appear in both AuthorizationStatus and TrustStatus with different semantics. Naming overlap only; distinct enum classes.
+
+- §D4.3.4 (in this document) documents the overlap and its intentionality.
+- §D5.2.2 documents the same overlap from the trust side.
+
+#### Current status
+
+**Documented design choice.** The finding is preserved as a naming observation. The overlap is intentional; the enums are separate types; the code does not confuse them.
+
+#### Why it is non-blocking
+
+Cross-axis string overlap does not create a code-level ambiguity in vOmega. The two enum classes are distinct; the canonical `DecisionContract` (§D4.4.4) enforces type-correct usage; no code path treats the two as interchangeable. The overlap is a naming observation, not a functional issue.
+
+#### What it does not imply
+
+- It does not imply that the two axes are equivalent. They are not; they answer different questions (§E5.2).
+- It does not imply that the naming is optimal. A future profile could rename one of the values to eliminate the overlap; doing so is a naming refactor, not a correctness fix.
+
+#### What would be required to close it
+
+A decision to rename one of the values (e.g., `TrustStatus.EXPIRED` → `TrustStatus.TRUST_EXPIRED`, or `AuthorizationStatus.EXPIRED` → `AuthorizationStatus.AUTH_EXPIRED`). Such a rename would be a naming change with potential downstream impact; it is not planned in the current scope.
+
+---
+
+### D11.6 F-07 — EXECUTED_EXTERNAL has no runtime owner
+
+#### Observed
+
+The `DecisionLifecycle` state `EXECUTED_EXTERNAL` is defined as a state that would be entered after an external system had executed the decision. No component of vOmega sets this state automatically. No executor integration exists.
+
+#### Evidence
+
+- `DEFECTS-LOG.md` — FINDING-3D-07:
+
+  > EXECUTED_EXTERNAL transition has no runtime owner. Reserved for a future executor integration stage.
+
+- §D4.5.3 (in this document) documents the `external_observation=True` flag that is required to enter this state.
+- §D6.2.9 documents that the end-to-end path does not set this state.
+
+#### Current status
+
+**Documented by design.** The state is defined; the transition is available with an explicit `external_observation=True` flag; the runtime owner is a future integration.
+
+#### Why it is non-blocking
+
+The end-to-end assurance path (§D6) terminates at the manifest-emission boundary, before any external execution. The `EXECUTED_EXTERNAL` state is not required for the path to be internally consistent. Its absence of a runtime owner does not prevent decisions from being authorized or manifests from being emitted.
+
+#### What it does not imply
+
+- It does not imply that vOmega is missing a feature. It implies that a specific integration point (with an external executor) is out of scope for the current work.
+- It does not imply that the lifecycle state machine is incomplete. The state and its legal transitions are defined (§D4.5.1); the "owner" of the transition is a deployment-time question.
+
+#### What would be required to close it
+
+An executor integration that observes a manifest, invokes the external execution, and asserts the `external_observation=True` transition. This would be a **new subsystem**, not a fix. It is out of scope for the current vOmega work.
+
+---
+
+### D11.7 F-08 — Trust store integrity gate is O(N)
+
+#### Observed
+
+`TrustStatusStore.resolve_at()` and `resolve_current()` run `verify_integrity()` on every call. `verify_integrity()` re-reads the persisted JSONL file and re-verifies the hash chain; its cost is O(N) in the number of assertions stored.
+
+#### Evidence
+
+- `DEFECTS-LOG.md` — FINDING-3D-08:
+
+  > TrustStatusStore.resolve_* runs verify_integrity() on each call (O(N)). Known scaling limit.
+
+- §D5.5.5 (in this document) documents the integrity gate.
+- §D5.11 and §D8.3.7 also cite the O(N) property.
+
+#### Current status
+
+**Documented scaling limitation.** The finding is preserved. The integrity gate is intentional: it is a fail-closed mechanism that prevents a tampered store from producing a trusted answer. Its cost is the price of that guarantee.
+
+#### Why it is non-blocking
+
+The verification cost is **linear and predictable relative to the number of stored assertions**. No upper resource bound is claimed. No blocking performance issue has been established for the current evidence scope; larger deployments would require separate scaling analysis.
+
+#### What it does not imply
+
+- It does not imply that the integrity gate is wrong. It implies that its cost is not hidden.
+- It does not imply that a caching scheme would be unsafe. It implies that no caching scheme is currently implemented.
+
+#### What would be required to close it
+
+A caching layer or an incremental verification scheme (e.g., verify only newly appended entries since the last verification). Such an approach would need to preserve the fail-closed property. **Not planned** in the current vOmega scope. Documented as F-08 in §E6.10 and D11.
+
+---
+
+### D11.8 F-09 — Test volume target not met
+
+#### Observed
+
+A test-volume target of 500 tests was set during the project; the achieved count is below that target. Dense orthogonal coverage was used instead of raw count.
+
+#### Evidence
+
+`DEFECTS-LOG.md` — FINDING-3D-09:
+
+> Test volume target 500 not met (dense orthogonal coverage used instead). Accepted by Commander.
+
+#### Current status
+
+**Accepted.** The Commander's acceptance is recorded in the log. This is a project-level decision, not a technical defect.
+
+#### Why it is non-blocking
+
+The evidence-based discipline in this document (§E1.5, §E3.9) explicitly separates category counts from quality claims. A test count is not, by itself, a measure of coverage; the differential corpus, the 46-suite evidence set, and the tier structure all address specific behavioral properties rather than raw volume. The number 500 was an aspiration; the achieved structure is what the evidence demonstrates.
+
+#### What it does not imply
+
+- It does not imply that coverage is inadequate. It implies that a specific target number was not reached.
+- It does not imply that more tests would be harmful. Additional tests could be added in future work; they would extend, not replace, the current structure.
+
+#### What would be required to close it
+
+Either (a) add tests to reach 500 (a volume exercise), or (b) formally retire the 500 target and record the actual coverage structure as the intended shape. This is a **project decision**, not a technical fix.
+
+---
+
+### D11.9 F-10 — Governance path is Python-only
+
+#### Observed
+
+The 3B governance layer, the 3C trust layer, and the 3D end-to-end path are Python-only. No JavaScript or Rust implementation of the governance layer exists.
+
+#### Evidence
+
+- `DEFECTS-LOG.md` — FINDING-3D-10:
+
+  > 3B/3C/3D governance is Python-only. JS/Rust governance path is a future GAP.
+
+- §E2.2.5 and §D3.2 (in this document) document the cross-runtime parity scope: it applies to the wire layer, not the governance layer.
+
+#### Current status
+
+**Documented future GAP.** The finding is preserved. The parity claim (§D3) is explicitly bounded to the wire format; it does not extend to governance.
+
+#### Why it is non-blocking
+
+The wire-parity scope was established in Phase 3A and has not been extended. The governance layer's algorithms are described in §D4–§D6 as Python reference implementations; a second implementation would be an extension, not a correction. No capability stated in §E3 depends on JavaScript or Rust governance.
+
+#### What it does not imply
+
+- It does not imply that governance behavior is unspecified. It is specified in §D4–§D6 and implemented in Python.
+- It does not imply that a JavaScript or Rust governance implementation is infeasible. It implies that the current vOmega scope does not include one.
+
+#### What would be required to close it
+
+A parallel implementation of the governance layers in JavaScript and/or Rust, with a shared corpus and a differential suite — the same architecture used for the wire layer (§D3). This is a **substantial extension**, out of scope for the current work.
+
+---
+
+### D11.10 F-11 — wire_bridge is subprocess-based
+
+#### Observed
+
+The wire bridge in `src/enterpriseguard/adie/canonical/wire_bridge.py` delegates to the wire layer via a **subprocess call** to `protocol/wire/bin/adie-cbor-envelope.py`. It does not import the wire layer's internal Python API directly.
+
+#### Evidence
+
+- `DEFECTS-LOG.md` — FINDING-3D-11:
+
+  > wire_bridge is subprocess-based. Dependency direction preserved; coupling method noted as known.
+
+- §D4.8 (in this document) documents the bridge and its one-directional dependency.
+
+#### Current status
+
+**Documented design choice.** The subprocess boundary is deliberate: it keeps the two layers decoupled so that the governance layer does not acquire a direct import dependency on the wire layer's internal structure. The dependency direction (governance → wire, never reverse) is enforced by test W02 in the wire-bridge suite.
+
+#### Why it is non-blocking
+
+The subprocess boundary preserves the architectural invariant (§D4.8.1) that `protocol/` does not import from `enterpriseguard/adie/`. A direct-import design would risk that invariant. The subprocess cost is a performance observation, not a correctness concern.
+
+#### What it does not imply
+
+- It does not imply that the bridge is unreliable. It has been exercised by the E2E suite and by the wire-bridge suite.
+- It does not imply that a direct-import design would be wrong; it would be a different tradeoff (speed vs decoupling).
+
+#### What would be required to close it
+
+A direct-import design that preserves the dependency direction. This would require careful handling of imports to avoid the governance layer's dependency on the wire layer's internals. **Not planned** in the current scope.
+
+---
+
+### D11.11 GAP-8 — Rust ML-DSA sigGen not covered by ACVP KAT
+
+#### Observed
+
+The ACVP KAT vectors used by the project cover ML-DSA-65 key generation and verification, but not the deterministic signature-generation path in the Rust implementation.
+
+#### Evidence
+
+`DEFECTS-LOG.md` — GAP-8 (line 258):
+
+> The ACVP KAT vectors used by the project cover ML-DSA-65 key generation and verification, but not the deterministic signature-generation path in Rust. The Rust signing path is exercised by project tests, but not against external NIST vectors.
+
+#### Current status
+
+**Open GAP.** Not classified as a defect. The signing path works and is tested; its coverage by external NIST vectors is incomplete.
+
+#### Why it is non-blocking
+
+The Rust signing path is exercised by project tests (§D7.6.1 — `test_sign.py`, `test_rust_parity.py`). The absence of external NIST sigGen vectors is a coverage gap, not a functional defect. Cross-runtime signing parity is established for the tested inputs.
+
+#### What it does not imply
+
+- It does not imply that the Rust signing path is incorrect. It implies that a specific external vector set has not been applied to it.
+- It does not imply that sigGen is deterministic in Rust. Deterministic signing is a mode permitted by FIPS 204; its use in vOmega is bounded per §D7.4.4.
+
+#### What would be required to close it
+
+Obtain or generate NIST ACVP sigGen vectors for ML-DSA-65 and run them against the Rust signing path. This is a **coverage extension**, not a fix.
+
+---
+
+### D11.12 GAP-9 — ML-DSA-65 key_id uses raw pk bytes, not SPKI DER
+
+#### Observed
+
+The ML-DSA-65 `key_id` in a hybrid certificate is derived from the raw public-key bytes. It is not derived from an SPKI-DER encoding of the public key.
+
+#### Evidence
+
+`DEFECTS-LOG.md` — GAP-9 (line 304):
+
+> The ML-DSA-65 `key_id` in a hybrid certificate is derived from the raw public-key bytes, not from an SPKI-DER encoding. This is a documented design choice, not a defect.
+
+#### Current status
+
+**Open GAP.** Documented as a design choice.
+
+#### Why it is non-blocking
+
+The choice is consistent across all phases of the ADIE implementation. It does not break any capability in §E3. It is recorded so that any future decision to switch to SPKI-DER is visible as a **decision**, not as a silent change.
+
+#### What it does not imply
+
+- It does not imply that the current scheme is incorrect. It implies that a specific encoding has been chosen and documented.
+- It does not imply that SPKI-DER would be better or worse. It implies that a comparison of the two has not been documented.
+
+#### What would be required to close it
+
+Either (a) adopt SPKI-DER for the ML-DSA-65 `key_id` and document the change (with a corresponding change to any signed vectors that reference the old format), or (b) formally record the raw-pk-bytes choice as the intended design and remove the GAP classification. This is a **profile decision**, not a defect fix.
+
+---
+
+### D11.13 GAP-3.4B-01 — wasm-bindgen nodejs CWD-relative wasm path
+
+#### Observed
+
+The `wasm-bindgen`-generated Node.js bindings load the `.wasm` file relative to the current working directory. This is the default behavior of `wasm-bindgen` for the `nodejs` target and is not modified by vOmega.
+
+#### Evidence
+
+`DEFECTS-LOG.md` — GAP-3.4B-01 (line 1389):
+
+> The wasm-bindgen-generated Node.js bindings load the .wasm file relative to the current working directory. This is the default behavior of wasm-bindgen for the nodejs target and is not modified.
+
+#### Current status
+
+**Documented by design.** Not classified as a defect.
+
+#### Why it is non-blocking
+
+The GAP is documented so that callers know to invoke the WASM module from a working directory where the `.wasm` file is reachable. The alternative — modifying the generated bindings — would diverge from the `wasm-bindgen` default and complicate future regeneration.
+
+#### What it does not imply
+
+- It does not imply that the WASM delivery path is broken. It implies that a specific invocation constraint is documented.
+- It does not imply that all WASM deployment scenarios are affected. Only the CWD-relative loading behavior is at issue.
+
+#### What would be required to close it
+
+Either (a) patch the generated bindings to use an absolute path derived from `import.meta.url` (which would diverge from the `wasm-bindgen` default and require regeneration discipline), or (b) keep the GAP as-is and document the invocation requirement for callers. Currently (b) is the adopted stance.
+
+---
+
+### D11.14 RISK-3.3 — Build environment is space-constrained
+
+#### Observed
+
+The development environment has limited disk headroom. At the peak during Phase 3A.2, `cargo build --release` failed with `OS error 28` (No space left on device).
+
+#### Evidence
+
+`DEFECTS-LOG.md` — RISK-3.3 (line 699):
+
+```
+observation: Development disk is 38 GB with 36 GB used at peak,
+leaving ~450 MB free. One `cargo build --release` required ~240 MB.
+When the disk filled, the build failed with OS error 28
+(No space left on device).
+mitigation:
+  - Removed ~6.7 GB of cache: ~/.cache/trunk (4.5 GB),
+    ~/.npm/_cacache (1.2 GB), ~/.cache/pip (642 MB),
+    mozilla cache (301 MB), node-gyp (56 MB), stale /tmp.
+  - Rule: after each `cargo build --release`, check `df -h /home`.
+    If free space < 1 GB, run `cargo clean` before continuing.
+consequence: Development is functional but constrained.
+not hidden: recorded as an active operational constraint.
+```
+
+At the **last recorded environment reading** associated with the evidence set, the home partition was at 86% usage.
+
+#### Current status
+
+**ACTIVE.** This is the only RISK entry still marked active at the evidence-reference commit. The other two (RISK-3.1, RISK-3.2) are archived.
+
+#### Why it is non-blocking
+
+The development environment is functional under the documented mitigation. The constraint is operational, not architectural: it affects how the development work is performed (cache hygiene, disk monitoring), not the correctness of any vOmega capability.
+
+#### What it does not imply
+
+- It does not imply that vOmega deployments will have the same constraint. The constraint is specific to the development environment used to produce the evidence in this document.
+- It does not imply that the disk space situation cannot change. It is monitored.
+
+#### What would be required to close it
+
+Sufficient disk headroom on the development environment, or a migration to a larger storage volume. This is an **environmental** concern, not a vOmega code fix. It remains open.
+
+---
+
+### D11.15 Cross-Reference Table
+
+The following table summarizes all open items and their cross-references within this document.
+
+| Item | Category | Status | Cross-reference in this document |
+|---|---|---|---|
+| F-04 | Finding (HIGH) | Documented assumption | §E5.6, §E6.5, §D5.11, §D11.3 |
+| F-05 | Finding (MEDIUM) | Documented assumption | §D4.11, §D5.11, §D10.7.3, §D11.4 |
+| F-06 | Finding (MEDIUM) | Documented design choice | §D4.3.4, §D5.2.2, §D11.5 |
+| F-07 | Finding (MEDIUM) | Documented by design | §D4.5.3, §D6.2.9, §D11.6 |
+| F-08 | Finding (MEDIUM) | Documented scaling limit | §D5.5.5, §D5.11, §D8.3.7, §E6.10, §D11.7 |
+| F-09 | Finding (LOW) | Accepted | §D11.8 |
+| F-10 | Finding (LOW) | Documented future GAP | §E2.2.5, §D3.2, §D11.9 |
+| F-11 | Finding (LOW) | Documented design choice | §D4.8, §D11.10 |
+| GAP-8 | GAP | Open | §D7.6.1, §D11.11 |
+| GAP-9 | GAP | Open | §D11.12 |
+| GAP-3.4B-01 | GAP | Documented by design | §D11.13 |
+| RISK-3.3 | RISK | **ACTIVE** | §E7.1, §D11.14 |
+
+---
+
+### D11.16 What D11 Does Not Claim
+
+- D11 does not claim that the open items are the only open items in vOmega. It documents the items that were recorded in the adversarial review, in the GAP log, and in the RISK log.
+- D11 does not claim that any "documented" item is closed. A documented item remains open; it is recorded with its current status.
+- D11 does not claim that any "accepted" item is not a limitation. Acceptance is a decision that the limitation is tolerable for the current scope; it is not a claim that the limitation does not exist.
+- D11 does not convert GAPs into DEFECTs. GAP-8, GAP-9, and GAP-3.4B-01 are not defects; they are documented limitations.
+- D11 does not convert RISKs into security claims. RISK-3.3 is an operational constraint on the development environment; it is not a security property of vOmega.
+- D11 does not claim that any item will be closed in a future version. It records what would be required to close each item, as a factual statement about the scope of the work, not as a commitment.
+- D11 does not claim that the six-part structure applied to each item is exhaustive. It is the structure used in this document; other structures could be applied.
+- D11 does not claim that the findings F-04 through F-11 exhaust the DeepSeek review's observations. The review's executive summary recorded **"4 High"** findings, while the detailed finding list assigns HIGH severity to **F-02, F-03, and F-04**, with **F-01 classified as CRITICAL**. D11 preserves both source representations rather than silently reconciling them; the discrepancy is recorded in `DEFECTS-LOG.md` for audit consistency.
+- D11 does not claim that the closure conditions listed for each item are the only possible closure conditions. They are the ones identified at the time of writing.
+- D11 does not claim that F-04 and F-05 are independent. They are related: F-04 concerns establishment (who creates authorities); F-05 concerns anchoring (are authorities signed by a root). A solution to F-04 would likely include an anchoring mechanism for F-05.
+
+---
+
+**End of D11.**
+
+# End of Part II (D1–D11)
+
+**D12 and Part III (Appendices A–H) are not part of this recovery.**
 
 ---
 
