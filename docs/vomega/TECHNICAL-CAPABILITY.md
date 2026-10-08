@@ -46,6 +46,7 @@
   - Appendix E. CONTINUITY Index
   - Appendix F. Environment Specification and Suite Manifest
   - Appendix G. Glossary
+  - Appendix H. Reading Paths
 
 ---
 
@@ -6958,6 +6959,248 @@ Source module: `src/enterpriseguard/adie/canonical/integration/e2e.py`. Defined 
 ---
 
 **End of Appendix G.**
+
+## Appendix H — Reading Paths
+
+**Part III, Appendix H.**
+**Purpose:** four reading paths through this document, each tuned to a distinct reader profile, with cross-references to the sections that serve each profile.
+**Reference base:** the full document structure; §E1.2 (intended readers); Appendix F (suite manifest); Appendix G (glossary).
+
+---
+
+### H.1 Purpose and Scope
+
+Appendix H serves one purpose: to define **four reading paths** through this document, so that a reader can select the sequence of sections best suited to their role.
+
+The four paths are:
+
+| Path | Reader profile | Primary goal |
+|---|---|---|
+| **H.3** — Executive | Decision-maker, program sponsor | Understand what vOmega proves, at what level of assurance |
+| **H.4** — Cryptographer / wire engineer | Security engineer, cryptographer | Evaluate the wire format, envelope, and cryptographic identity |
+| **H.5** — Governance / trust architect | Governance and compliance architect | Evaluate the decision-lifecycle, authorization, and trust-status models |
+| **H.6** — Independent reproducer | Auditor, reviewer | Reproduce the evidence and verify the claims independently |
+
+Each path is a **reading order**, not a scope restriction. A reader may follow one path and then extend into another. The paths are designed to be self-contained for their target profile, but the document as a whole is one dossier.
+
+**Note on D1.** D1 is currently a **placeholder** (see §D1). Paths that would include D1 (§H.4) point to §D2, §D3, and §D7 as the available sources for the wire and envelope material. The D1 placeholder is a documentation gap, not a reading-path gap.
+
+---
+
+### H.2 Reading Path Common Elements
+
+Every path includes the following three sections as **common reference elements** — they need not be read first, but they establish vocabulary and discipline that later sections rely on:
+
+- **E1** (Document Purpose and Reading Guide) — the document's structure and evidence discipline.
+- **E8** (Terminology) — the vOmega-specific terms used throughout.
+- **Appendix G** (Glossary) — acronyms, standards, and error codes as an index.
+
+A reader who skips them will encounter references (e.g., "TBS", "Rawcheck", "E_WIRE_FLOAT") without the corresponding definition. In the path tables of §H.3–§H.6, these three sections are listed in their natural reading position, not necessarily at the start; a reader who prefers to establish vocabulary first may read them before starting the path.
+
+Where reproducibility or artifact integrity is relevant to the reader's goal, **Appendix A** (Frozen Artifact Hashes) and **Appendix B** (Source Artifact Hashes) should be verified. These two appendices establish the hashes that any claim in the document is anchored to. A reader who reaches the end of a path for which verification is part of the goal should verify at least the frozen artifacts (Appendix A) and, for reproducibility, the source artifacts (Appendix B).
+
+---
+
+### H.3 Path 1 — Executive
+
+**Profile.** Decision-maker, program sponsor, or senior stakeholder who needs to understand what vOmega proves at the level of assurance and how it can be verified.
+
+**Primary goal.** Answer the question: *what does vOmega actually prove, and how can I verify that?*
+
+**Reading order:**
+
+| # | Section | Role |
+|---|---|---|
+| 1 | E1 | Purpose and reading guide |
+| 2 | E2 | The problem space (four questions) |
+| 3 | E3 | What vOmega proves — at a glance |
+| 4 | E4 | Cross-runtime parity — executive view |
+| 5 | E5 | Governance + trust model — executive view |
+| 6 | E6 | What vOmega does not yet prove |
+| 7 | E7 | Reproduction instructions |
+| 8 | E8 | Terminology |
+| 9 | Appendix F | Environment + suite manifest (§F.3 for the 46-suite list) |
+| 10 | Appendix G | Glossary |
+
+**Optional extensions.**
+
+- **§D11** (Open GAPs and Non-Blocking Findings) — the boundary section on what remains open.
+- **§D10** (Positioning Against Adjacent Technologies) — for a reader evaluating vOmega relative to JWT, COSE, CMS, SCITT, Sigstore.
+
+**What this path deliberately omits.** Part II's deep-technical sections (D1–D12) and most of Part III's appendices. The executive path covers the executive summary, the suite manifest, the glossary, and the open-items section.
+
+---
+
+### H.4 Path 2 — Cryptographer / Wire Engineer
+
+**Profile.** Security engineer, cryptographer, or wire-format implementer who needs to evaluate the deterministic CBOR profile, the B+ envelope, and the cryptographic-identity invariants.
+
+**Primary goal.** Evaluate the wire format's strictness, its cross-runtime parity, and the preservation of cryptographic identity across phases.
+
+**Reading order:**
+
+| # | Section | Role |
+|---|---|---|
+| 1 | E1 | Purpose and reading guide |
+| 2 | E2.2.1 | Byte-deterministic representation |
+| 3 | E2.2.3 | Cryptographic identity and the signing framework |
+| 4 | E2.2.5 | Cross-language byte equivalence |
+| 5 | E3.3 | Deterministic wire representation |
+| 6 | E3.4 | Cross-runtime byte parity |
+| 7 | D2 | B+ envelope |
+| 8 | D3 | Cross-runtime parity — deep proof |
+| 9 | D7 | Cryptographic identity — invariants preserved |
+| 10 | D8 | Security analysis |
+| 11 | E8 | Terminology |
+| 12 | Appendix A | Frozen artifact hashes |
+| 13 | Appendix B | Source artifact hashes |
+| 14 | Appendix G | Glossary (standards + error codes) |
+
+**Note on D1.** D1 (Wire Format: Deterministic CBOR) is a placeholder. The wire-format material is available through §D2 (envelope), §D3 (parity), §D7 (identity), and the frozen `WIRE-FORMAT-0.2` artifacts referenced by Appendix A. A cryptographer reading this path will find the D1 material distributed across these sections; the placeholder is documented in §D1.
+
+**Optional extensions.**
+
+- **§D10** (Positioning) — for a reader comparing vOmega's design to COSE, CMS, or JWS.
+- **Appendix C** (Raw Logs) — for a reader who wants to inspect the raw differential outputs.
+
+**What this path deliberately omits.** The governance, trust, and end-to-end sections (D4–D6), the defect index (D9), and the finding dispositions (D11). The cryptographer path is wire-focused.
+
+---
+
+### H.5 Path 3 — Governance / Trust Architect
+
+**Profile.** Governance and compliance architect who needs to evaluate the decision-lifecycle model, the authorization axis, the trust-status axis, and the end-to-end assurance path.
+
+**Primary goal.** Evaluate the separation of decision lifecycle from authorization, the deterministic trust-status resolver, and the end-to-end decision path that terminates at the external-execution boundary.
+
+**Reading order:**
+
+| # | Section | Role |
+|---|---|---|
+| 1 | E1 | Purpose and reading guide |
+| 2 | E2.2.2 | Uniform governance separation |
+| 3 | E2.2.4 | Historical vs current trust evaluation |
+| 4 | E5 | Governance + trust model — executive view |
+| 5 | D4 | Governance control plane (3B) |
+| 6 | D5 | Trust status and revocation (3C) |
+| 7 | D6 | End-to-end assurance (3D / 3D-R1) |
+| 8 | D9 | Defect history (classification and architecture-critical set) |
+| 9 | D10 | Positioning against adjacent technologies |
+| 10 | D11 | Open GAPs and non-blocking findings |
+| 11 | E8 | Terminology |
+| 12 | Appendix D | DEFECT Index |
+| 13 | Appendix E | CONTINUITY Index |
+| 14 | Appendix G | Glossary |
+
+**Optional extensions.**
+
+- **§D7** (Cryptographic Identity) — for a governance architect who wants to confirm that the TBS is independent of the governance layer.
+- **§D8** (Security Analysis) — for a reader who wants the threat model and library trust boundaries.
+
+**What this path deliberately omits.** The wire-format sections (D1–D3) and the reproducibility commands (D12). The governance path is decision-focused.
+
+---
+
+### H.6 Path 4 — Independent Reproducer
+
+**Profile.** Auditor, reviewer, or independent verifier who wants to reproduce the evidence and verify the claims in this document.
+
+**Primary goal.** Reproduce the fresh 46-suite evidence run, verify the artifact hashes, and independently confirm the counts and the cross-runtime matrix.
+
+**Reading order:**
+
+| # | Section | Role |
+|---|---|---|
+| 1 | E1 | Purpose and reading guide |
+| 2 | E1.5, E1.6 | Evidence discipline and verification method |
+| 3 | E7 | Reproduction instructions (executive guide) |
+| 4 | D12 | Reproducibility — how to verify everything (deep guide) |
+| 5 | E3.9 | Quantitative summary — categorized, not summed |
+| 6 | D9 | Defect history — record inventory and reconciliation |
+| 7 | D11 | Open GAPs and non-blocking findings |
+| 8 | E8 | Terminology |
+| 9 | Appendix A | Frozen artifact hashes |
+| 10 | Appendix B | Source artifact hashes |
+| 11 | Appendix C | Full test execution logs (pointer to raw logs) |
+| 12 | Appendix D | DEFECT Index |
+| 13 | Appendix E | CONTINUITY Index |
+| 14 | Appendix F | Environment specification and suite manifest |
+| 15 | Appendix G | Glossary |
+
+**Note on D1.** D1 is a placeholder. The reproducer path does **not** depend on D1 for reproducing the evidence; the wire-format claims are reproduced through the frozen `WIRE-FORMAT-0.2` artifacts (Appendix A) and the differential suites (§D3). The D1 placeholder is a documentation gap, not a reproducibility gap. See §D12.11.
+
+**Optional extensions.**
+
+- **§D8** (Security Analysis) — for a reproducer who also wants the threat model and library trust boundaries.
+- **Appendix E** (CONTINUITY Index) — for a reader who wants to navigate the narrative history behind the closed stages.
+
+**What this path deliberately omits.** The positioning sections (§D10) and most of the executive summary's narrative (§E2). The reproducer path is verification-focused.
+
+---
+
+### H.7 Cross-Path Summary
+
+The four paths share common entry and exit points (H.2), and each specializes in the middle of the document.
+
+| Section | H.3 Exec | H.4 Crypto | H.5 Gov | H.6 Repro |
+|---|---|---|---|---|
+| E1 | ● | ● | ● | ● |
+| E2 | ● | ● | ● | |
+| E3 | ● | ● | ● | ● |
+| E4 | ● | ● | | |
+| E5 | ● | | ● | |
+| E6 | ● | | | |
+| E7 | ● | | | ● |
+| E8 | ● | ● | ● | ● |
+| D1 (placeholder) | | (see note) | | (see note) |
+| D2 | | ● | | |
+| D3 | | ● | | |
+| D4 | | | ● | |
+| D5 | | | ● | |
+| D6 | | | ● | |
+| D7 | | ● | (opt) | |
+| D8 | | ● | (opt) | (opt) |
+| D9 | | | ● | ● |
+| D10 | (opt) | (opt) | ● | |
+| D11 | (opt) | | ● | ● |
+| D12 | | | | ● |
+| Appendix A | | ● | | ● |
+| Appendix B | | ● | | ● |
+| Appendix C | | (opt) | | ● |
+| Appendix D | | | ● | ● |
+| Appendix E | | | ● | (opt) |
+| Appendix F | ● | | | ● |
+| Appendix G | ● | ● | ● | ● |
+
+**Legend:** ● = on the reading path; (opt) = optional extension; blank = not on the path.
+
+**Sections shared across all four paths.** The table shows that **E1**, **E8**, and **Appendix G** appear on all four paths. This is intentional: E1 establishes the document's purpose and evidence discipline; E8 establishes the terminology; Appendix G is the consolidated glossary. These three sections are the **common reference layer** of the document. No other section is shared across all four paths — the middle of the document is deliberately partitioned by reader profile:
+
+- **D2–D3** for cryptography (H.4).
+- **D4–D6** for governance and trust (H.5).
+- **D9 and D11** for reproducers and auditors (H.6).
+- **D12** for reproducibility (H.6).
+
+This partitioning reflects §E1.2's design: the document serves multiple reader profiles without forcing any single profile to traverse the entire dossier. The **common reference layer** (E1, E8, Appendix G) ensures that all four paths share the same vocabulary and evidence discipline; the **specialized layers** ensure that each profile reads the material it needs without dilution.
+
+---
+
+### H.8 What Appendix H Does Not Claim
+
+- Appendix H does not claim that the four paths are the only valid paths through the document. They are the ones designed for the four reader profiles in §E1.2.
+- Appendix H does not claim that a reader on one path may skip the common reference elements (E1, E8, Appendix G). Those are prerequisites for the terminology and discipline used throughout.
+- Appendix H does not claim that a reader on one path should not read sections from another. The paths are recommended sequences, not access controls.
+- Appendix H does not claim that D1 is optional for any path. D1 is a **placeholder** in the current document; the paths that would include it (H.4 and H.6) point to the sections that carry the wire-format material instead.
+- Appendix H does not define any new capability, term, or evidence. It is a navigation aid.
+- Appendix H does not claim that the section list in any path is exhaustive of every relevant subsection. Where a subsection is the load-bearing part of its section, the path lists the section; the reader is expected to identify the relevant subsection.
+- Appendix H does not claim that the cross-path summary in §H.7 is exhaustive of every cross-reference between paths. It lists the presence/absence of each section per path.
+- Appendix H does not claim that the four reader profiles in §E1.2 are the only profiles for which the document is useful. It documents the four profiles for which reading paths have been designed.
+- Appendix H does not claim that the reading order within a path is mandatory. It is the recommended order; a reader with prior familiarity may reorder.
+- Appendix H does not claim that the "optional extension" markers in §H.3–§H.6 are exhaustive. Any section not on a path may be read as an extension.
+
+---
+
+**End of Appendix H.**
 
 # End of Recovered Document
 
