@@ -45,6 +45,7 @@
   - Appendix D. DEFECT Index
   - Appendix E. CONTINUITY Index
   - Appendix F. Environment Specification and Suite Manifest
+  - Appendix G. Glossary
 
 ---
 
@@ -6744,6 +6745,219 @@ Appendix F does not duplicate the reproduction commands. The reader should follo
 ---
 
 **End of Appendix F.**
+
+## Appendix G — Glossary
+
+**Part III, Appendix G.**
+**Purpose:** a consolidated glossary of acronyms, standards, and error codes used across this document, with cross-references to where each item is defined.
+**Reference base:** §E8 (Terminology); §E8.4 (Standards); §D2.4 and §E8 (error codes); §D6.6 (E2E outcomes); the source modules `error.py`, `error.mjs`, `error.rs`, `verify.py`, `e2e.py`.
+
+---
+
+### G.1 Purpose and Scope
+
+Appendix G serves one purpose: to record, in one place, a **consolidated glossary** of acronyms, standards, and error codes referenced across this document.
+
+Appendix G complements §E8 (Terminology) — it does not duplicate it:
+
+- §E8.2–§E8.5 define vOmega-specific terms and their meanings. Appendix G **indexes** them (with cross-references), rather than repeating the definitions.
+- §E8.4 lists the standards referenced by the executive summary. Appendix G **extends** that list with the standards referenced in Part II (e.g., RFC 5652, RFC 7519, RFC 9942, RFC 9943) that are not in §E8.4.
+- Error codes are enumerated in Appendix G as a **single consolidated index**, with the source module named for each family.
+
+Appendix G does **not**:
+
+- redefine any term already defined in §E8.
+- assert that any acronym, standard, or error code used in the repository is captured here. It lists what is used **across this document**.
+- translate the Arabic-language section titles of `CONTINUITY.md` (those are preserved in Appendix E).
+- enumerate the internal identifiers of the DEFECTS-LOG (those are in Appendix D).
+
+---
+
+### G.2 Acronyms and Abbreviations
+
+The following acronyms and abbreviations are used across this document. Where a definition exists in §E8, the entry cross-references it.
+
+| Acronym | Expansion | Where defined / cited |
+|---|---|---|
+| ABI | Application Binary Interface | DEFECT-029-WASM; Appendix D |
+| ACL | Access Control List (Phase 1 semantic layer) | `CONTINUITY.md` §12; Appendix E |
+| ACVP | Automated Cryptographic Validation Protocol (NIST) | §E6.4, §D7.6.1, §D9.5; `ACVP_EXECUTIONS` in §E3.9 |
+| ADIE | Adaptive Defense Intelligence Engine | §E1.1 |
+| AKP | Algorithm Key Pair (COSE key type) | §D10.3.1, §D10.3.4 |
+| API | Application Programming Interface | §D2.4, §D3.2 |
+| CBOR | Concise Binary Object Representation | §E8.2; RFC 8949 |
+| CMS | Cryptographic Message Syntax | §D10.4; RFC 5652 |
+| COSE | CBOR Object Signing and Encryption | §E8.2, §D10.3; RFC 9052, RFC 9964 |
+| DCP | Deterministic CBOR Profile | §E8.2 |
+| DCP 2.1 | DCP, version 2.1 | §E8.2 |
+| DoS | Denial of Service | §D8.3.7 |
+| E2E | End-to-End | §D6, §E3.7 |
+| ESM | ECMAScript Modules | DEFECT-025; Appendix D |
+| FIPS | Federal Information Processing Standards | §E6.4, §E8.4 |
+| IANA | Internet Assigned Numbers Authority | §D10.3.2 |
+| JCS | JSON Canonicalization Scheme | §E8.2; RFC 8785 |
+| JSON | JavaScript Object Notation | §E2.2.1; RFC 8259 |
+| JWS | JSON Web Signature | §E2.2.3, §D10.2; RFC 7515 |
+| JWT | JSON Web Token | §D10.2; RFC 7519 |
+| KAT | Known Answer Test | §D9.6.1; `CONTINUITY.md` §28–§29 |
+| ML-DSA | Module-Lattice-Based Digital Signature Algorithm | §E8.4; FIPS 204 |
+| ML-DSA-65 | ML-DSA at the security level corresponding to NIST Level 3 | §D2.5, §D7.6.3 |
+| OCSP | Online Certificate Status Protocol | §E2.2.4; RFC 6960 |
+| OIDC | OpenID Connect | §D10.7.1 |
+| RFC | Request for Comments (IETF) | §E8.4 |
+| RS256 | RSASSA-PKCS1-v1_5 using SHA-256 | §E8.4; RFC 8017 |
+| SCITT | Supply Chain Integrity, Transparency, and Trust | §D10.6; RFC 9942, RFC 9943 |
+| SDK | Software Development Kit | §D4.1 (B-lineage consumers); Appendix E |
+| SHA | Secure Hash Algorithm | §E8.4 |
+| SPKI | Subject Public Key Info | §D11.12; GAP-9 |
+| TBS | To-Be-Signed | §E8.2 |
+| TLS | Transport Layer Security | §D8.3.6 (network-layer threats) |
+| TUF | The Update Framework | §D10.7.1 |
+| VDS | Verifiable Data Structure | §D10.6.1 |
+| WASM | WebAssembly | §E8.2; §D3.9 |
+
+---
+
+### G.3 Standards Referenced
+
+The following standards are referenced across this document. The list is a **superset** of §E8.4: it includes the standards cited by Part II (e.g., RFC 5652, RFC 7519) that are not in the executive-summary table.
+
+| Identifier | Title | Cited in |
+|---|---|---|
+| RFC 5280 | Internet X.509 Public Key Infrastructure Certificate and CRL Profile | §E2.2.4, §E8.4 |
+| RFC 5652 | Cryptographic Message Syntax (CMS) | §D10.4.1 |
+| RFC 6960 | X.509 Internet Public Key Infrastructure Online Certificate Status Protocol (OCSP) | §E2.2.4, §E8.4 |
+| RFC 6962 | Certificate Transparency | §E8.4 |
+| RFC 7515 | JSON Web Signature (JWS) | §E2.2.3, §D10.2.1, §E8.4 |
+| RFC 7519 | JSON Web Token (JWT) | §D10.2.1 |
+| RFC 8017 | PKCS #1: RSA Cryptography Specifications | §E8.4 (RS256); implicit reference via RS256 |
+| RFC 8259 | The JavaScript Object Notation (JSON) Data Interchange Format | §E2.2.1, §E8.4 |
+| RFC 8785 | JSON Canonicalization Scheme (JCS) | §E2.2.1, §E8.2, §E8.4 |
+| RFC 8949 | Concise Binary Object Representation (CBOR) | §E2.2.1, §E8.4 |
+| RFC 9052 | CBOR Object Signing and Encryption (COSE): Structures and Process | §E2.2.3, §D10.3.1, §E8.4 |
+| RFC 9942 | CBOR Object Signing and Encryption (COSE) Receipts | §D10.6.1 |
+| RFC 9943 | An Architecture for Trustworthy and Transparent Digital Supply Chains (SCITT) | §D10.6.1 |
+| RFC 9964 | ML-DSA for JSON Object Signing and Encryption (JOSE) and CBOR Object Signing and Encryption (COSE) | §E2.2.3, §D10.3.1, §E8.4 |
+| FIPS 204 | Module-Lattice-Based Digital Signature Standard | §E6.4, §E8.4 |
+
+**Note on RFC 8017.** RFC 8017 is the specification behind the RS256 algorithm (`RSASSA-PKCS1-v1_5`). It is referenced here for the algorithm definition; the document does not otherwise cite the RFC by number.
+
+**Note on RFC 9942 / RFC 9943.** These two RFCs are cited in §D10.6 (SCITT positioning). They are not part of the executive-summary standards list in §E8.4.
+
+**Note on RFC 9964.** RFC 9964 was published in May 2026. The title is preserved as stated in §E8.4.
+
+---
+
+### G.4 vOmega-Specific Terms — Index
+
+Appendix G does not redefine vOmega-specific terms. The definitions are in §E8. The following is an index for navigation.
+
+| Term | Defined in |
+|---|---|
+| DCP 2.1 | §E8.2 |
+| B+ | §E8.2 |
+| TBS | §E8.2 |
+| JCS | §E8.2 |
+| ClaimRoot | §E8.2 |
+| Wire bytes | §E8.2 |
+| Rawcheck | §E8.2 |
+| Profile | §E8.2 |
+| DecisionContract | §E8.3 |
+| DecisionLifecycle | §E8.3 |
+| AuthorizationStatus | §E8.3 |
+| Authority | §E8.3 |
+| RevocationAuthority | §E8.3 |
+| TrustStatus | §E8.3 |
+| TrustStatusAssertion | §E8.3 |
+| TrustStatusStore | §E8.3 |
+| GOVERNED_INITIAL_STATE | §E8.3 |
+| ExecutionManifest | §E8.3 |
+| E2EOutcome | §E8.3 |
+| EXECUTES_SECURITY_ACTIONS | §E8.3 |
+| DEFECT / CBOR-LIB-EVAL / GAP / RISK | §E8.5 |
+| CONTINUITY / Evidence Collection | §E8.5 |
+
+**Enum completeness.** The complete value lists for the three axes (`DecisionLifecycle`, `AuthorizationStatus`, `TrustStatus`) are in §E8.3.
+
+---
+
+### G.5 Error Code Index
+
+The following error codes are referenced across this document. Each family is defined in a source module; the list below is an index of the codes as they appear.
+
+#### G.5.1 Wire-level error codes (`E_WIRE_*`) — 14 codes
+
+Source modules: `protocol/wire/error.py`, `js/wire/error.mjs`, `rust/adie-primitives/src/cbor/error.rs`. Enumerated in §D2.4 and §E8.2.
+
+| Code | Meaning (as documented) |
+|---|---|
+| `E_WIRE_MALFORMED` | The input is malformed (general). |
+| `E_WIRE_TRAILING` | Bytes remain after the top-level item. |
+| `E_WIRE_INDEFINITE` | Indefinite-length item encountered. |
+| `E_WIRE_FLOAT` | Floating-point value encountered. |
+| `E_WIRE_TAG` | CBOR tag (major type 6) encountered. |
+| `E_WIRE_DUP_KEY` | Duplicate map key. |
+| `E_WIRE_NONCANONICAL_INT` | Non-shortest integer encoding. |
+| `E_WIRE_NONCANONICAL_MAP` | Non-canonical map (order or form). |
+| `E_WIRE_INVALID_UTF8` | Invalid UTF-8 in a text string. |
+| `E_WIRE_TYPE_MISMATCH` | Value type does not match the profile. |
+| `E_WIRE_MISSING_FIELD` | A required field is missing. |
+| `E_WIRE_UNKNOWN_CRITICAL` | Unknown critical field. |
+| `E_WIRE_VERSION` | Protocol version mismatch. |
+| `E_WIRE_AMBIGUOUS` | Field requires external state to resolve. |
+
+**Note on the "14 codes" figure.** The 14 codes above are the codes exercised by `test_error.py` / `test_error.mjs` (T01–T14) and referenced in §E3.3. The precise set of codes and their triggering conditions is defined by the source modules; Appendix G is an index.
+
+#### G.5.2 Signature error codes (`E_SIGNATURE_*`) — 6 codes
+
+Source module: `protocol/hybrid/verify.py`. Exercised by `test_verify.py` (V04–V19) and `test_rust_parity.py` (R05–R07).
+
+| Code | Meaning (as documented) |
+|---|---|
+| `E_SIGNATURE_HYBRID_MISSING` | One or both required signatures are missing, or the signatures array is not a list. |
+| `E_SIGNATURE_DUPLICATE_ALG` | Two signatures with the same algorithm identifier. |
+| `E_SIGNATURE_UNKNOWN_ALG` | A signature's algorithm identifier is not recognized. |
+| `E_SIGNATURE_DOWNGRADE` | A required algorithm is not present in the signatures array. |
+| `E_SIGNATURE_HYBRID_INVALID` | A signature failed verification (tampered bytes, bad base64, invalid signature bytes). |
+| `E_SIGNATURE_KEY_MISMATCH` | The public key provided does not match the signature's `key_id`. |
+
+#### G.5.3 E2E outcome values — 9 values
+
+Source module: `src/enterpriseguard/adie/canonical/integration/e2e.py`. Defined in §D6.6.
+
+| Value | Meaning (as documented) |
+|---|---|
+| `ACCEPTED` | All stages passed; a decision was emitted. |
+| `REJECTED_WIRE` | Wire round-trip failed. |
+| `REJECTED_CRYPTO` | Cryptographic verification failed or was not possible. |
+| `REJECTED_EVIDENCE` | Evidence input was not a valid `DecisionEvidence`. |
+| `REJECTED_AUTHORITY` | Authority was missing, invalid, inactive, or out of scope. |
+| `REJECTED_TRUST` | Trust status was `UNKNOWN`, `CONFLICT`, or a non-`ACTIVE` value. |
+| `REJECTED_LIFECYCLE` | A lifecycle transition was illegal. |
+| `REJECTED_POLICY` | Policy denied the decision at the decision stage. |
+| `REJECTED_MANIFEST` | Manifest emission failed. |
+
+**Note on the classifier.** The `E2EOutcome` values are not "error codes" in the same sense as `E_WIRE_*` or `E_SIGNATURE_*`. They are the value domain of the end-to-end result classifier. They are listed here for completeness.
+
+---
+
+### G.6 What Appendix G Does Not Claim
+
+- Appendix G does not redefine any term already defined in §E8. The definitions are in §E8; Appendix G is an index.
+- Appendix G does not claim that its acronym list is exhaustive of every acronym used in the repository. It lists what is used across this document.
+- Appendix G does not claim that its standards list is exhaustive of every standard the repository touches. It lists what is cited across this document.
+- Appendix G does not claim that the error code lists are the canonical definitions. The canonical definitions are in the source modules named for each family.
+- Appendix G does not enumerate the internal identifiers of the DEFECTS-LOG. Those are in Appendix D.
+- Appendix G does not translate Arabic-language terms. It preserves English terms as they appear in the document.
+- Appendix G does not claim that the 14 `E_WIRE_*` codes, the 6 `E_SIGNATURE_*` codes, or the 9 `E2EOutcome` values are stable across future versions of this document. Each is bounded by its source module's state at the evidence-reference commit `7683adb`.
+- Appendix G does not claim that any acronym, standard, or error code outside the listed sets is uninteresting. Only items used across this document are listed.
+- Appendix G does not claim that the "meaning" column for each error code is a formal specification. It is a paraphrase consistent with the code's usage in this document.
+- Appendix G does not claim that the acronym expansions are the only valid expansions. Where an acronym has multiple expansions in the wider community (e.g., ABI, API), the expansion here reflects the usage in this document.
+- Appendix G does not duplicate §E8.4. §E8.4 is the executive-summary standards list; Appendix G is the consolidated extended list.
+
+---
+
+**End of Appendix G.**
 
 # End of Recovered Document
 
